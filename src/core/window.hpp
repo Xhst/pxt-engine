@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/base.hpp"
+#include "core/memory.hpp"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>

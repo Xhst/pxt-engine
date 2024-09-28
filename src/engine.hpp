@@ -1,4 +1,4 @@
-#include "core/base.hpp"
+#include "core/memory.hpp"
 #include "core/window.hpp"
 
 namespace CGEngine {

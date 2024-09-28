@@ -1,7 +1,4 @@
-#include "core/base.hpp"
 #include "engine.hpp"
-
-#include <iostream>
 
 int main() {
     
