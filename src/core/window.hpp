@@ -29,7 +29,7 @@ namespace CGEngine {
 
         bool shouldClose() { return glfwWindowShouldClose(m_window); }
 
-        static Unique<Window> create(const WindowData& props = WindowData());
+        void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 
     private:
         GLFWwindow* m_window;
