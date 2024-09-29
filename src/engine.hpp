@@ -1,3 +1,5 @@
+#pragma once
+
 #include "core/memory.hpp"
 #include "core/window.hpp"
 #include "renderer/pipeline.hpp"
