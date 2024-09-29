@@ -1,6 +1,3 @@
-#vscode
-/.vscode/*
-
 # Prerequisites
 *.d
 
@@ -34,6 +31,21 @@
 *.out
 *.app
 
+# Build directory
 /build/*
 
+# Environment variables
 .env
+
+# Compiled Shader files
+*.spv
+
+# vscode
+.vscode/*
+
+# jetbrains
+.idea/*
+*.iml
+
+
+
