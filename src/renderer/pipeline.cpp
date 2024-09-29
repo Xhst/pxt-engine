@@ -3,15 +3,14 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <vector>
 
 namespace CGEngine {
 
-    Pipeline::Pipeline(const std::string &vertFilepath, const std::string &fragFilepath) {
+    Pipeline::Pipeline(const std::string& vertFilepath, const std::string& fragFilepath) {
         createGraphicsPipeline(vertFilepath, fragFilepath);
     }
 
-    std::vector<char> Pipeline::readFile(const std::string &filename) {
+    std::vector<char> Pipeline::readFile(const std::string& filename) {
         std::ifstream file{filename, std::ios::ate | std::ios::binary};
 
         if (!file.is_open()) {
@@ -29,7 +28,7 @@ namespace CGEngine {
         return buffer;
     }
 
-    void Pipeline::createGraphicsPipeline(const std::string &vertFilepath, const std::string &fragFilepath) {
+    void Pipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath) {
         auto vertCode = readFile(vertFilepath);
         auto fragCode = readFile(fragFilepath);
 
