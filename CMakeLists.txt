@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.11.0)
 
 set(NAME CG_Engine)
 
+# MinGW
 message(STATUS "using ${CMAKE_GENERATOR}")
 if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     if (NOT MINGW_PATH) 
@@ -17,47 +18,25 @@ endif()
 
 project(${NAME} VERSION 0.0.1)
 
-# 1. Set VULKAN_SDK_PATH in .env to target specific vulkan version
+# Vulkan
 if (DEFINED VULKAN_SDK_PATH)
-  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include") # 1.1 Make sure this include path is correct
-  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib") # 1.2 Make sure lib path is correct
+  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
+  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
   set(Vulkan_FOUND "True")
 else()
-  find_package(Vulkan REQUIRED) # throws error if could not find Vulkan
+  find_package(Vulkan REQUIRED)
   message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
 endif()
 if (NOT Vulkan_FOUND)
-	message(FATAL_ERROR "Could not find Vulkan library!")
+  message(FATAL_ERROR "Could not find Vulkan library!")
 else()
-	message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
+  message(STATUS "Using Vulkan library at: ${Vulkan_LIBRARIES}")
 endif()
 
-# 2. Set GLFW_PATH in .env to target specific glfw
-if (DEFINED GLFW_PATH)
-  message(STATUS "Using GLFW path specified in .env")
-  set(GLFW_INCLUDE_DIRS "${GLFW_PATH}/include")
-  if (MSVC)
-    set(GLFW_LIB "${GLFW_PATH}/lib-vc2022") # 2.1 Update lib-vc2022 to use same version as your visual studio
-  elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
-    message(STATUS "USING MINGW")
-    set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64") # 2.1 make sure matches glfw mingw subdirectory
-  endif()
-else()
-  find_package(glfw3 3.4 REQUIRED)
-  set(GLFW_LIB glfw)
-  message(STATUS "Found GLFW")
-endif()
-if (NOT GLFW_LIB)
-	message(FATAL_ERROR "Could not find glfw library!")
-else()
-	message(STATUS "Using glfw lib at: ${GLFW_LIB}")
-endif()
-
-include_directories(external)
-
-if (NOT TINYOBJ_PATH)
-  message(STATUS "TINYOBJ_PATH not specified in .env, using external/tinyobjloader")
-endif()
+# Vendor libraries
+add_subdirectory(vendor/glfw)         
+add_subdirectory(vendor/glm)          
+add_subdirectory(vendor/tinyobjloader)  
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
@@ -79,31 +58,41 @@ if (WIN32)
     )
   endif()
 
+  # Include and link Vulkan and other submodule libraries
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${Vulkan_INCLUDE_DIRS}
-    ${TINYOBJ_PATH}
-    ${GLFW_INCLUDE_DIRS}
-    ${GLM_PATH}
-    )
-
+  )
+  
+  # Ensure you add the Vulkan SDK library directory for MinGW
   target_link_directories(${PROJECT_NAME} PUBLIC
     ${Vulkan_LIBRARIES}
-    ${GLFW_LIB}
   )
 
-  target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
+  # Link with the Vulkan library file
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+    glfw                     
+    glm                      
+    tinyobjloader            
+    vulkan-1  # This is the name of the Vulkan library
+  )
+
+
 elseif (UNIX)
-    message(STATUS "CREATING BUILD FOR UNIX")
-    target_include_directories(${PROJECT_NAME} PUBLIC
-      ${PROJECT_SOURCE_DIR}/src
-      ${TINYOBJ_PATH}
-    )
-    target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
+  message(STATUS "CREATING BUILD FOR UNIX")
+  target_include_directories(${PROJECT_NAME} PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+  )
+  target_link_libraries(${PROJECT_NAME} PRIVATE
+    glfw 
+    ${Vulkan_LIBRARIES}
+  )
 endif()
 
+############## SHADERS ##############
 
-############## Build SHADERS #######################
+message(STATUS "Using Vulkan SDK Path: ${VULKAN_SDK_PATH}")
+message(STATUS "Using Vulkan SDK: $ENV{VULKAN_SDK} , ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} ")
 
 # Find all vertex and fragment sources within shaders directory
 find_program(GLSL_VALIDATOR glslangValidator HINTS 
