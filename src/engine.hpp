@@ -17,6 +17,6 @@ namespace CGEngine {
         bool isRunning();
 
         Unique<Window> m_window;
-        Pipeline pipeline{"../shaders/simple_shader.vert", "../shaders/simple_shader.frag"};
+        Pipeline pipeline{"../shaders/simple_shader.vert.spv", "../shaders/simple_shader.frag.spv"};
     };
 }
