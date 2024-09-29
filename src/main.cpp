@@ -1,9 +1,17 @@
 #include "engine.hpp"
+#include <iostream>
+#include <stdexcept>
 
 int main() {
     
     CGEngine::Engine engine;
-    engine.run();
+    
+    try {
+        engine.run();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
