@@ -19,5 +19,4 @@ CG Engine is a graphics engine built using GLFW, Vulkan, and GLM.
 
 ### Unix
 
-1. Set up the environment variables by copying `.env.example.unix` to `.env` and updating the paths as necessary.
-2. Run the `start.sh` script to build and run the project.
+1. Run the `start.sh` script to build and run the project.
