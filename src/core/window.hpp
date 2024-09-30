@@ -24,8 +24,12 @@ namespace CGEngine {
         Window(const WindowData& props);
         ~Window();
 
+        Window(const Window&) = delete;
+        Window& operator=(const Window&) = delete;
+
         uint32_t getWidth() const { return m_data.width; }
         uint32_t getHeight() const { return m_data.height; }
+        VkExtent2D getExtent() const { return { m_data.width, m_data.height }; }
 
         bool shouldClose() { return glfwWindowShouldClose(m_window); }
 
