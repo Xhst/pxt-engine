@@ -9,6 +9,7 @@
 namespace CGEngine {
 
     Engine::Engine() {
+        loadModels();
         createPipelineLayout();
         createPipeline();
         createCommandBuffers();
@@ -29,6 +30,16 @@ namespace CGEngine {
 
     bool Engine::isRunning() {
         return !m_window.shouldClose();
+    }
+
+    void Engine::loadModels() {
+        std::vector<Model::Vertex> vertices{
+            {{0.0f, -0.5f}},
+            {{0.5f, 0.5f}},
+            {{-0.5f, 0.5f}}
+        };
+
+        m_model = createUnique<Model>(m_device, vertices);
     }
 
     void Engine::createPipelineLayout() {
@@ -96,7 +107,8 @@ namespace CGEngine {
             vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
             
             m_pipeline->bind(m_commandBuffers[i]);
-            vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);
+            m_model->bind(m_commandBuffers[i]);
+            m_model->draw(m_commandBuffers[i]);
             
             vkCmdEndRenderPass(m_commandBuffers[i]);
 
