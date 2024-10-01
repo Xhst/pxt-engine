@@ -1,10 +1,10 @@
 #pragma once
 
 #include "core/memory.hpp"
-#include "core/window.hpp"
-#include "renderer/pipeline.hpp"
-#include "renderer/swap_chain.hpp"
-#include "device.hpp"
+#include "graphics/window.hpp"
+#include "graphics/pipeline.hpp"
+#include "graphics/swap_chain.hpp"
+#include "graphics/device.hpp"
 
 
 namespace CGEngine {

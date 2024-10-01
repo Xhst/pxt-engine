@@ -1,9 +1,9 @@
 #pragma once
 
-#include "device.hpp"
-
 #include <string>
 #include <vector>
+
+#include "graphics/device.hpp"
 
 namespace CGEngine {
 
@@ -22,30 +22,28 @@ namespace CGEngine {
     };
 
     class Pipeline {
-    public:
+       public:
         Pipeline(
-            Device& device, 
-            const std::string& vertFilepath, 
+            Device& device,
+            const std::string& vertFilepath,
             const std::string& fragFilepath,
-            const PipelineConfigInfo& configInfo
-        );
+            const PipelineConfigInfo& configInfo);
         ~Pipeline();
 
         Pipeline(const Pipeline&) = delete;
-        void operator=(const Pipeline&) = delete;
+        Pipeline& operator=(const Pipeline&) = delete;
 
         void bind(VkCommandBuffer commandBuffer);
 
         static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
 
-    private:
+       private:
         static std::vector<char> readFile(const std::string& filename);
 
         void createGraphicsPipeline(
             const std::string& vertFilepath,
             const std::string& fragFilepath,
-            const PipelineConfigInfo& configInfo
-        );
+            const PipelineConfigInfo& configInfo);
 
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 

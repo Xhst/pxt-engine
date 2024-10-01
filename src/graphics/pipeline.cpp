@@ -1,4 +1,6 @@
-#include "pipeline.hpp"
+#include "graphics/pipeline.hpp"
+
+#include "graphics/model.hpp"
 
 #include <cassert>
 #include <fstream>
