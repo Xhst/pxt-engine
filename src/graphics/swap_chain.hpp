@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "core/memory.hpp"
 #include "device.hpp"
 
 namespace CGEngine {
@@ -14,6 +15,7 @@ namespace CGEngine {
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
         SwapChain(Device& deviceRef, VkExtent2D windowExtent);
+        SwapChain(Device& deviceRef, VkExtent2D windowExtent, Shared<SwapChain> previous);
         ~SwapChain();
 
         SwapChain(const SwapChain&) = delete;
@@ -43,6 +45,7 @@ namespace CGEngine {
                                       uint32_t *imageIndex);
 
        private:
+        void init();
         void createSwapChain();
         void createImageViews();
         void createDepthResources();
@@ -74,6 +77,7 @@ namespace CGEngine {
         VkExtent2D m_windowExtent;
 
         VkSwapchainKHR m_swapChain;
+        Shared<SwapChain> m_oldSwapChain;
 
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;

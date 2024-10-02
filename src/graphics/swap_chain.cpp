@@ -12,6 +12,17 @@ namespace CGEngine {
 
     SwapChain::SwapChain(Device &deviceRef, VkExtent2D extent)
         : m_device{deviceRef}, m_windowExtent{extent} {
+        init();
+    }
+
+    SwapChain::SwapChain(Device &deviceRef, VkExtent2D extent, Shared<SwapChain> previous)
+        : m_device{deviceRef}, m_windowExtent{extent}, m_oldSwapChain{previous} {
+        init();
+
+        m_oldSwapChain = nullptr;
+    }
+
+    void SwapChain::init() {
         createSwapChain();
         createImageViews();
         createRenderPass();
@@ -155,7 +166,7 @@ namespace CGEngine {
         createInfo.presentMode = presentMode;
         createInfo.clipped = VK_TRUE;
 
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        createInfo.oldSwapchain = m_oldSwapChain == nullptr ? VK_NULL_HANDLE : m_oldSwapChain->m_swapChain;
 
         if (vkCreateSwapchainKHR(m_device.device(), &createInfo, nullptr, &m_swapChain) !=
             VK_SUCCESS) {

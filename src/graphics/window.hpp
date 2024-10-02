@@ -30,6 +30,8 @@ namespace CGEngine {
         uint32_t getWidth() const { return m_data.width; }
         uint32_t getHeight() const { return m_data.height; }
         VkExtent2D getExtent() const { return { m_data.width, m_data.height }; }
+        bool isWindowResized() { return m_frameBufferResized; }
+        void resetWindowResizedFlag() { m_frameBufferResized = false; }
 
         bool shouldClose() { return glfwWindowShouldClose(m_window); }
 
@@ -38,6 +40,9 @@ namespace CGEngine {
     private:
         GLFWwindow* m_window;
         WindowData m_data;
+        bool m_frameBufferResized = false;
+
+        static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     };
     
 
