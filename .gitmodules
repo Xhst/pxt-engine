@@ -7,3 +7,6 @@
 [submodule "vendor/tinyobjloader"]
 	path = vendor/tinyobjloader
 	url = https://github.com/tinyobjloader/tinyobjloader
+[submodule "vendor/entt"]
+	path = vendor/entt
+	url = https://github.com/skypjack/entt

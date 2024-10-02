@@ -8,12 +8,12 @@ set(NAME CG_Engine)
 # MinGW
 message(STATUS "using ${CMAKE_GENERATOR}")
 if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
-    if (NOT MINGW_PATH) 
-      message(FATAL_ERROR "MINGW_PATH not set in .env")
-    endif()
-    set(USE_MINGW "True")
-    set(CMAKE_C_COMPILER ${MINGW_PATH}/bin/gcc.exe)
-    set(CMAKE_CXX_COMPILER  ${MINGW_PATH}/bin/g++.exe)
+  if (NOT MINGW_PATH) 
+    message(FATAL_ERROR "MINGW_PATH not set in .env")
+  endif()
+  set(USE_MINGW "True")
+  set(CMAKE_C_COMPILER ${MINGW_PATH}/bin/gcc.exe)
+  set(CMAKE_CXX_COMPILER  ${MINGW_PATH}/bin/g++.exe)
 endif()
 
 project(${NAME} VERSION 0.0.1)
@@ -37,6 +37,7 @@ endif()
 add_subdirectory(vendor/glfw)         
 add_subdirectory(vendor/glm)          
 add_subdirectory(vendor/tinyobjloader)  
+add_subdirectory(vendor/entt)
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
@@ -62,6 +63,7 @@ if (WIN32)
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${Vulkan_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/vendor/entt/single_include
   )
   
   # Ensure you add the Vulkan SDK library directory for MinGW
@@ -73,7 +75,7 @@ if (WIN32)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw                     
     glm                      
-    tinyobjloader            
+    tinyobjloader      
     vulkan-1  # This is the name of the Vulkan library
   )
 
