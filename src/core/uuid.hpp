@@ -20,6 +20,10 @@ namespace CGEngine {
             return std::hash<std::string>{}(m_uuid);
         }
 
+        std::string toString() const {
+            return m_uuid;
+        }
+
 
     private:
         std::string m_uuid;
