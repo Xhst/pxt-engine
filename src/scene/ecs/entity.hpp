@@ -12,6 +12,8 @@ namespace CGEngine {
         Entity() = default;
         Entity(entt::entity entity, Scene* scene) : m_enttEntity(entity), m_scene(scene) {}
 		Entity(const Entity& other) = default;
+        Entity(Entity&& other) = default;
+        Entity& operator=(Entity&& other) = default;
 
         template <typename... T>
         bool has() {
@@ -26,9 +28,9 @@ namespace CGEngine {
         }
 
         template <typename T, typename... Args>
-        T& add(Args&&... args) {
+        Entity& add(Args&&... args) {
             T& component = m_scene->m_registry.emplace<T>(m_enttEntity, std::forward<Args>(args)...);
-            return component;
+            return *this;
         }
 
         template <typename T>
