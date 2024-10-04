@@ -1,5 +1,7 @@
 #include "engine.hpp"
 #include "core/memory.hpp"
+#include "scene/ecs/entity.hpp"
+
 
 #include <iostream>
 #include <array>
@@ -9,16 +11,18 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 
 namespace CGEngine {
 
     struct SimplePushConstantData {
+        glm::mat2 transform{1.f};
         glm::vec2 offset;
         alignas(16) glm::vec3 color;
     };
 
     Engine::Engine() {
-        loadModels();
+        loadScene();
         createPipelineLayout();
         recreateSwapChain();
         createCommandBuffers();
@@ -41,14 +45,21 @@ namespace CGEngine {
         return !m_window.shouldClose();
     }
 
-    void Engine::loadModels() {
+    void Engine::loadScene() {
         std::vector<Model::Vertex> vertices{
             {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
             {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
             {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
         };
+        auto model = createShared<Model>(m_device, vertices);
 
-        m_model = createUnique<Model>(m_device, vertices);
+        m_scene = createUnique<Scene>();
+
+        auto rotation = .25f * glm::two_pi<float>();
+        m_scene->createEntity("triangle")
+            .add<Transform2dComponent>(glm::vec2{0.5f, 0.0f}, glm::vec2{0.5f, 0.5f}, rotation)
+            .add<ColorComponent>(glm::vec3{0.6f, 0.0f, 0.5f})
+            .add<ModelComponent>(model);
     }
 
     void Engine::createPipelineLayout() {
@@ -131,9 +142,6 @@ namespace CGEngine {
     }
 
     void Engine::recordCommandBuffer(int imageIndex) {
-        static int frame = 0;
-        frame = (frame + 1) % 1000;
-
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -169,27 +177,44 @@ namespace CGEngine {
         vkCmdSetViewport(m_commandBuffers[imageIndex], 0, 1, &viewport);
         vkCmdSetScissor(m_commandBuffers[imageIndex], 0, 1, &scissor);
 
-        m_pipeline->bind(m_commandBuffers[imageIndex]);
-        m_model->bind(m_commandBuffers[imageIndex]);
-
-        for (int j = 0; j < 4; j++) {
-            SimplePushConstantData push{};
-            push.offset = {-0.3f + frame * 0.002f, -0.4f + j * 0.25f};
-            push.color = {0.0f, 0.2f + 0.2f * j, 0.0f};
-            vkCmdPushConstants(
-                m_commandBuffers[imageIndex],
-                m_pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0,
-                sizeof(SimplePushConstantData),
-                &push);
-            m_model->draw(m_commandBuffers[imageIndex]);
-        }
+        renderScene(m_commandBuffers[imageIndex]);
 
         vkCmdEndRenderPass(m_commandBuffers[imageIndex]);
 
         if (vkEndCommandBuffer(m_commandBuffers[imageIndex]) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
+        }
+    }
+
+    void Engine::renderScene(VkCommandBuffer commandBuffer) {
+        m_pipeline->bind(commandBuffer);
+
+        for (auto entity : m_scene->view<Transform2dComponent, ColorComponent, ModelComponent>()) {
+            Entity e{entity, m_scene.get()};
+
+            auto& transform = e.get<Transform2dComponent>();
+            auto& colorComp = e.get<ColorComponent>();
+            auto& modelComp = e.get<ModelComponent>();
+
+            //just cool rotation wow
+            transform.rotation = glm::mod(transform.rotation + 0.01f, glm::two_pi<float>());
+
+            SimplePushConstantData push{};
+            push.transform = transform.mat2();
+            push.offset = transform.translation;
+            push.color = colorComp.color;
+
+            vkCmdPushConstants(
+                commandBuffer,
+                m_pipelineLayout,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                0,
+                sizeof(SimplePushConstantData),
+                &push);
+
+            modelComp.model->bind(commandBuffer);
+            modelComp.model->draw(commandBuffer);
+
         }
     }
 

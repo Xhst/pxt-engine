@@ -6,6 +6,7 @@
 #include "graphics/swap_chain.hpp"
 #include "graphics/device.hpp"
 #include "graphics/model.hpp"
+#include "scene/scene.hpp"
 
 namespace CGEngine {
 
@@ -26,7 +27,8 @@ namespace CGEngine {
         void createCommandBuffers();
         void freeCommandBuffers();
         void drawFrame();
-        void loadModels();
+        void loadScene();
+        void renderScene(VkCommandBuffer commandBuffer);
         void recreateSwapChain();
         void recordCommandBuffer(int imageIndex);
 
@@ -36,6 +38,6 @@ namespace CGEngine {
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
         std::vector<VkCommandBuffer> m_commandBuffers;
-        Unique<Model> m_model;
+        Unique<Scene> m_scene;
     };
 }
