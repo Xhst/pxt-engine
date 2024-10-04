@@ -11,7 +11,7 @@ namespace CGEngine {
         entity.add<NameComponent>(name.empty() ? "Unnamed-Entity" : name);
 
         m_entityMap[entity.getUUID()] = entity;
-
+        
         return entity;
     }
 

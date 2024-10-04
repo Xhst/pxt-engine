@@ -15,7 +15,13 @@ namespace CGEngine {
         
         Entity createEntity(const std::string& name = std::string());
         Entity getEntity(UUID uuid);
+        
         void destroyEntity(Entity entity);
+
+        template <typename ...T>
+        auto view() {
+            return m_registry.view<T...>();
+        }
 
     private:
         std::unordered_map<UUID, entt::entity> m_entityMap; 
