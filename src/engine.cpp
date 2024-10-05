@@ -189,20 +189,17 @@ namespace CGEngine {
     void Engine::renderScene(VkCommandBuffer commandBuffer) {
         m_pipeline->bind(commandBuffer);
 
-        for (auto entity : m_scene->view<Transform2dComponent, ColorComponent, ModelComponent>()) {
-            Entity e{entity, m_scene.get()};
+        auto view = m_scene->getEntitiesWith<Transform2dComponent, ColorComponent, ModelComponent>();
+        for (auto entity : view) {
 
-            auto& transform = e.get<Transform2dComponent>();
-            auto& colorComp = e.get<ColorComponent>();
-            auto& modelComp = e.get<ModelComponent>();
+            const auto&[transform, color, model] = view.get<Transform2dComponent, ColorComponent, ModelComponent>(entity);
 
-            //just cool rotation wow
             transform.rotation = glm::mod(transform.rotation + 0.01f, glm::two_pi<float>());
 
             SimplePushConstantData push{};
-            push.transform = transform.mat2();
+            push.transform = transform;
             push.offset = transform.translation;
-            push.color = colorComp.color;
+            push.color = color;
 
             vkCmdPushConstants(
                 commandBuffer,
@@ -212,8 +209,10 @@ namespace CGEngine {
                 sizeof(SimplePushConstantData),
                 &push);
 
-            modelComp.model->bind(commandBuffer);
-            modelComp.model->draw(commandBuffer);
+            auto modelPtr = model.model;
+            
+            modelPtr->bind(commandBuffer);
+            modelPtr->draw(commandBuffer);
 
         }
     }
