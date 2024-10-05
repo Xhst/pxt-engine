@@ -35,8 +35,8 @@ namespace CGEngine {
 
         template <typename T>
         void remove() {
+            static_assert(!std::is_same<T, IDComponent>::value, "Cannot remove ID component");
             assert(has<T>() && "Entity does not have component");
-            assert((std::is_same<T, IDComponent>::value) && "Cannot remove ID component");
 
             m_scene->m_registry.remove<T>(m_enttEntity);
         }
