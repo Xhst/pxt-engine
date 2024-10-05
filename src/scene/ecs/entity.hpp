@@ -15,6 +15,9 @@ namespace CGEngine {
         Entity(Entity&& other) = default;
         Entity& operator=(Entity&& other) = default;
 
+        operator entt::entity() const { return m_enttEntity; }
+        operator bool() const { return m_enttEntity != entt::null; }
+
         template <typename... T>
         bool has() {
             return m_scene->m_registry.all_of<T...>(m_enttEntity);
@@ -29,8 +32,13 @@ namespace CGEngine {
 
         template <typename T, typename... Args>
         Entity& add(Args&&... args) {
-            T& component = m_scene->m_registry.emplace<T>(m_enttEntity, std::forward<Args>(args)...);
+            m_scene->m_registry.emplace<T>(m_enttEntity, std::forward<Args>(args)...);
             return *this;
+        }
+
+        template <typename T, typename... Args>
+        T& addAndGet(Args&&... args) {
+            return m_scene->m_registry.emplace<T>(m_enttEntity, std::forward<Args>(args)...);
         }
 
         template <typename T>
@@ -40,9 +48,6 @@ namespace CGEngine {
 
             m_scene->m_registry.remove<T>(m_enttEntity);
         }
-
-        operator entt::entity() const { return m_enttEntity; }
-        operator bool() const { return m_enttEntity != entt::null; }
 
         UUID getUUID() {
             return get<IDComponent>().uuid;
