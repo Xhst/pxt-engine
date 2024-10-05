@@ -19,7 +19,7 @@ namespace CGEngine {
         void destroyEntity(Entity entity);
 
         template <typename ...T>
-        auto view() {
+        auto getEntitiesWith() {
             return m_registry.view<T...>();
         }
 
