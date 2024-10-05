@@ -78,8 +78,5 @@ namespace CGEngine
         ModelComponent() = default;
         ModelComponent(const ModelComponent&) = default;
         ModelComponent(const Shared<Model>& model) : model(model) {}
-
-        operator Shared<Model>&() { return model; }
-        operator const Shared<Model>&() const { return model; }
     };
 }
