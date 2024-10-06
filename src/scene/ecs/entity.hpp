@@ -18,7 +18,7 @@ namespace CGEngine {
         /**
          * @brief Check if entity has a component
          * 
-         * @tparam T Component type
+         * @tparam Components type
          * @return true if entity has component, false otherwise
          */
         template <typename... Components>
@@ -34,7 +34,7 @@ namespace CGEngine {
          */
         template <typename Component>
         Component& get() {
-            assert(has<T>() && "Entity does not have component");
+            assert(has<Component>() && "Entity does not have component");
 
             return m_scene->m_registry.get<Component>(m_enttEntity);
         }
@@ -69,9 +69,9 @@ namespace CGEngine {
          * 
          * @tparam Component type
          */
-        template <typename ComponentT>
+        template <typename Component>
         void remove() {
-            static_assert(!std::is_same<T, IDComponent>::value, "Cannot remove ID component");
+            static_assert(!std::is_same<Component, IDComponent>::value, "Cannot remove ID component");
             assert(has<Component>() && "Entity does not have component");
 
             m_scene->m_registry.remove<Component>(m_enttEntity);
