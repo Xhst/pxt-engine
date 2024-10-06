@@ -16,11 +16,9 @@ namespace CGEngine {
     class TestScript : public Script {
     public:
         void onUpdate(float deltaTime) override {
-            auto& transform = get<Transform2dComponent>();
-            transform.rotation = glm::mod(transform.rotation + 0.001f, glm::two_pi<float>());
-
-            auto& color = get<ColorComponent>();
-            color.color = glm::vec4{glm::sin(transform.rotation), glm::cos(transform.rotation), glm::tanh(transform.rotation), 1.0f};
+            auto& transform = get<TransformComponent>();
+            transform.rotation.y = glm::mod(transform.rotation.y + 0.001f, glm::two_pi<float>());
+            transform.rotation.x = glm::mod(transform.rotation.y + 0.0001f, glm::two_pi<float>());
         }
     };
 
@@ -52,17 +50,71 @@ namespace CGEngine {
         return !m_window.shouldClose();
     }
 
-    void Engine::loadScene() {
+    // temporary helper function, creates a 1x1x1 cube centered at offset
+    Shared<Model> createCubeModel(Device& device, glm::vec3 offset) {
         std::vector<Model::Vertex> vertices{
-            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-        };
-        auto model = createShared<Model>(m_device, vertices);
 
-        auto rotation = .25f * glm::two_pi<float>();
-        Entity entity = m_scene.createEntity("triangle")
-            .add<Transform2dComponent>(glm::vec2{0.5f, 0.0f}, glm::vec2{0.5f, 0.5f}, rotation)
+            // left face (white)
+            {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
+            {{-.5f, -.5f, .5f}, {.9f, .9f, .9f}},
+            {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, -.5f}, {.9f, .9f, .9f}},
+            {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
+
+            // right face (yellow)
+            {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
+            {{.5f, -.5f, .5f}, {.8f, .8f, .1f}},
+            {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, -.5f}, {.8f, .8f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
+
+            // top face (orange, remember y axis points down)
+            {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+            {{-.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+            {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
+            {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
+
+            // bottom face (red)
+            {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+            {{-.5f, .5f, .5f}, {.8f, .1f, .1f}},
+            {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, -.5f}, {.8f, .1f, .1f}},
+            {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
+
+            // nose face (blue)
+            {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+            {{-.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+            {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
+            {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
+
+            // tail face (green)
+            {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+            {{-.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+            {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
+            {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
+
+        };
+        for (auto& v : vertices) {
+            v.position += offset;
+        }
+        return createShared<Model>(device, vertices);
+    }
+
+    void Engine::loadScene() {
+        
+        auto model = createCubeModel(m_device, glm::vec3{0.0f, 0.0f, 0.0f});
+
+        Entity entity = m_scene.createEntity("cube")
+            .add<TransformComponent>(glm::vec3{0.0f, 0.0f, .5f}, glm::vec3{0.5f, 0.5f, .5f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<ColorComponent>(glm::vec3{0.6f, 0.0f, 0.5f})
             .add<ModelComponent>(model);
 

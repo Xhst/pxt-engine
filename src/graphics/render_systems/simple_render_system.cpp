@@ -15,8 +15,7 @@
 namespace CGEngine {
 
     struct SimplePushConstantData {
-        glm::mat2 transform2d{1.f};
-        glm::vec2 offset;
+        glm::mat4 transform{1.f};
         alignas(16) glm::vec3 color;
     };
 
@@ -66,14 +65,13 @@ namespace CGEngine {
     void SimpleRenderSystem::renderScene(VkCommandBuffer commandBuffer, Scene& scene) {
         m_pipeline->bind(commandBuffer);
 
-        auto view = scene.getEntitiesWith<Transform2dComponent, ColorComponent, ModelComponent>();
+        auto view = scene.getEntitiesWith<TransformComponent, ColorComponent, ModelComponent>();
         for (auto entity : view) {
 
-            const auto&[transform2d, color, model] = view.get<Transform2dComponent, ColorComponent, ModelComponent>(entity);
+            const auto&[transform, color, model] = view.get<TransformComponent, ColorComponent, ModelComponent>(entity);
 
             SimplePushConstantData push{};
-            push.transform2d = transform2d;
-            push.offset = transform2d.translation;
+            push.transform = transform;
             push.color = color;
 
             vkCmdPushConstants(
