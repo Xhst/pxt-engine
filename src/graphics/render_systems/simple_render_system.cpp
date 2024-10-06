@@ -2,7 +2,6 @@
 #include "core/memory.hpp"
 #include "scene/ecs/entity.hpp"
 
-
 #include <iostream>
 #include <array>
 #include <stdexcept>
@@ -71,8 +70,6 @@ namespace CGEngine {
         for (auto entity : view) {
 
             const auto&[transform, color, model] = view.get<Transform2dComponent, ColorComponent, ModelComponent>(entity);
-
-            transform.rotation = glm::mod(transform.rotation + 0.01f, glm::two_pi<float>());
 
             SimplePushConstantData push{};
             push.transform = transform;
