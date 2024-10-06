@@ -44,6 +44,11 @@ namespace CGEngine {
         VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
                                       uint32_t *imageIndex);
 
+        bool compareSwapFormats(const SwapChain& swapChain) const {
+            return m_swapChainImageFormat == swapChain.m_swapChainImageFormat &&
+                   m_swapChainDepthFormat == swapChain.m_swapChainDepthFormat;
+        }
+
        private:
         void init();
         void createSwapChain();
@@ -62,6 +67,7 @@ namespace CGEngine {
             const VkSurfaceCapabilitiesKHR& capabilities);
 
         VkFormat m_swapChainImageFormat;
+        VkFormat m_swapChainDepthFormat;
         VkExtent2D m_swapChainExtent;
 
         std::vector<VkFramebuffer> m_swapChainFramebuffers;

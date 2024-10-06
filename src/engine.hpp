@@ -2,10 +2,8 @@
 
 #include "core/memory.hpp"
 #include "graphics/window.hpp"
-#include "graphics/pipeline.hpp"
-#include "graphics/swap_chain.hpp"
 #include "graphics/device.hpp"
-#include "graphics/model.hpp"
+#include "graphics/renderer.hpp"
 #include "scene/scene.hpp"
 
 namespace CGEngine {
@@ -22,22 +20,12 @@ namespace CGEngine {
 
     private:
         bool isRunning();
-        void createPipelineLayout();
-        void createPipeline();  
-        void createCommandBuffers();
-        void freeCommandBuffers();
-        void drawFrame();
         void loadScene();
-        void renderScene(VkCommandBuffer commandBuffer);
-        void recreateSwapChain();
-        void recordCommandBuffer(int imageIndex);
 
         Window m_window{WindowData()};
         Device m_device{m_window};
-        Unique<SwapChain> m_swapChain;
-        Unique<Pipeline> m_pipeline;
-        VkPipelineLayout m_pipelineLayout;
-        std::vector<VkCommandBuffer> m_commandBuffers;
-        Unique<Scene> m_scene;
+        Renderer m_renderer{m_window, m_device};
+
+        Scene m_scene{};
     };
 }
