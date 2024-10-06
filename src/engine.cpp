@@ -6,11 +6,6 @@
 #include "graphics/render_systems/simple_render_system.hpp"
 #include "scene/script/script.hpp"
 
-#include <iostream>
-#include <array>
-#include <stdexcept>
-#include <cassert>
-
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
