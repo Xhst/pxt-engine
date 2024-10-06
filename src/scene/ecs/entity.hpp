@@ -11,9 +11,6 @@ namespace CGEngine {
     public:
         Entity() = default;
         Entity(entt::entity entity, Scene* scene) : m_enttEntity(entity), m_scene(scene) {}
-		Entity(const Entity& other) = default;
-        Entity(Entity&& other) = default;
-        Entity& operator=(Entity&& other) = default;
 
         operator entt::entity() const { return m_enttEntity; }
         operator bool() const { return m_enttEntity != entt::null; }
