@@ -79,4 +79,27 @@ namespace CGEngine
         ModelComponent(const ModelComponent&) = default;
         ModelComponent(const Shared<Model>& model) : model(model) {}
     };
+
+    class Script;
+
+    struct ScriptComponent {
+        Script* script = nullptr;
+
+        Script*(*create)();
+		void (*destroy)(ScriptComponent*);
+
+		template<typename T>
+		void bind()
+		{
+			create  = []() { 
+                return static_cast<Script*>(new T()); 
+            };
+
+			destroy = [](ScriptComponent* s) { 
+                delete s->script; 
+                s->script = nullptr; 
+            };
+		}
+
+    };
 }
