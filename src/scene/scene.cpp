@@ -1,6 +1,8 @@
 #include "scene/scene.hpp"
-#include "scene/ecs/entity.hpp"
+
 #include "scene/ecs/component.hpp"
+#include "scene/ecs/entity.hpp"
+#include "scene/script/script.hpp"
 
 namespace CGEngine {
 
@@ -24,5 +26,19 @@ namespace CGEngine {
     void Scene::destroyEntity(Entity entity) {
         m_entityMap.erase(entity.getUUID());
         m_registry.destroy(entity);
+    }
+
+    void Scene::onUpdate(float delta) {
+        getEntitiesWith<ScriptComponent>().each([=](auto entity, auto& scriptComponent) {
+
+            if (scriptComponent.script == nullptr) {
+                scriptComponent.script = scriptComponent.create();
+                scriptComponent.script->m_entity = Entity{ entity, this };
+                scriptComponent.script->onCreate();
+            }
+            
+            scriptComponent.script->onUpdate(delta);
+            
+        });
     }
 }
