@@ -18,6 +18,8 @@ namespace CGEngine {
         
         void destroyEntity(Entity entity);
 
+        void onUpdate(float delta);
+
         template <typename ...T>
         auto getEntitiesWith() {
             return m_registry.view<T...>();
