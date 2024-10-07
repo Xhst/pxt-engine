@@ -17,8 +17,8 @@ namespace CGEngine {
     public:
         void onUpdate(float deltaTime) override {
             auto& transform = get<TransformComponent>();
-            transform.rotation.y = glm::mod(transform.rotation.y + 0.001f, glm::two_pi<float>());
-            transform.rotation.x = glm::mod(transform.rotation.y + 0.0001f, glm::two_pi<float>());
+            transform.rotation.y = glm::mod(transform.rotation.y + 0.01f, glm::two_pi<float>());
+            transform.rotation.x = glm::mod(transform.rotation.x + 0.01f, glm::two_pi<float>());
         }
     };
 
