@@ -1,0 +1,2 @@
+*.frag linguist-language=GLSL
+*.vert linguist-language=GLSL
