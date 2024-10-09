@@ -31,6 +31,8 @@ namespace CGEngine {
     void Engine::run() {
         SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
 
+        m_scene.onStart();
+        
         while (isRunning()) {
             glfwPollEvents();
             
