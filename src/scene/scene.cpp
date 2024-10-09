@@ -28,14 +28,16 @@ namespace CGEngine {
         m_registry.destroy(entity);
     }
 
+    void Scene::onStart() {
+        getEntitiesWith<ScriptComponent>().each([=](auto entity, auto& scriptComponent) {
+            scriptComponent.script = scriptComponent.create();
+            scriptComponent.script->m_entity = Entity{ entity, this };
+            scriptComponent.script->onCreate();
+        });
+    }
+
     void Scene::onUpdate(float delta) {
         getEntitiesWith<ScriptComponent>().each([=](auto entity, auto& scriptComponent) {
-
-            if (scriptComponent.script == nullptr) {
-                scriptComponent.script = scriptComponent.create();
-                scriptComponent.script->m_entity = Entity{ entity, this };
-                scriptComponent.script->onCreate();
-            }
             
             scriptComponent.script->onUpdate(delta);
             

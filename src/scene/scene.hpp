@@ -18,6 +18,7 @@ namespace CGEngine {
         
         void destroyEntity(Entity entity);
 
+        void onStart();
         void onUpdate(float delta);
 
         template <typename ...T>
