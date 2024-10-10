@@ -11,8 +11,10 @@ namespace CGEngine {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         
         m_window = glfwCreateWindow(props.width, props.height, props.title.c_str(), nullptr, nullptr);
+
         glfwSetWindowUserPointer(m_window, this);
-        glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
+
+        registerCallbacks();
     }
 
     Window::~Window() {
@@ -26,10 +28,17 @@ namespace CGEngine {
         }
     }
 
-    void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto new_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-        new_window->m_frameBufferResized = true;
-        new_window->m_data.width = static_cast<uint32_t>(width);
-        new_window->m_data.height = static_cast<uint32_t>(height);
+
+    void Window::registerCallbacks() {
+
+        // Set the framebuffer resize callback
+        glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
+            auto new_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+            new_window->m_frameBufferResized = true;
+            new_window->m_data.width = static_cast<uint32_t>(width);
+            new_window->m_data.height = static_cast<uint32_t>(height);
+        });
+
+
     }
 }

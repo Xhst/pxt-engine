@@ -42,7 +42,7 @@ namespace CGEngine {
         WindowData m_data;
         bool m_frameBufferResized = false;
 
-        static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+        void registerCallbacks();
     };
     
 
