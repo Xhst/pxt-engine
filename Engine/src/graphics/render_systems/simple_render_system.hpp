@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/memory.hpp"
-#include "graphics/camera.hpp"
+#include "scene/camera.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/device.hpp"

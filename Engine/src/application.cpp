@@ -5,7 +5,7 @@
 #include "core/events/window_event.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
-#include "graphics/camera.hpp"
+#include "scene/camera.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
 #include "scene/script/script.hpp"
 
