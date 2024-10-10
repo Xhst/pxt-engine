@@ -1,6 +1,8 @@
 #pragma once
 
 #include "core/memory.hpp"
+#include "core/uuid.hpp"
+#include "core/system.hpp"
 #include "core/events/event.hpp"
 #include "graphics/window.hpp"
 #include "graphics/device.hpp"
@@ -17,8 +19,25 @@ namespace CGEngine {
     class Application {
     public:
         Application();
+        virtual ~Application() {
+            for (auto& [_, system] : m_systems) {
+                system->onShutdown();
+                delete system;
+            }
+        };
 
-    protected:
+        static Application& get() { return *Instance; }
+
+        void addSystem(System* system) {
+            m_systems[system->getId()] = system;
+            system->onInit();
+        }
+
+        void removeSystem(System* system) {
+            system->onShutdown();
+            m_systems.erase(system->getId());
+        }
+
         Scene& getScene() {
             return m_scene;
         }
@@ -43,6 +62,10 @@ namespace CGEngine {
         Renderer m_renderer{m_window, m_device};
 
         Scene m_scene{};
+
+        std::unordered_map<UUID, System*> m_systems;
+
+        static Application* Instance;
 
         friend int ::main();
     };

@@ -18,8 +18,10 @@
 
 namespace CGEngine {
 
-    Application::Application() {
+    Application* Application::Instance = nullptr;
 
+    Application::Application() {
+        Instance = this;
     }
 
     void Application::run() {
@@ -46,6 +48,10 @@ namespace CGEngine {
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
 
+                for (auto& [_, system] : m_systems) {
+                    system->onUpdate(elapsedTime);
+                }
+                
                 m_scene.onUpdate(elapsedTime);
 
                 simpleRenderSystem.renderScene(commandBuffer, m_scene, camera);
@@ -68,6 +74,14 @@ namespace CGEngine {
         dispatcher.dispatch<WindowCloseEvent>([this](auto& event) {
             m_running = false;
         });
+
+        for (auto& [_, system] : m_systems) {
+            if (event.isHandled()) {
+                break;
+            }
+
+            system->onEvent(event);
+        }
     }
     
 }
