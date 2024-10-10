@@ -36,6 +36,7 @@ namespace CGEngine {
 
         SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
         Camera camera{};
+        //camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.5f, 0.f, 1.f));
     
         m_scene.onStart();
         
@@ -44,7 +45,7 @@ namespace CGEngine {
 
             float aspect = m_renderer.getAspectRatio();
             //camera.setOrthographic(-aspect, aspect, -1.f, 1.f, -1.f, 1.f);
-            camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 10.f);
+            camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
             
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 m_renderer.beginSwapChainRenderPass(commandBuffer);

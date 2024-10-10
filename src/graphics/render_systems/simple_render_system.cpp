@@ -65,13 +65,15 @@ namespace CGEngine {
     void SimpleRenderSystem::renderScene(VkCommandBuffer commandBuffer, Scene& scene, const Camera& camera) {
         m_pipeline->bind(commandBuffer);
 
+        auto projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+
         auto view = scene.getEntitiesWith<TransformComponent, ColorComponent, ModelComponent>();
         for (auto entity : view) {
 
             const auto&[transform, color, model] = view.get<TransformComponent, ColorComponent, ModelComponent>(entity);
 
             SimplePushConstantData push{};
-            push.transform = camera.getProjectionMatrix() * transform.mat4();
+            push.transform = projectionView * transform.mat4();
             push.color = color;
 
             vkCmdPushConstants(
