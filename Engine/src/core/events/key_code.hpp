@@ -151,20 +151,24 @@ namespace CGEngine {
         LeftHyper,       // Left Hyper
         RightHyper,      // Right Hyper
         LeftFn,          // Left Fn
-        RightFn          // Right Fn
+        RightFn,         // Right Fn
     };
 
     enum class MouseButton {
-        Mouse0,	         // The Left (or primary) mouse button.
-        Mouse1,	         // Right mouse button (or secondary mouse button).
-        Mouse2,	         // Middle mouse button (or third button).
-        Mouse3,	         // Additional (fourth) mouse button.
-        Mouse4,	         // Additional (fifth) mouse button.
-        Mouse5,	         // Additional (or sixth) mouse button.
-        Mouse6,	         // Additional (or seventh) mouse button.
+        Unknown,
+
+        Button0,	      // The Left (or primary) mouse button.
+        Button1,	      // Right mouse button (or secondary mouse button).
+        Button2,	      // Middle mouse button (or third button).
+        Button3,	      // Additional (fourth) mouse button.
+        Button4,	      // Additional (fifth) mouse button.
+        Button5,	      // Additional (or sixth) mouse button.
+        Button6,	      // Additional (or seventh) mouse button.
+        Button7,	      // Additional (or eighth) mouse button.
+        Button8,          // Additional (or ninth) mouse button.
     };
 
-    constexpr MouseButton LeftMouseButton   = MouseButton::Mouse0;
-    constexpr MouseButton RightMouseButton  = MouseButton::Mouse1;
-    constexpr MouseButton MiddleMouseButton = MouseButton::Mouse2;
+    constexpr MouseButton LeftMouseButton   = MouseButton::Button0;
+    constexpr MouseButton RightMouseButton  = MouseButton::Button1;
+    constexpr MouseButton MiddleMouseButton = MouseButton::Button2;
 }
