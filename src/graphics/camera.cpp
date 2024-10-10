@@ -28,7 +28,7 @@ namespace CGEngine {
     }
 
     void Camera::setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up) {
-        assert(glm::length(direction) > 0.0f && "Direction cannot be zero");
+        assert((glm::dot(direction, direction) > std::numeric_limits<float>::epsilon()) && "Direction cannot be zero");
 
         const glm::vec3 w{glm::normalize(direction)};
         const glm::vec3 u{glm::normalize(glm::cross(w, up))};
