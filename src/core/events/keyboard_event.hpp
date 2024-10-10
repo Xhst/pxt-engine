@@ -28,11 +28,15 @@ namespace CGEngine {
     class KeyPressEvent : public KeyBoardEvent {
     public:
         KeyPressEvent(KeyCode keyCode): KeyBoardEvent(keyCode) {}
+        KeyPressEvent(KeyCode keyCode, int repeatCount): KeyBoardEvent(keyCode), m_repeatCount(repeatCount) {}
 
         Event::Type getEventType() const override { return Event::Type::KeyPress; }
         std::string getName() const override { return "KeyPress"; }
 
         static Event::Type getStaticType() { return Event::Type::KeyPress; }
+
+    private:
+        int m_repeatCount = 0;
     };
 
     class KeyReleaseEvent : public KeyBoardEvent {
