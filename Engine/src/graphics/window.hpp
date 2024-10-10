@@ -39,6 +39,7 @@ namespace CGEngine {
         void setEventCallback(const std::function<void(Event&)>& callback) {
             m_data.eventCallback = callback;
         }
+        GLFWwindow* getBaseWindow() { return m_window; }
         
         bool isWindowResized() { return m_data.frameBufferResized; }
         void resetWindowResizedFlag() { m_data.frameBufferResized = false; }
@@ -50,7 +51,6 @@ namespace CGEngine {
     private:
         GLFWwindow* m_window;
         WindowData m_data;
-        //bool m_frameBufferResized = false;
 
         void registerCallbacks();
     };
