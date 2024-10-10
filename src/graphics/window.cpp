@@ -1,5 +1,11 @@
 #include "graphics/window.hpp"
 
+#include "core/events/event.hpp"
+#include "core/events/window_event.hpp"
+#include "core/events/keyboard_event.hpp"
+#include "core/events/mouse_event.hpp"
+#include "core/events/mapper/glfw_event_mapper.hpp"
+
 #include <stdexcept>
 
 namespace CGEngine {
@@ -12,7 +18,7 @@ namespace CGEngine {
         
         m_window = glfwCreateWindow(props.width, props.height, props.title.c_str(), nullptr, nullptr);
 
-        glfwSetWindowUserPointer(m_window, this);
+        glfwSetWindowUserPointer(m_window, &m_data);
 
         registerCallbacks();
     }
@@ -30,14 +36,51 @@ namespace CGEngine {
 
 
     void Window::registerCallbacks() {
+  
+        glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window) {
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
-        // Set the framebuffer resize callback
+			WindowCloseEvent event;
+			data.eventCallback(event);
+		});
+
         glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
-            auto new_window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-            new_window->m_frameBufferResized = true;
-            new_window->m_data.width = static_cast<uint32_t>(width);
-            new_window->m_data.height = static_cast<uint32_t>(height);
+            WindowData& data = *(WindowData*)(glfwGetWindowUserPointer(window));
+            
+            data.width = static_cast<uint32_t>(width);
+            data.height = static_cast<uint32_t>(height);
+            data.frameBufferResized = true;
+
+            WindowResizeEvent event(width, height);
+            data.eventCallback(event);
         });
+
+        glfwSetKeyCallback(m_window, [](GLFWwindow* window, int glfwKey, int scancode, int action, int mods) {
+			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+            KeyCode key = mapGLFWKey(glfwKey);
+
+			switch (action) {
+				case GLFW_PRESS:
+				{
+					KeyPressEvent event(key);
+					data.eventCallback(event);
+					break;
+				}
+				case GLFW_RELEASE:
+				{
+					KeyReleaseEvent event(key);
+					data.eventCallback(event);
+					break;
+				}
+				case GLFW_REPEAT:
+				{
+					KeyPressEvent event(key, 1);
+					data.eventCallback(event);
+					break;
+				}
+			}
+		});
 
 
     }
