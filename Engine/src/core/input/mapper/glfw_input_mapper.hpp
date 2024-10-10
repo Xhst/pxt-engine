@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/events/key_code.hpp"
+#include "core/input/key_code.hpp"
 
 #include <GLFW/glfw3.h>
 

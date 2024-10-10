@@ -4,7 +4,7 @@
 #include "core/events/window_event.hpp"
 #include "core/events/keyboard_event.hpp"
 #include "core/events/mouse_event.hpp"
-#include "core/events/mapper/glfw_event_mapper.hpp"
+#include "core/input/mapper/glfw_input_mapper.hpp"
 
 #include <stdexcept>
 

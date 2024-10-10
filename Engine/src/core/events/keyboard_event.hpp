@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/events/key_code.hpp"
+#include "core/input/key_code.hpp"
 #include "core/events/event.hpp"
 
 namespace CGEngine {

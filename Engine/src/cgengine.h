@@ -4,7 +4,7 @@
 
 #include "core/memory.hpp"
 #include "core/uuid.hpp"
-#include "core/events/key_code.hpp"
+#include "core/input/key_code.hpp"
 #include "core/events/event_dispatcher.hpp"
 #include "core/events/mouse_event.hpp"
 #include "core/events/keyboard_event.hpp"
