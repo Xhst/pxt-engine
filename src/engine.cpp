@@ -1,6 +1,8 @@
 #include "engine.hpp"
 
 #include "core/memory.hpp"
+#include "core/events/event_dispatcher.hpp"
+#include "core/events/window_event.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
@@ -31,6 +33,8 @@ namespace CGEngine {
     void Engine::run() {
         SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
 
+        m_window.setEventCallback(std::bind(&Engine::onEvent, this, std::placeholders::_1));
+        
         m_scene.onStart();
         
         while (isRunning()) {
@@ -49,7 +53,15 @@ namespace CGEngine {
     }
 
     bool Engine::isRunning() {
-        return !m_window.shouldClose();
+        return !m_window.shouldClose() && m_running;
+    }
+
+    void Engine::onEvent(Event& event) {
+        EventDispatcher dispatcher(event);
+
+        dispatcher.dispatch<WindowCloseEvent>([this](auto& event) {
+            m_running = false;
+        });
     }
 
     // temporary helper function, creates a 1x1x1 cube centered at offset

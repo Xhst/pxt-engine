@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/memory.hpp"
+#include "core/events/event.hpp"
 #include "graphics/window.hpp"
 #include "graphics/device.hpp"
 #include "graphics/renderer.hpp"
@@ -18,9 +19,13 @@ namespace CGEngine {
         
         void run();
 
+        void onEvent(Event& event);
+
     private:
         bool isRunning();
         void loadScene();
+
+        bool m_running = true;
 
         Window m_window{WindowData()};
         Device m_device{m_window};
