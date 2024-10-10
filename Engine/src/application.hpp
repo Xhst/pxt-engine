@@ -7,23 +7,34 @@
 #include "graphics/renderer.hpp"
 #include "scene/scene.hpp"
 
+#include <iostream>
+#include <stdexcept>
+
+int main();
+
 namespace CGEngine {
 
-    class Engine {
+    class Application {
     public:
-        Engine();
-        ~Engine();
+        Application();
 
-        Engine(const Engine&) = delete;
-        Engine& operator=(const Engine&) = delete;
-        
-        void run();
+    protected:
+        Scene& getScene() {
+            return m_scene;
+        }
 
-        void onEvent(Event& event);
+        Device& getDevice() {
+            return m_device;
+        }
 
+        Window& getWindow() {
+            return m_window;
+        }
+    
     private:
+        void run();
+        void onEvent(Event& event);
         bool isRunning();
-        void loadScene();
 
         bool m_running = true;
 
@@ -32,5 +43,9 @@ namespace CGEngine {
         Renderer m_renderer{m_window, m_device};
 
         Scene m_scene{};
+
+        friend int ::main();
     };
+
+    Application* initApplication();
 }

@@ -39,7 +39,7 @@ add_subdirectory(Engine/vendor/glm)
 add_subdirectory(Engine/vendor/tinyobjloader)  
 add_subdirectory(Engine/vendor/entt)
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/Engine/src/*.cpp)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/Application/src/*.cpp ${PROJECT_SOURCE_DIR}/Engine/src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -62,6 +62,7 @@ if (WIN32)
   # Include and link Vulkan and other submodule libraries
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/Engine/src
+    ${PROJECT_SOURCE_DIR}/Application/src
     ${Vulkan_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/Engine/vendor/entt/single_include
   )
@@ -84,6 +85,7 @@ elseif (UNIX)
   message(STATUS "CREATING BUILD FOR UNIX")
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/Engine/src
+    ${PROJECT_SOURCE_DIR}/Application/src
   )
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw 
