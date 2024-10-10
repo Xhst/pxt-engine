@@ -14,14 +14,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+#include <chrono>
+
 namespace CGEngine {
 
     class TestScript : public Script {
     public:
         void onUpdate(float deltaTime) override {
             auto& transform = get<TransformComponent>();
-            transform.rotation.y = glm::mod(transform.rotation.y + 0.01f, glm::two_pi<float>());
-            transform.rotation.x = glm::mod(transform.rotation.x + 0.01f, glm::two_pi<float>());
+            //transform.rotation.y = glm::mod(transform.rotation.y + 0.01f, glm::two_pi<float>());
+            //transform.rotation.x = glm::mod(transform.rotation.x + 0.01f, glm::two_pi<float>());
         }
     };
 
@@ -36,12 +38,17 @@ namespace CGEngine {
 
         SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
         Camera camera{};
-        //camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.5f, 0.f, 1.f));
+        
+        auto currentTime = std::chrono::high_resolution_clock::now();
     
         m_scene.onStart();
         
         while (isRunning()) {
             glfwPollEvents();
+
+            auto newTime = std::chrono::high_resolution_clock::now();
+            float elapsedTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+            currentTime = newTime;
 
             float aspect = m_renderer.getAspectRatio();
             //camera.setOrthographic(-aspect, aspect, -1.f, 1.f, -1.f, 1.f);
@@ -49,7 +56,7 @@ namespace CGEngine {
             
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
-                m_scene.onUpdate(0.0f);
+                m_scene.onUpdate(elapsedTime);
                 simpleRenderSystem.renderScene(commandBuffer, m_scene, camera);
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
