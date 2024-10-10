@@ -3,6 +3,8 @@
 namespace CGEngine {
 
     enum class KeyCode {
+        Unknown,
+        
         Backspace,       // Backspace
         Delete,          // Delete
         Tab,             // Tab
