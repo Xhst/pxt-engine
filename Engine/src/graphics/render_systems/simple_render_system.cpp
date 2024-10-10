@@ -56,8 +56,8 @@ namespace CGEngine {
 
         m_pipeline = createUnique<Pipeline>(
             m_device,
-            "../shaders/simple_shader.vert.spv",
-            "../shaders/simple_shader.frag.spv",
+            "../build/shaders/simple_shader.vert.spv",
+            "../build/shaders/simple_shader.frag.spv",
             pipelineConfig
         );
     }

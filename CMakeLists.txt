@@ -1,4 +1,4 @@
-include(./.env OPTIONAL RESULT_VARIABLE LOCAL_ENV)
+include(./Engine/.env OPTIONAL RESULT_VARIABLE LOCAL_ENV)
 message(STATUS "Local .env: ${LOCAL_ENV}")
 
 cmake_minimum_required(VERSION 3.11.0)
@@ -34,12 +34,12 @@ else()
 endif()
 
 # Vendor libraries
-add_subdirectory(vendor/glfw)         
-add_subdirectory(vendor/glm)          
-add_subdirectory(vendor/tinyobjloader)  
-add_subdirectory(vendor/entt)
+add_subdirectory(Engine/vendor/glfw)         
+add_subdirectory(Engine/vendor/glm)          
+add_subdirectory(Engine/vendor/tinyobjloader)  
+add_subdirectory(Engine/vendor/entt)
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/Engine/src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -61,9 +61,9 @@ if (WIN32)
 
   # Include and link Vulkan and other submodule libraries
   target_include_directories(${PROJECT_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/Engine/src
     ${Vulkan_INCLUDE_DIRS}
-    ${PROJECT_SOURCE_DIR}/vendor/entt/single_include
+    ${PROJECT_SOURCE_DIR}/Engine/vendor/entt/single_include
   )
   
   # Ensure you add the Vulkan SDK library directory for MinGW
@@ -83,7 +83,7 @@ if (WIN32)
 elseif (UNIX)
   message(STATUS "CREATING BUILD FOR UNIX")
   target_include_directories(${PROJECT_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/Engine/src
   )
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw 
@@ -109,13 +109,13 @@ find_program(GLSL_VALIDATOR glslangValidator HINTS
 
 # get all .vert and .frag files in shaders directory
 file(GLOB_RECURSE GLSL_SOURCE_FILES
-  "${PROJECT_SOURCE_DIR}/shaders/*.frag"
-  "${PROJECT_SOURCE_DIR}/shaders/*.vert"
+  "${PROJECT_SOURCE_DIR}/assets/shaders/*.frag"
+  "${PROJECT_SOURCE_DIR}/assets/shaders/*.vert"
 )
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
   get_filename_component(FILE_NAME ${GLSL} NAME)
-  set(SPIRV "${PROJECT_SOURCE_DIR}/shaders/${FILE_NAME}.spv")
+  set(SPIRV "${PROJECT_SOURCE_DIR}/build/shaders/${FILE_NAME}.spv")
   add_custom_command(
     OUTPUT ${SPIRV}
     COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
