@@ -5,6 +5,7 @@
 #include "core/events/window_event.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
 #include "scene/script/script.hpp"
 
@@ -31,19 +32,24 @@ namespace CGEngine {
     Engine::~Engine() {}
 
     void Engine::run() {
-        SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
-
         m_window.setEventCallback(std::bind(&Engine::onEvent, this, std::placeholders::_1));
-        
+
+        SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
+        Camera camera{};
+    
         m_scene.onStart();
         
         while (isRunning()) {
             glfwPollEvents();
+
+            float aspect = m_renderer.getAspectRatio();
+            //camera.setOrthographic(-aspect, aspect, -1.f, 1.f, -1.f, 1.f);
+            camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 10.f);
             
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
                 m_scene.onUpdate(0.0f);
-                simpleRenderSystem.renderScene(commandBuffer, m_scene);
+                simpleRenderSystem.renderScene(commandBuffer, m_scene, camera);
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }
@@ -128,7 +134,7 @@ namespace CGEngine {
         auto model = createCubeModel(m_device, glm::vec3{0.0f, 0.0f, 0.0f});
 
         Entity entity = m_scene.createEntity("cube")
-            .add<TransformComponent>(glm::vec3{0.0f, 0.0f, .5f}, glm::vec3{0.5f, 0.5f, .5f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<TransformComponent>(glm::vec3{0.0f, 0.0f, 2.5f}, glm::vec3{0.5f, 0.5f, .5f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<ColorComponent>(glm::vec3{0.6f, 0.0f, 0.5f})
             .add<ModelComponent>(model);
 

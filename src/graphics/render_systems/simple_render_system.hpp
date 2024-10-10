@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/memory.hpp"
+#include "graphics/camera.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/device.hpp"
@@ -16,7 +17,7 @@ namespace CGEngine {
         SimpleRenderSystem(const SimpleRenderSystem&) = delete;
         SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
 
-        void renderScene(VkCommandBuffer commandBuffer, Scene& scene);
+        void renderScene(VkCommandBuffer commandBuffer, Scene& scene, const Camera& camera);
 
     private:
         void createPipelineLayout();
