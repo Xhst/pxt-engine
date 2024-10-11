@@ -10,8 +10,16 @@ namespace CGEngine {
 
     class Input {
     public:
+        static bool isKeyReleased(KeyCode key) {
+            return glfwGetKey(getWindow(), mapToGLFWKey(key)) == GLFW_RELEASE;
+        }
+        
         static bool isKeyPressed(KeyCode key) {
             return glfwGetKey(getWindow(), mapToGLFWKey(key)) == GLFW_PRESS;
+        }
+
+        static bool isKeyRepeated(KeyCode key) {
+            return glfwGetKey(getWindow(), mapToGLFWKey(key)) == GLFW_REPEAT;
         }
 
         static bool isMouseButtonPressed(MouseButton button) {
