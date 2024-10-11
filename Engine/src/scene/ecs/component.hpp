@@ -4,6 +4,7 @@
 #include "core/uuid.hpp"
 #include "core/memory.hpp"
 #include "graphics/model.hpp"
+#include "scene/camera.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -167,5 +168,16 @@ namespace CGEngine
             };
 		}
 
+    };
+
+    struct CameraComponent {
+        Camera camera;
+
+        bool isMainCamera = true;
+
+        CameraComponent() {
+            camera = Camera{};
+        }
+        CameraComponent(const CameraComponent&) = default;
     };
 }
