@@ -115,6 +115,8 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
   "${PROJECT_SOURCE_DIR}/assets/shaders/*.vert"
 )
 
+file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/build/shaders)
+
 foreach(GLSL ${GLSL_SOURCE_FILES})
   get_filename_component(FILE_NAME ${GLSL} NAME)
   set(SPIRV "${PROJECT_SOURCE_DIR}/build/shaders/${FILE_NAME}.spv")
