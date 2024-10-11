@@ -95,6 +95,96 @@ namespace CGEngine {
         }
     }
 
+    static int mapToGLFWKey(KeyCode key) {
+        switch (key) {
+            // Letters
+            case KeyCode::A: return GLFW_KEY_A;
+            case KeyCode::B: return GLFW_KEY_B;
+            case KeyCode::C: return GLFW_KEY_C;
+            case KeyCode::D: return GLFW_KEY_D;
+            case KeyCode::E: return GLFW_KEY_E;
+            case KeyCode::F: return GLFW_KEY_F;
+            case KeyCode::G: return GLFW_KEY_G;
+            case KeyCode::H: return GLFW_KEY_H;
+            case KeyCode::I: return GLFW_KEY_I;
+            case KeyCode::J: return GLFW_KEY_J;
+            case KeyCode::K: return GLFW_KEY_K;
+            case KeyCode::L: return GLFW_KEY_L;
+            case KeyCode::M: return GLFW_KEY_M;
+            case KeyCode::N: return GLFW_KEY_N;
+            case KeyCode::O: return GLFW_KEY_O;
+            case KeyCode::P: return GLFW_KEY_P;
+            case KeyCode::Q: return GLFW_KEY_Q;
+            case KeyCode::R: return GLFW_KEY_R;
+            case KeyCode::S: return GLFW_KEY_S;
+            case KeyCode::T: return GLFW_KEY_T;
+            case KeyCode::U: return GLFW_KEY_U;
+            case KeyCode::V: return GLFW_KEY_V;
+            case KeyCode::W: return GLFW_KEY_W;
+            case KeyCode::X: return GLFW_KEY_X;
+            case KeyCode::Y: return GLFW_KEY_Y;
+            case KeyCode::Z: return GLFW_KEY_Z;
+
+            // Numbers on the top of the keyboard
+            case KeyCode::Number0: return GLFW_KEY_0;
+            case KeyCode::Number1: return GLFW_KEY_1;
+            case KeyCode::Number2: return GLFW_KEY_2;
+            case KeyCode::Number3: return GLFW_KEY_3;
+            case KeyCode::Number4: return GLFW_KEY_4;
+            case KeyCode::Number5: return GLFW_KEY_5;
+            case KeyCode::Number6: return GLFW_KEY_6;
+            case KeyCode::Number7: return GLFW_KEY_7;
+            case KeyCode::Number8: return GLFW_KEY_8;
+            case KeyCode::Number9: return GLFW_KEY_9;
+
+            // Function keys
+            case KeyCode::F1:  return GLFW_KEY_F1;
+            case KeyCode::F2:  return GLFW_KEY_F2;
+            case KeyCode::F3:  return GLFW_KEY_F3;
+            case KeyCode::F4:  return GLFW_KEY_F4;
+            case KeyCode::F5:  return GLFW_KEY_F5;
+            case KeyCode::F6:  return GLFW_KEY_F6;
+            case KeyCode::F7:  return GLFW_KEY_F7;
+            case KeyCode::F8:  return GLFW_KEY_F8;
+            case KeyCode::F9:  return GLFW_KEY_F9;
+            case KeyCode::F10: return GLFW_KEY_F10;
+            case KeyCode::F11: return GLFW_KEY_F11;
+            case KeyCode::F12: return GLFW_KEY_F12;
+
+            // Arrow keys
+            case KeyCode::UpArrow:    return GLFW_KEY_UP;
+            case KeyCode::DownArrow:  return GLFW_KEY_DOWN;
+            case KeyCode::LeftArrow:  return GLFW_KEY_LEFT;
+            case KeyCode::RightArrow: return GLFW_KEY_RIGHT;
+
+            // Special keys
+
+            case KeyCode::Space: return GLFW_KEY_SPACE;
+            case KeyCode::Escape: return GLFW_KEY_ESCAPE;
+            case KeyCode::Return: return GLFW_KEY_ENTER;
+            case KeyCode::Backspace: return GLFW_KEY_BACKSPACE;
+            case KeyCode::Tab: return GLFW_KEY_TAB;
+            case KeyCode::Delete: return GLFW_KEY_DELETE;
+            case KeyCode::Insert: return GLFW_KEY_INSERT;
+            case KeyCode::Home: return GLFW_KEY_HOME;
+            case KeyCode::End: return GLFW_KEY_END;
+            case KeyCode::PageUp: return GLFW_KEY_PAGE_UP;
+            case KeyCode::PageDown: return GLFW_KEY_PAGE_DOWN;
+
+            // Modifiers
+            case KeyCode::LeftShift: return GLFW_KEY_LEFT_SHIFT;
+            case KeyCode::RightShift: return GLFW_KEY_RIGHT_SHIFT;
+            case KeyCode::LeftControl: return GLFW_KEY_LEFT_CONTROL;
+            case KeyCode::RightControl: return GLFW_KEY_RIGHT_CONTROL;
+            case KeyCode::LeftAlt: return GLFW_KEY_LEFT_ALT;
+            case KeyCode::RightAlt: return GLFW_KEY_RIGHT_ALT;
+
+            // Default case for unmapped keys
+            default:
+                return GLFW_KEY_UNKNOWN;
+        }
+    }
+
     static MouseButton mapGLFWMouseButton(int glfwButton) {
         switch (glfwButton) {
             case GLFW_MOUSE_BUTTON_LEFT: return LeftMouseButton;
@@ -107,6 +197,21 @@ namespace CGEngine {
             case GLFW_MOUSE_BUTTON_8: return MouseButton::Button8;
 
             default: return MouseButton::Unknown;
+        }
+    }
+
+    static int mapToGLFWMouseButton(MouseButton button) {
+        switch (button) {
+            case LeftMouseButton: return GLFW_MOUSE_BUTTON_LEFT;
+            case RightMouseButton: return GLFW_MOUSE_BUTTON_RIGHT;
+            case MiddleMouseButton: return GLFW_MOUSE_BUTTON_MIDDLE;
+            case MouseButton::Button4: return GLFW_MOUSE_BUTTON_4;
+            case MouseButton::Button5: return GLFW_MOUSE_BUTTON_5;
+            case MouseButton::Button6: return GLFW_MOUSE_BUTTON_6;
+            case MouseButton::Button7: return GLFW_MOUSE_BUTTON_7;
+            case MouseButton::Button8: return GLFW_MOUSE_BUTTON_8;
+
+            default: return GLFW_MOUSE_BUTTON_LAST;
         }
     }
 }
