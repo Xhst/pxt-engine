@@ -9,6 +9,7 @@
 #include "core/events/mouse_event.hpp"
 #include "core/events/keyboard_event.hpp"
 #include "core/events/event.hpp"
+#include "core/input/input.hpp"
 #include "core/system.hpp"
 
 #include "scene/scene.hpp"
