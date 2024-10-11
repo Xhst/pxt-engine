@@ -28,7 +28,7 @@ namespace CGEngine {
         m_window.setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
 
         SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
-        Camera camera{};
+        Camera camera;
         
         auto currentTime = std::chrono::high_resolution_clock::now();
     
@@ -40,10 +40,22 @@ namespace CGEngine {
             auto newTime = std::chrono::high_resolution_clock::now();
             float elapsedTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
-
+            
+            m_scene.onUpdate(elapsedTime);
+            
             float aspect = m_renderer.getAspectRatio();
-            //camera.setOrthographic(-aspect, aspect, -1.f, 1.f, -1.f, 1.f);
-            camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
+            auto cameraEntities = m_scene.getEntitiesWith<CameraComponent, TransformComponent>();
+            for (auto entity : cameraEntities) {
+
+                const auto&[cameraComponent, transform] = cameraEntities.get<CameraComponent, TransformComponent>(entity);
+
+                if (cameraComponent.isMainCamera) {
+                    camera = cameraComponent.camera;
+                    camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
+                    camera.setViewYXZ(transform.translation, transform.rotation);
+                    break;
+                }
+            }
             
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
@@ -51,8 +63,6 @@ namespace CGEngine {
                 for (auto& [_, system] : m_systems) {
                     system->onUpdate(elapsedTime);
                 }
-                
-                m_scene.onUpdate(elapsedTime);
 
                 simpleRenderSystem.renderScene(commandBuffer, m_scene, camera);
 
