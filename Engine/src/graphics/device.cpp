@@ -502,8 +502,11 @@ namespace CGEngine {
         vkFreeCommandBuffers(m_device, m_commandPool, 1, &commandBuffer);
     }
 
+
     void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
                             VkDeviceSize size) {
+        // TODO: we can try to implement a memory barrier to avoid waiting the copy
+        //       to be finished before we can start rendering again.
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkBufferCopy copyRegion{};
