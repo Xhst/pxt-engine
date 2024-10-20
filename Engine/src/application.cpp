@@ -44,17 +44,16 @@ namespace CGEngine {
             m_scene.onUpdate(elapsedTime);
             
             float aspect = m_renderer.getAspectRatio();
-            auto cameraEntities = m_scene.getEntitiesWith<CameraComponent, TransformComponent>();
-            for (auto entity : cameraEntities) {
 
-                const auto&[cameraComponent, transform] = cameraEntities.get<CameraComponent, TransformComponent>(entity);
+            Entity mainCameraEntity = m_scene.getMainCameraEntity();
 
-                if (cameraComponent.isMainCamera) {
-                    camera = cameraComponent.camera;
-                    camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
-                    camera.setViewYXZ(transform.translation, transform.rotation);
-                    break;
-                }
+            if (mainCameraEntity) {
+                const auto& cameraComponent = mainCameraEntity.get<CameraComponent>();
+                const auto& transform = mainCameraEntity.get<TransformComponent>();
+
+                camera = cameraComponent.camera;
+                camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
+                camera.setViewYXZ(transform.translation, transform.rotation);
             }
             
             if (auto commandBuffer = m_renderer.beginFrame()) {

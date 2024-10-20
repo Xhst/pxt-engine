@@ -28,6 +28,18 @@ namespace CGEngine {
         m_registry.destroy(entity);
     }
 
+    Entity Scene::getMainCameraEntity() {
+        auto cameraEntities = m_registry.view<CameraComponent, TransformComponent>();
+        
+        for (auto entity : cameraEntities) {
+            if (!cameraEntities.get<CameraComponent>(entity).isMainCamera) continue;
+            
+            return { entity, this };
+        }
+
+        return {};
+    }
+
     void Scene::onStart() {
         getEntitiesWith<ScriptComponent>().each([=](auto entity, auto& scriptComponent) {
             scriptComponent.script = scriptComponent.create();

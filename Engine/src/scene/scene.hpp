@@ -26,6 +26,8 @@ namespace CGEngine {
             return m_registry.view<T...>();
         }
 
+        Entity getMainCameraEntity();
+
     private:
         std::unordered_map<UUID, entt::entity> m_entityMap; 
         entt::registry m_registry;
