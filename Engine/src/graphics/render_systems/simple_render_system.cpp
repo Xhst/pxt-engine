@@ -16,7 +16,7 @@ namespace CGEngine {
 
     struct SimplePushConstantData {
         glm::mat4 transform{1.f};
-        alignas(16) glm::vec3 color;
+        glm::mat4 modelMatrix{1.f};
     };
 
     SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass) : m_device(device) {
@@ -73,8 +73,9 @@ namespace CGEngine {
             const auto&[transform, color, model] = view.get<TransformComponent, ColorComponent, ModelComponent>(entity);
 
             SimplePushConstantData push{};
-            push.transform = projectionView * transform.mat4();
-            push.color = color;
+            auto modelMatrix = transform.mat4();
+            push.transform = projectionView * modelMatrix;
+            push.modelMatrix = modelMatrix;
 
             vkCmdPushConstants(
                 commandBuffer,
