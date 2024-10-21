@@ -171,16 +171,11 @@ namespace CGEngine {
                         attrib.vertices[3 * index.vertex_index + 2],
                     };
 
-                    auto colorIndex = 3 * index.vertex_index + 2;
-                    if (colorIndex < attrib.colors.size()) {
-                        vertex.color = {
-                            attrib.colors[colorIndex - 2],
-                            attrib.colors[colorIndex - 1],
-                            attrib.colors[colorIndex - 0],
-                        };
-                    } else {
-                        vertex.color = {1.f, 1.f, 1.f};
-                    }
+                    vertex.color = {
+                        attrib.colors[3 * index.vertex_index + 0],
+                        attrib.colors[3 * index.vertex_index + 1],
+                        attrib.colors[3 * index.vertex_index + 2],
+                    };
                 }
 
                 if (index.normal_index >= 0) {
