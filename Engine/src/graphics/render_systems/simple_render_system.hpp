@@ -5,6 +5,7 @@
 #include "graphics/pipeline.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/device.hpp"
+#include "graphics/frame_info.hpp"
 #include "scene/scene.hpp"
 
 namespace CGEngine {
@@ -17,7 +18,7 @@ namespace CGEngine {
         SimpleRenderSystem(const SimpleRenderSystem&) = delete;
         SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
 
-        void renderScene(VkCommandBuffer commandBuffer, Scene& scene, const Camera& camera);
+        void renderScene(FrameInfo& framInfo, Scene& scene);
 
     private:
         void createPipelineLayout();

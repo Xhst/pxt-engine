@@ -18,6 +18,11 @@
 
 namespace CGEngine {
 
+    struct GlobalUbo {
+        glm::mat4 projectionView{1.f};
+        glm::vec3 lightDirection = glm::normalize(glm::vec3(1.f, -3.f, -1.f));
+    };
+
     Application* Application::Instance = nullptr;
 
     Application::Application() {
@@ -25,6 +30,16 @@ namespace CGEngine {
     }
 
     void Application::run() {
+        Buffer globalUboBuffer{
+            m_device,
+            sizeof(GlobalUbo),
+            SwapChain::MAX_FRAMES_IN_FLIGHT,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+            m_device.properties.limits.minUniformBufferOffsetAlignment
+        };
+        globalUboBuffer.map();
+
         m_window.setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
 
         SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
@@ -57,13 +72,28 @@ namespace CGEngine {
             }
             
             if (auto commandBuffer = m_renderer.beginFrame()) {
-                m_renderer.beginSwapChainRenderPass(commandBuffer);
+                int frameIndex = m_renderer.getFrameIndex();
 
+                FrameInfo frameInfo = {
+                    frameIndex,
+                    elapsedTime,
+                    commandBuffer,
+                    camera
+                };
+
+                // update
+                GlobalUbo globalUbo{};
+                globalUbo.projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+                globalUboBuffer.writeToBuffer(&globalUbo, frameIndex);
+                
                 for (auto& [_, system] : m_systems) {
                     system->onUpdate(elapsedTime);
                 }
 
-                simpleRenderSystem.renderScene(commandBuffer, m_scene, camera);
+                // render 
+                m_renderer.beginSwapChainRenderPass(commandBuffer);
+
+                simpleRenderSystem.renderScene(frameInfo, m_scene);
 
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();

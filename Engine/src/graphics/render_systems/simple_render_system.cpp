@@ -62,10 +62,10 @@ namespace CGEngine {
         );
     }
 
-    void SimpleRenderSystem::renderScene(VkCommandBuffer commandBuffer, Scene& scene, const Camera& camera) {
-        m_pipeline->bind(commandBuffer);
+    void SimpleRenderSystem::renderScene(FrameInfo& frameInfo, Scene& scene) {
+        m_pipeline->bind(frameInfo.commandBuffer);
 
-        auto projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+        auto projectionView = frameInfo.camera.getProjectionMatrix() * frameInfo.camera.getViewMatrix();
 
         auto view = scene.getEntitiesWith<TransformComponent, ColorComponent, ModelComponent>();
         for (auto entity : view) {
@@ -78,7 +78,7 @@ namespace CGEngine {
             push.normalMatrix = transform.normalMatrix();
 
             vkCmdPushConstants(
-                commandBuffer,
+                frameInfo.commandBuffer,
                 m_pipelineLayout,
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                 0,
@@ -87,8 +87,8 @@ namespace CGEngine {
 
             auto modelPtr = model.model;
             
-            modelPtr->bind(commandBuffer);
-            modelPtr->draw(commandBuffer);
+            modelPtr->bind(frameInfo.commandBuffer);
+            modelPtr->draw(frameInfo.commandBuffer);
 
         }
     }
