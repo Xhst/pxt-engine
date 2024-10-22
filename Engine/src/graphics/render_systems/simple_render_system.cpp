@@ -16,7 +16,7 @@ namespace CGEngine {
 
     struct SimplePushConstantData {
         glm::mat4 transform{1.f};
-        glm::mat4 modelMatrix{1.f};
+        glm::mat4 normalMatrix{1.f};
     };
 
     SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass) : m_device(device) {
@@ -75,7 +75,7 @@ namespace CGEngine {
             SimplePushConstantData push{};
             auto modelMatrix = transform.mat4();
             push.transform = projectionView * modelMatrix;
-            push.modelMatrix = modelMatrix;
+            push.normalMatrix = transform.normalMatrix();
 
             vkCmdPushConstants(
                 commandBuffer,
