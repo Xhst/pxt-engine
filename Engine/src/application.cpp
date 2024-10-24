@@ -30,15 +30,18 @@ namespace CGEngine {
     }
 
     void Application::run() {
-        Buffer globalUboBuffer{
-            m_device,
-            sizeof(GlobalUbo),
-            SwapChain::MAX_FRAMES_IN_FLIGHT,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-            m_device.properties.limits.minUniformBufferOffsetAlignment
-        };
-        globalUboBuffer.map();
+        std::vector<Unique<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
+
+        for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
+            uboBuffers[i] = createUnique<Buffer>(
+                m_device,
+                sizeof(GlobalUbo),
+                1,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            );
+            uboBuffers[i]->map();
+        } 
 
         m_window.setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
 
@@ -82,9 +85,10 @@ namespace CGEngine {
                 };
 
                 // update
-                GlobalUbo globalUbo{};
-                globalUbo.projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
-                globalUboBuffer.writeToBuffer(&globalUbo, frameIndex);
+                GlobalUbo ubo{};
+                ubo.projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+                uboBuffers[frameIndex]->writeToBuffer(&ubo);
+                uboBuffers[frameIndex]->flush();
                 
                 for (auto& [_, system] : m_systems) {
                     system->onUpdate(elapsedTime);
