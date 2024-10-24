@@ -70,8 +70,9 @@ namespace CGEngine {
                 const auto& transform = mainCameraEntity.get<TransformComponent>();
 
                 camera = cameraComponent.camera;
-                camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
                 camera.setViewYXZ(transform.translation, transform.rotation);
+
+                camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
             }
             
             if (auto commandBuffer = m_renderer.beginFrame()) {
