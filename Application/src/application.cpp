@@ -35,6 +35,12 @@ public:
             .add<ColorComponent>(glm::vec3{0.6f, 0.0f, 0.5f})
             .add<ModelComponent>(model_bunny);
 
+        Shared<Model> model_pawn = Model::createModelFromFile(getDevice(), "../assets/models/pawn.obj");
+        entity = getScene().createEntity("pawn")
+            .add<TransformComponent>(glm::vec3{0.0f, 0.1f, 3.0f}, glm::vec3{0.5f, 0.5f, .5f}, glm::vec3{0.0f, glm::pi<float>(), 0.0f})
+            .add<ColorComponent>(glm::vec3{0.6f, 0.0f, 0.5f})
+            .add<ModelComponent>(model_pawn);
+
         Shared<Model> model_flat_vase = Model::createModelFromFile(getDevice(), "../assets/models/flat_vase.obj");
         entity = getScene().createEntity("flat_vase")
             .add<TransformComponent>(glm::vec3{0.2f, 0.1f, 0.5f}, glm::vec3{0.5f, 0.25f, .5f}, glm::vec3{0.0f, 0.0f, 0.0f})
