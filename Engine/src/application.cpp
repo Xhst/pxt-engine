@@ -27,6 +27,11 @@ namespace CGEngine {
 
     Application::Application() {
         Instance = this;
+
+        globalPool = DescriptorPool::Builder(m_device)
+                .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+                .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+                .build();
     }
 
     void Application::run() {
@@ -41,11 +46,27 @@ namespace CGEngine {
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
             );
             uboBuffers[i]->map();
-        } 
+        }
+
+        auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+            .build();
+
+        std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
+        for(int i = 0; i < globalDescriptorSets.size(); i++) {
+            auto bufferInfo = uboBuffers[i]->descriptorInfo();
+            DescriptorWriter(*globalSetLayout, *globalPool)
+                .writeBuffer(0, &bufferInfo)
+                .build(globalDescriptorSets[i]);
+        }
 
         m_window.setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
 
-        SimpleRenderSystem simpleRenderSystem(m_device, m_renderer.getSwapChainRenderPass());
+        SimpleRenderSystem simpleRenderSystem{
+            m_device,
+            m_renderer.getSwapChainRenderPass(),
+            globalSetLayout->getDescriptorSetLayout()
+        };
         Camera camera;
         
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -82,7 +103,8 @@ namespace CGEngine {
                     frameIndex,
                     elapsedTime,
                     commandBuffer,
-                    camera
+                    camera,
+                    globalDescriptorSets[frameIndex]
                 };
 
                 // update

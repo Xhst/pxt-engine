@@ -7,6 +7,7 @@
 #include "graphics/window.hpp"
 #include "graphics/device.hpp"
 #include "graphics/renderer.hpp"
+#include "graphics/descriptors.hpp"
 #include "scene/scene.hpp"
 
 #include <iostream>
@@ -61,6 +62,7 @@ namespace CGEngine {
         Device m_device{m_window};
         Renderer m_renderer{m_window, m_device};
 
+        Unique<DescriptorPool> globalPool{};
         Scene m_scene{};
 
         std::unordered_map<UUID, System*> m_systems;

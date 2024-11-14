@@ -10,5 +10,6 @@ namespace CGEngine {
         float frameTime;
         VkCommandBuffer commandBuffer;
         Camera& camera;
+        VkDescriptorSet globalDescriptorSet;
     };
 }
