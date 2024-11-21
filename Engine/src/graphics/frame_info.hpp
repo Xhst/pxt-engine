@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scene/camera.hpp"
+#include "scene/scene.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -11,5 +12,6 @@ namespace CGEngine {
         VkCommandBuffer commandBuffer;
         Camera& camera;
         VkDescriptorSet globalDescriptorSet;
+        Scene& scene;
     };
 }

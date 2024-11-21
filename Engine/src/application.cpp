@@ -21,8 +21,8 @@ namespace CGEngine {
     struct GlobalUbo {
         glm::mat4 projectionView{1.f};
         glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f};
-        glm::vec3 lightPosition{-1.f, -0.3f, 0.1f};
-        alignas(16) glm::vec4 lightColor{.6f, 0.f, 0.8f, 2.f}; //4th component is intensity
+        glm::vec3 lightPosition{-0.5f, -1.f, 0.3f};
+        alignas(16) glm::vec4 lightColor{.6f, 0.f, 0.8f, 1.f}; //4th component is intensity
     };
 
     Application* Application::Instance = nullptr;
@@ -51,7 +51,7 @@ namespace CGEngine {
         }
 
         auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -106,7 +106,8 @@ namespace CGEngine {
                     elapsedTime,
                     commandBuffer,
                     camera,
-                    globalDescriptorSets[frameIndex]
+                    globalDescriptorSets[frameIndex],
+                    m_scene
                 };
 
                 // update
@@ -122,7 +123,7 @@ namespace CGEngine {
                 // render 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
 
-                simpleRenderSystem.renderScene(frameInfo, m_scene);
+                simpleRenderSystem.renderScene(frameInfo);
 
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();

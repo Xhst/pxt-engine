@@ -65,7 +65,7 @@ namespace CGEngine {
         );
     }
 
-    void SimpleRenderSystem::renderScene(FrameInfo& frameInfo, Scene& scene) {
+    void SimpleRenderSystem::renderScene(FrameInfo& frameInfo) {
         m_pipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
@@ -79,7 +79,7 @@ namespace CGEngine {
             nullptr
         );
 
-        auto view = scene.getEntitiesWith<TransformComponent, ColorComponent, ModelComponent>();
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ColorComponent, ModelComponent>();
         for (auto entity : view) {
 
             const auto&[transform, color, model] = view.get<TransformComponent, ColorComponent, ModelComponent>(entity);
