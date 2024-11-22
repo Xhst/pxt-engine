@@ -157,6 +157,7 @@ namespace CGEngine {
         configInfo.rasterizationInfo.depthBiasClamp = 0.0f;           // Optional
         configInfo.rasterizationInfo.depthBiasSlopeFactor = 0.0f;     // Optional
 
+        // TODO: MSAA
         configInfo.multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
         configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
