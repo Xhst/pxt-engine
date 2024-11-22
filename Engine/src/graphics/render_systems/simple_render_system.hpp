@@ -18,7 +18,7 @@ namespace CGEngine {
         SimpleRenderSystem(const SimpleRenderSystem&) = delete;
         SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
 
-        void renderScene(FrameInfo& framInfo);
+        void render(FrameInfo& framInfo);
 
     private:
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);

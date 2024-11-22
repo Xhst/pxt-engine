@@ -65,7 +65,7 @@ namespace CGEngine {
         );
     }
 
-    void SimpleRenderSystem::renderScene(FrameInfo& frameInfo) {
+    void SimpleRenderSystem::render(FrameInfo& frameInfo) {
         m_pipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
