@@ -7,6 +7,7 @@
 #include "scene/ecs/entity.hpp"
 #include "scene/camera.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
+#include "graphics/render_systems/point_light_system.hpp"
 #include "scene/script/script.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -19,7 +20,8 @@
 namespace CGEngine {
 
     struct GlobalUbo {
-        glm::mat4 projectionView{1.f};
+        glm::mat4 projection{1.f};
+        glm::mat4 view{1.f};
         glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f};
         glm::vec3 lightPosition{-0.5f, -1.f, 0.3f};
         alignas(16) glm::vec4 lightColor{.6f, 0.f, 0.8f, 1.f}; //4th component is intensity
@@ -69,6 +71,13 @@ namespace CGEngine {
             m_renderer.getSwapChainRenderPass(),
             globalSetLayout->getDescriptorSetLayout()
         };
+
+        PointLightSystem pointLightSystem{
+            m_device,
+            m_renderer.getSwapChainRenderPass(),
+            globalSetLayout->getDescriptorSetLayout()
+        };
+
         Camera camera;
         
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -112,7 +121,8 @@ namespace CGEngine {
 
                 // update
                 GlobalUbo ubo{};
-                ubo.projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+                ubo.projection = camera.getProjectionMatrix();
+                ubo.view = camera.getViewMatrix();
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
                 
@@ -123,7 +133,8 @@ namespace CGEngine {
                 // render 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
 
-                simpleRenderSystem.renderScene(frameInfo);
+                simpleRenderSystem.render(frameInfo);
+                pointLightSystem.render(frameInfo);
 
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
