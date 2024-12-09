@@ -52,7 +52,18 @@ public:
             .add<TransformComponent>(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{10.f, 1.f, 10.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<ColorComponent>(glm::vec3{0.6f, 0.f, 0.5f})
             .add<ModelComponent>(model_floor);
+
+        entity = createPointLight(1.0f, 0.1f, glm::vec3{1.f, 0.f, 0.f});
+        entity.get<TransformComponent>().translation = glm::vec3{1.f, -1.f, 1.5f};
+
+        entity = createPointLight(1.7f, 0.35f, glm::vec3{0.f, 0.f, 1.f});
+        entity.get<TransformComponent>().translation = glm::vec3{-1.f, -1.f, 0.5f};
+
+        entity = createPointLight(8.f, 0.5f, glm::vec3{0.8f, 0.9f, 0.05f});
+        entity.get<TransformComponent>().translation = glm::vec3{0.8f, -2.f, 5.0f};
     }
+
+    
 };
 
 CGEngine::Application* CGEngine::initApplication() {
