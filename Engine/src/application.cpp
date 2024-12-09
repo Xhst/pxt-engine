@@ -19,14 +19,6 @@
 
 namespace CGEngine {
 
-    struct GlobalUbo {
-        glm::mat4 projection{1.f};
-        glm::mat4 view{1.f};
-        glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f};
-        glm::vec3 lightPosition{-0.5f, -1.f, 0.3f};
-        alignas(16) glm::vec4 lightColor{.6f, 0.f, 0.8f, 1.f}; //4th component is intensity
-    };
-
     Application* Application::Instance = nullptr;
 
     Application::Application() {
@@ -123,9 +115,14 @@ namespace CGEngine {
                 GlobalUbo ubo{};
                 ubo.projection = camera.getProjectionMatrix();
                 ubo.view = camera.getViewMatrix();
+
+                // update light values into ubo
+                pointLightSystem.update(frameInfo, ubo);
+
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
                 
+                // its not used yet
                 for (auto& [_, system] : m_systems) {
                     system->onUpdate(elapsedTime);
                 }
@@ -162,6 +159,15 @@ namespace CGEngine {
 
             system->onEvent(event);
         }
+    }
+
+    Entity Application::createPointLight(float intensity, float radius, glm::vec3 color) {
+        Entity entity = m_scene.createEntity("point_light")
+            .add<PointLightComponent>(intensity)
+            .add<TransformComponent>(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{radius, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<ColorComponent>(color);
+
+        return entity;
     }
     
 }

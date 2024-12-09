@@ -10,6 +10,10 @@
 #include "graphics/descriptors.hpp"
 #include "scene/scene.hpp"
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+
 #include <iostream>
 #include <stdexcept>
 
@@ -50,6 +54,8 @@ namespace CGEngine {
         Window& getWindow() {
             return m_window;
         }
+
+        Entity createPointLight(const float intensity = 1.0f, const float radius = 0.1f, const glm::vec3 color = glm::vec3(1.f));
     
     private:
         void run();
