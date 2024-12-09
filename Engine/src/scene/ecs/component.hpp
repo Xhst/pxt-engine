@@ -38,7 +38,9 @@ namespace CGEngine
         ColorComponent() = default;
         ColorComponent(const ColorComponent&) = default;
         ColorComponent(const glm::vec4& color) : color(color) {}
-        ColorComponent(const glm::vec3& color) : color(glm::vec4{color, 1.f}) {}
+        
+        /* w can be anything (intensity, alpha etc.)*/
+        ColorComponent(const glm::vec3& color, float w = 1.f) : color(glm::vec4{color, w}) {}
 
         operator glm::vec4&() { return color; }
         operator const glm::vec4&() const { return color; }
@@ -207,5 +209,13 @@ namespace CGEngine
             camera = Camera{};
         }
         CameraComponent(const CameraComponent&) = default;
+    };
+
+    struct PointLightComponent {
+        float lightIntensity = 1.0f;
+
+        PointLightComponent() = default;
+        PointLightComponent(const PointLightComponent&) = default;
+        PointLightComponent(const float intensity) : lightIntensity(intensity) {}
     };
 }
