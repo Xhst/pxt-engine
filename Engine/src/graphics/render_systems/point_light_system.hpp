@@ -18,7 +18,8 @@ namespace CGEngine {
         PointLightSystem(const PointLightSystem&) = delete;
         PointLightSystem& operator=(const PointLightSystem&) = delete;
 
-        void render(FrameInfo& framInfo);
+        void update(FrameInfo& frameInfo, GlobalUbo& ubo);
+        void render(FrameInfo& frameInfo);
 
     private:
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
