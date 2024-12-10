@@ -17,10 +17,14 @@ namespace CGEngine {
 
         const glm::mat4& getProjectionMatrix() const { return m_projectionMatrix; }
         const glm::mat4& getViewMatrix() const { return m_viewMatrix; }
+        const glm::mat4& getInverseViewMatrix() const { return m_inverseViewMatrix; }
 
     private:
+        void updateViewMatrix(glm::vec3 u, glm::vec3 v, glm::vec3 w, glm::vec3 position);
+
         glm::mat4 m_projectionMatrix{1.f};
         glm::mat4 m_viewMatrix{1.f};
+        glm::mat4 m_inverseViewMatrix{1.f};
     };
 
 }

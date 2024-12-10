@@ -16,6 +16,7 @@ struct PointLight {
 layout(set = 0, binding = 0) uniform GlobalUbo {
   mat4 projectionMatrix;
   mat4 viewMatrix;
+  mat4 inverseViewMatrix;
   vec4 ambientLightColor;
   PointLight pointLights[MAX_LIGHTS];
   int numLights;
@@ -28,18 +29,34 @@ layout(push_constant) uniform Push {
 
 void main() {
   vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
+  vec3 specularLight = vec3(0.0);
   vec3 surfaceNormal = normalize(fragNormalWorld); // fragment normal could not be normalized from previous stage (normals interpolation)
+
+  vec3 cameraPosWorld = ubo.inverseViewMatrix[3].xyz;
+  vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld); // it's the direction from fragment to camera
 
   for (int i = 0; i < ubo.numLights; i++) {
     PointLight light = ubo.pointLights[i];
     vec3 vectorToLight = light.position.xyz - fragPosWorld;
     float attenuation = 1.0 / dot(vectorToLight, vectorToLight);
-    float cosAngleIncidence = max(dot(surfaceNormal, normalize(vectorToLight)), 0);
+    vec3 directionToLight = normalize(vectorToLight);
+
+    float cosAngleIncidence = max(dot(surfaceNormal, directionToLight), 0);
     vec3 lightColor = light.color.xyz * light.color.w * attenuation; // color * intensity * attenuation
     
     diffuseLight += lightColor * cosAngleIncidence;
+
+    // specualar light - using Blinn-Phong model
+    vec3 halfAngle = normalize(directionToLight + viewDirection);
+    float blinnTerm = dot(surfaceNormal, halfAngle);
+    blinnTerm = clamp(blinnTerm, 0 , 1);
+    blinnTerm = pow(blinnTerm, 32.0); // 32 can be passed based on material. Higher values -> sharper highlight
+
+    specularLight += lightColor * blinnTerm; 
   }
 
-  // r g b a
-  outColor = vec4(diffuseLight * fragColor, 1.0);
+  /* we need to add control coefficients to regulate both terms
+     for now we use fragColor for both which is ideal for metallic objects
+  */
+  outColor = vec4(diffuseLight * fragColor + specularLight * fragColor, 1.0);
 }

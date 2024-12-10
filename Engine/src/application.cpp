@@ -115,6 +115,7 @@ namespace CGEngine {
                 GlobalUbo ubo{};
                 ubo.projection = camera.getProjectionMatrix();
                 ubo.view = camera.getViewMatrix();
+                ubo.inverseView = camera.getInverseViewMatrix();
 
                 // update light values into ubo
                 pointLightSystem.update(frameInfo, ubo);
