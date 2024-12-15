@@ -19,6 +19,8 @@ namespace CGEngine {
         const glm::mat4& getViewMatrix() const { return m_viewMatrix; }
         const glm::mat4& getInverseViewMatrix() const { return m_inverseViewMatrix; }
 
+        const glm::vec3 getPosition() const { return glm::vec3(m_inverseViewMatrix[3]); }
+
     private:
         void updateViewMatrix(glm::vec3 u, glm::vec3 v, glm::vec3 w, glm::vec3 position);
 
