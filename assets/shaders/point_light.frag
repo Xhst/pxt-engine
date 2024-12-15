@@ -1,5 +1,7 @@
 #version 450
 
+const float PI = 3.14159265359;
+
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
 layout(location = 0) in vec2 fragOffset;
@@ -32,5 +34,7 @@ void main() {
         discard;
     }
 
-    outColor = vec4(push.color.xyz, 1.0);
+    float alpha = 0.5 * (cos(dis * PI) + 1.0);
+
+    outColor = vec4(push.color.xyz, alpha);
 }

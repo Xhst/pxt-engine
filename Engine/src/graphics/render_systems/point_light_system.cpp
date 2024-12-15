@@ -6,6 +6,7 @@
 #include <array>
 #include <stdexcept>
 #include <cassert>
+#include <map>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -55,6 +56,7 @@ namespace CGEngine {
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
+        Pipeline::enableAlphaBlending(pipelineConfig);
 
         // clear model information when using point lights system
         pipelineConfig.bindingDescriptions.clear();
@@ -90,6 +92,28 @@ namespace CGEngine {
     }
 
     void PointLightSystem::render(FrameInfo& frameInfo) {
+        // sort lights by distance to camera
+        //TODO: WE SHOULD DO THIS FOR EVERY TRANSPARENT OBJECT or use order independent transparency
+        std::map<float, entt::entity> sorted;
+
+        auto view = frameInfo.scene.getEntitiesWith<PointLightComponent, ColorComponent, TransformComponent>();
+        for (auto entity : view) {
+
+            const auto&[light, color, transform] = view.get<PointLightComponent, ColorComponent, TransformComponent>(entity);
+
+            glm::vec3 lightPos = transform.translation;
+            glm::vec3 cameraPos = frameInfo.camera.getPosition();
+
+            glm::vec3 lightToCamera = cameraPos - lightPos;
+
+            // dot product to get distance squared, less expensive than sqrt
+            float distanceSq = glm::dot(lightToCamera, lightToCamera);
+
+            sorted[distanceSq] = entity;
+        }
+
+
+        
         m_pipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
@@ -103,8 +127,8 @@ namespace CGEngine {
             nullptr
         );
 
-        auto view = frameInfo.scene.getEntitiesWith<PointLightComponent, ColorComponent, TransformComponent>();
-        for (auto entity : view) {
+        for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+            auto entity = it->second;
 
             const auto&[light, color, transform] = view.get<PointLightComponent, ColorComponent, TransformComponent>(entity);
 
