@@ -33,18 +33,29 @@ namespace CGEngine
     };
 
     struct ColorComponent {
-        glm::vec4 color;
+        glm::vec3 color;
 
         ColorComponent() = default;
         ColorComponent(const ColorComponent&) = default;
-        ColorComponent(const glm::vec4& color) : color(color) {}
-        
-        /* w can be anything (intensity, alpha etc.)*/
-        ColorComponent(const glm::vec3& color, float w = 1.f) : color(glm::vec4{color, w}) {}
+        ColorComponent(const glm::vec3& color) : color(color) {}
 
-        operator glm::vec4&() { return color; }
-        operator const glm::vec4&() const { return color; }
-        operator glm::vec3() const { return glm::vec3(color); }
+        operator glm::vec3&() { return color; }
+        operator const glm::vec3&() const { return color; }
+    };
+
+    struct MaterialComponent {
+        glm::vec4 color;
+        float specularIntensity;
+        float shininess;
+
+        MaterialComponent() = default;
+        MaterialComponent(const MaterialComponent&) = default;
+        MaterialComponent(const glm::vec4& color, float specularIntensity = 0.0f, float shininess = 1.0f) 
+        : color(color), specularIntensity(specularIntensity), shininess(shininess) {}
+
+        /* w can be anything (intensity, alpha etc.)*/
+        MaterialComponent(const glm::vec3& color, float w = 1.f, float specularIntensity = 0.0f, float shininess = 1.0f) 
+        : color(glm::vec4{color, w}), specularIntensity(specularIntensity), shininess(shininess) {}
     };
 
     struct Transform2dComponent {
