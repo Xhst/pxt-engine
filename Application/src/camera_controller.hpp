@@ -7,6 +7,6 @@ class CameraController : public Script {
         void onUpdate(float deltaTime) override;
         
     private:
-        float m_moveSpeed{3.f};
-        float m_lookSpeed{1.5f};
+        float m_moveSpeed{1.f};
+        float m_lookSpeed{1.75f};
 };
