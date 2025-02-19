@@ -25,6 +25,9 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 layout(push_constant) uniform Push {
   mat4 modelMatrix;
   mat4 normalMatrix;
+  vec4 color;
+  float specularIntensity;
+  float shininess;
 } push;
 
 void main() {
@@ -49,10 +52,10 @@ void main() {
     // specualar light - using Blinn-Phong model
     vec3 halfAngle = normalize(directionToLight + viewDirection);
     float blinnTerm = dot(surfaceNormal, halfAngle);
-    blinnTerm = clamp(blinnTerm, 0 , 1);
-    blinnTerm = pow(blinnTerm, 32.0); // 32 can be passed based on material. Higher values -> sharper highlight
+    blinnTerm = clamp(blinnTerm, 0, 1);
+    blinnTerm = pow(blinnTerm, push.shininess); // Higher values -> sharper highlight
 
-    specularLight += lightColor * blinnTerm; 
+    specularLight += lightColor * blinnTerm * push.specularIntensity; 
   }
 
   /* we need to add control coefficients to regulate both terms
