@@ -39,6 +39,30 @@ add_subdirectory(Engine/vendor/glm)
 add_subdirectory(Engine/vendor/tinyobjloader)  
 add_subdirectory(Engine/vendor/entt)
 
+# IMGUI Library
+set(IMGUI_DIR ${PROJECT_SOURCE_DIR}/Engine/vendor/imgui)
+include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
+
+# Add ImGui source files
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+)
+
+# Create ImGui library and add Vulkan include directory for its sources
+add_library(imgui STATIC ${IMGUI_SOURCES})
+target_include_directories(imgui PUBLIC ${Vulkan_INCLUDE_DIRS})
+
+# Link dependencies to ImGui
+target_link_libraries(imgui PUBLIC glfw ${Vulkan_LIBRARIES}/vulkan-1.lib)
+
+####
+
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/Application/src/*.cpp ${PROJECT_SOURCE_DIR}/Engine/src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -78,6 +102,7 @@ if (WIN32)
     glm                      
     tinyobjloader      
     vulkan-1  # This is the name of the Vulkan library
+    imgui
   )
 
 
@@ -90,6 +115,7 @@ elseif (UNIX)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw 
     ${Vulkan_LIBRARIES}
+    imgui
   )
 endif()
 

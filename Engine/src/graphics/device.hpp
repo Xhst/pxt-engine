@@ -46,6 +46,9 @@ namespace CGEngine {
         VkQueue graphicsQueue() { return m_graphicsQueue; }
         VkQueue presentQueue() { return m_presentQueue; }
 
+        VkInstance getVkInstance() {return m_instance;}
+        VkPhysicalDevice getPhysicalDevice() {return m_physicalDevice;}
+
         SwapChainSupportDetails getSwapChainSupport() {
             return querySwapChainSupport(m_physicalDevice);
         }
