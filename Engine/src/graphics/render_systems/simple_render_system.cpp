@@ -17,6 +17,9 @@ namespace CGEngine {
     struct SimplePushConstantData {
         glm::mat4 modelMatrix{1.f};
         glm::mat4 normalMatrix{1.f};
+        glm::vec4 color{1.f};
+        float specularIntensity = 0.0f;
+        float shininess = 1.0f;
     };
 
     SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_device(device) {
@@ -79,14 +82,17 @@ namespace CGEngine {
             nullptr
         );
 
-        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ColorComponent, ModelComponent>();
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MaterialComponent, ModelComponent>();
         for (auto entity : view) {
 
-            const auto&[transform, color, model] = view.get<TransformComponent, ColorComponent, ModelComponent>(entity);
+            const auto&[transform, material, model] = view.get<TransformComponent, MaterialComponent, ModelComponent>(entity);
 
             SimplePushConstantData push{};
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
+            push.color = material.color;
+            push.specularIntensity = material.specularIntensity;
+            push.shininess = material.shininess;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
