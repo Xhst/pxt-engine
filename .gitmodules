@@ -10,3 +10,6 @@
 [submodule "Engine/vendor/entt"]
 	path = Engine/vendor/entt
 	url = https://github.com/skypjack/entt
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/ocornut/imgui
