@@ -72,6 +72,8 @@ namespace CGEngine {
         DescriptorPool(const DescriptorPool &) = delete;
         DescriptorPool &operator=(const DescriptorPool &) = delete;
 
+        VkDescriptorPool getDescriptorPool() {return m_descriptorPool;}
+
         bool allocateDescriptorSet(
             const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
 
