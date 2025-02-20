@@ -3,6 +3,9 @@
 void CameraController::onUpdate(float deltaTime) {
     auto& transform = get<TransformComponent>();
 
+    // can look with mouse when Space is Hold
+    bool is_mouse_move_enabled = Input::isKeyPressed(KeyCode::Space); 
+
     // --- Keyboard Rotation ---
     glm::vec3 rotate{0};
     if (Input::isKeyPressed(KeyCode::RightArrow)) rotate.y += 1.f;
@@ -15,22 +18,24 @@ void CameraController::onUpdate(float deltaTime) {
     }
 
     // --- Mouse Movement for Rotation ---
-    glm::vec2 currentMousePos = Input::getMousePosition();
-    if (m_firstMouse) {
+    if (is_mouse_move_enabled) {
+        glm::vec2 currentMousePos = Input::getMousePosition();
+        if (m_firstMouse) {
+            m_lastMousePos = currentMousePos;
+            m_firstMouse = false;
+        }
+        // Compute mouse delta. (Note: glfw's y-coordinate increases downward.)
+        glm::vec2 offset = currentMousePos - m_lastMousePos;
         m_lastMousePos = currentMousePos;
-        m_firstMouse = false;
-    }
-    // Compute mouse delta. (Note: glfw's y-coordinate increases downward.)
-    glm::vec2 offset = currentMousePos - m_lastMousePos;
-    m_lastMousePos = currentMousePos;
-    
-    // Invert the Y offset so that moving the mouse up (decreasing y)
-    // increases the pitch (rotation.x) and vice versa.
-    transform.rotation.x += (-offset.y) * m_mouseSensitivity;
-    transform.rotation.y += offset.x * m_mouseSensitivity;
+        
+        // Invert the Y offset so that moving the mouse up (decreasing y)
+        // increases the pitch (rotation.x) and vice versa.
+        transform.rotation.x += (-offset.y) * m_mouseSensitivity;
+        transform.rotation.y += offset.x * m_mouseSensitivity;
 
-    transform.rotation.x = glm::clamp(transform.rotation.x, -1.5f, 1.5f);
-    transform.rotation.y = glm::mod(transform.rotation.y, glm::two_pi<float>());
+        transform.rotation.x = glm::clamp(transform.rotation.x, -1.5f, 1.5f);
+        transform.rotation.y = glm::mod(transform.rotation.y, glm::two_pi<float>());
+    }
 
     // --- Keyboard Translation ---
     float yaw = transform.rotation.y;
