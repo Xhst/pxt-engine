@@ -30,8 +30,18 @@ public:
             .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
             .add<ModelComponent>(quad);
 
+        entity = getScene().createEntity("Roof")
+            .add<TransformComponent>(glm::vec3{0.f, -2.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<ModelComponent>(quad);
+
         entity = getScene().createEntity("BackWall")
             .add<TransformComponent>(glm::vec3{0.0f, -1.f, 1.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{glm::pi<float>()/2, 0.0f, 0.0f})
+            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<ModelComponent>(quad);
+
+            entity = getScene().createEntity("FrontWall")
+            .add<TransformComponent>(glm::vec3{0.0f, -1.f, -1.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{-glm::pi<float>()/2, 0.0f, 0.0f})
             .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
             .add<ModelComponent>(quad);
 
