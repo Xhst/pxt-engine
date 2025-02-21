@@ -3,7 +3,7 @@
 #include <cassert>
 #include <limits>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     void Camera::setOrthographic(float left, float right, float top, float bottom, float near, float far) {
         m_projectionMatrix = glm::mat4{1.0f};

@@ -8,7 +8,7 @@
 #include "core/memory.hpp"
 #include "device.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class SwapChain {
        public:

@@ -4,7 +4,7 @@
 #include "scene/ecs/entity.hpp"
 #include "scene/script/script.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     Entity Scene::createEntity(const std::string& name) {
         Entity entity = { m_registry.create(), this };

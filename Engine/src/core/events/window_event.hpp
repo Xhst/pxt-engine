@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-namespace CGEngine {
+namespace PXTEngine {
      
     class WindowCloseEvent : public Event {
     public:

@@ -8,7 +8,7 @@
 #include <set>
 #include <stdexcept>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     SwapChain::SwapChain(Device &deviceRef, VkExtent2D extent)
         : m_device{deviceRef}, m_windowExtent{extent} {

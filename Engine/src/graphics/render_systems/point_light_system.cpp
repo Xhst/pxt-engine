@@ -13,7 +13,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     struct PointLightPushConstants {
         glm::vec4 position{};

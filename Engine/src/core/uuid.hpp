@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     /**
      * @brief Enumeration representing the versions of UUID that can be generated.
@@ -69,13 +69,13 @@ namespace CGEngine {
 namespace std {
 
     /**
-     * @brief Specialization of std::hash for CGEngine::UUID.
+     * @brief Specialization of std::hash for PXTEngine::UUID.
      * 
      * This allows UUIDs to be used as keys in unordered containers, 
      * such as std::unordered_map and std::unordered_set.
      */
 	template<>
-	struct hash<CGEngine::UUID>
+	struct hash<PXTEngine::UUID>
 	{
 		/**
          * @brief Computes the hash for a given UUID.
@@ -83,7 +83,7 @@ namespace std {
          * @param uuid The UUID to be hashed.
          * @return The hash value of the UUID as size_t.
          */
-		std::size_t operator()(const CGEngine::UUID& uuid) const
+		std::size_t operator()(const PXTEngine::UUID& uuid) const
 		{
 			return (size_t) uuid;
 		}

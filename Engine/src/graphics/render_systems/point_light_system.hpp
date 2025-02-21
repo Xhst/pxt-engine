@@ -8,7 +8,7 @@
 #include "graphics/frame_info.hpp"
 #include "scene/scene.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class PointLightSystem {
     public:

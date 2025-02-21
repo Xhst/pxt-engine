@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Input {
     public:

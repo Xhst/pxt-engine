@@ -8,7 +8,7 @@
 
 #include <stdexcept>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     Window::Window(const WindowData& props): m_data(props) {
         glfwInit();

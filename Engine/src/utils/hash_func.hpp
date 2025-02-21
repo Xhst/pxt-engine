@@ -2,7 +2,7 @@
  
 #include <functional>
  
-namespace CGEngine {
+namespace PXTEngine {
  
     /**
      * @brief Combine multiple hash values into a single hash value

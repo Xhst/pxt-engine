@@ -5,7 +5,7 @@
 
 #include "graphics/device.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     struct PipelineConfigInfo {
         PipelineConfigInfo() = default;

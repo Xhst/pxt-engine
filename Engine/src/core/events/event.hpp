@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Event {
     public:

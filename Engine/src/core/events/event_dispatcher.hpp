@@ -3,7 +3,7 @@
 #include "core/events/event.hpp"
 #include <functional>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     /**
      * @class EventDispatcher

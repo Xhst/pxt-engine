@@ -3,7 +3,7 @@
 #include "core/input/key_code.hpp"
 #include "core/events/event.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class KeyBoardEvent : public Event {
     public:

@@ -7,7 +7,7 @@
 
 #include <cassert>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Renderer {
     public:

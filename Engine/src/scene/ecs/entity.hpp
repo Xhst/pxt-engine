@@ -5,7 +5,7 @@
 
 #include <entt/entt.hpp>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Entity {
     public:

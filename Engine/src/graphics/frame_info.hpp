@@ -5,7 +5,7 @@
 
 #include <vulkan/vulkan.h>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     #define MAX_LIGHTS 10
 

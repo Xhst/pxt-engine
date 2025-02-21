@@ -3,7 +3,7 @@
 #include "core/uuid.hpp"
 #include "core/events/event.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
     
     class System {
     public:

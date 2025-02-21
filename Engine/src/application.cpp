@@ -17,7 +17,7 @@
 
 #include <chrono>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     Application* Application::Instance = nullptr;
 
@@ -176,7 +176,7 @@ namespace CGEngine {
 int main() {
 
     try {
-        auto app = CGEngine::initApplication();
+        auto app = PXTEngine::initApplication();
 
         app->run();
 

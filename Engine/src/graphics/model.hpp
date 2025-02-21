@@ -13,7 +13,7 @@
 
 #include <vector>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Model {
     public:
@@ -67,11 +67,11 @@ namespace CGEngine {
 
 namespace std {
     template <>
-    struct hash<CGEngine::Model::Vertex> {
-        size_t operator()(CGEngine::Model::Vertex const &vertex) const {
+    struct hash<PXTEngine::Model::Vertex> {
+        size_t operator()(PXTEngine::Model::Vertex const &vertex) const {
             size_t seed = 0;
 
-            CGEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+            PXTEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
             return seed;
         }
     };

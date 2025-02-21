@@ -2,7 +2,7 @@
 
 #include "scene/ecs/entity.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     /**
      * @brief Base class for creating custom scripts to be attached to entities in a scene.

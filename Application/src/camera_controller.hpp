@@ -1,6 +1,6 @@
-#include "cgengine.h"
+#include "pxtengine.h"
 
-using namespace CGEngine;
+using namespace PXTEngine;
 
 class CameraController : public Script {
     public:

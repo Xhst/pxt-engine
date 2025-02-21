@@ -12,7 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     struct SimplePushConstantData {
         glm::mat4 modelMatrix{1.f};

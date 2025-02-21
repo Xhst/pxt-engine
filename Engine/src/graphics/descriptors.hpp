@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace CGEngine {
+namespace PXTEngine {
     class DescriptorSetLayout {
     public:
         class Builder {

@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <cassert>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     Renderer::Renderer(Window& window, Device& device) : m_window{window}, m_device{device} {
         recreateSwapChain();

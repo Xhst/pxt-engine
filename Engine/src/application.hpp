@@ -19,7 +19,7 @@
 
 int main();
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Application {
     public:

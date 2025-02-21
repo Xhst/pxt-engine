@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 
-namespace CGEngine {
+namespace PXTEngine {
 
     Model::Model(Device& device, const Model::Builder& builder)
         : m_device{device} {

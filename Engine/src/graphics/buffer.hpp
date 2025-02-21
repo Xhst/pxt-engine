@@ -2,7 +2,7 @@
 
 #include "graphics/device.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Buffer {
        public:

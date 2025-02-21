@@ -1,6 +1,6 @@
-# CG Engine
+# PXT Engine
 
-CG Engine is a graphics engine built using GLFW, Vulkan, and GLM.
+PXT Engine is a graphics engine built using GLFW, Vulkan, and GLM.
 
 
 ## Prerequisites

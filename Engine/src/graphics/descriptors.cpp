@@ -4,7 +4,7 @@
 #include <cassert>
 #include <stdexcept>
  
-namespace CGEngine {
+namespace PXTEngine {
  
     // *************** Descriptor Set Layout Builder *********************
     

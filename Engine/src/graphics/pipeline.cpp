@@ -8,7 +8,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     struct SpecializationData {
         int32_t maxLights;

@@ -1,11 +1,11 @@
-#include "cgengine.h"
+#include "pxtengine.h"
 
 #include "camera_controller.hpp"
 #include "rotating_light_controller.hpp"
 
 #include <iostream>
 
-using namespace CGEngine;
+using namespace PXTEngine;
 
 class App : public Application {
 public:
@@ -93,6 +93,6 @@ public:
     
 };
 
-CGEngine::Application* CGEngine::initApplication() {
+PXTEngine::Application* PXTEngine::initApplication() {
     return new App();
 }

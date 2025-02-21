@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace CGEngine {
+namespace PXTEngine {
 
 
     UUID::UUID(const std::string& uuid) : m_uuid(uuid) {}

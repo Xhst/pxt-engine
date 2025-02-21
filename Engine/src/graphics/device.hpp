@@ -5,7 +5,7 @@
 
 #include "graphics/window.hpp"
 
-namespace CGEngine {
+namespace PXTEngine {
 
     struct SwapChainSupportDetails {
         VkSurfaceCapabilitiesKHR capabilities;

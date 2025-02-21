@@ -8,7 +8,7 @@
 #include <string>
 #include <functional>
 
-namespace CGEngine {
+namespace PXTEngine {
 
     class Event;
 
