@@ -66,12 +66,8 @@ public:
             //.add<MaterialComponent>(colorWhite)
             .add<MaterialComponent>(colorGold, 2.0f, 140.0f);
 
-        // Base light
-        entity = createPointLight(1.5f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
-        entity.get<TransformComponent>().translation = glm::vec3{0.0f, -10.0f, 0.0f};
-
         // Light above the bunny
-        entity = createPointLight(0.05f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
+        entity = createPointLight(0.025f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
         entity.get<TransformComponent>().translation = glm::vec3{0.0f, -0.65f, 0.0f};
 
         // Three rotating lights around the bunny (red, green, blue)
@@ -86,7 +82,6 @@ public:
         entity = createPointLight(0.1f, 0.025f, glm::vec3{0.f, 0.f, 1.f});
         entity.get<TransformComponent>().translation = glm::vec3{-1.0f / (float) (2.0f * sqrt(3)), -0.5f, -0.5f};
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
-        
         
     }
 
