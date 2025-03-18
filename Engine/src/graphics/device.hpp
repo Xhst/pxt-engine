@@ -41,7 +41,7 @@ namespace PXTEngine {
         Device &operator=(Device&&) = delete;
 
         VkCommandPool getCommandPool() { return m_commandPool; }
-        VkDevice device() { return m_device; }
+        VkDevice getDevice() { return m_device; }
         VkSurfaceKHR surface() { return m_surface; }
         VkQueue graphicsQueue() { return m_graphicsQueue; }
         VkQueue presentQueue() { return m_presentQueue; }
@@ -56,6 +56,12 @@ namespace PXTEngine {
                                 VkMemoryPropertyFlags properties);
         QueueFamilyIndices findPhysicalQueueFamilies() {
             return findQueueFamilies(m_physicalDevice);
+        }
+        int32_t getGraphicsQueueFamily() {
+            return findPhysicalQueueFamilies().graphicsFamily;
+        }
+        int32_t getPresentQueueFamily() {
+            return findPhysicalQueueFamilies().presentFamily;
         }
         VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates,
                                      VkImageTiling tiling,

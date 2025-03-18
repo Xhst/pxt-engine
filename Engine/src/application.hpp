@@ -8,6 +8,7 @@
 #include "graphics/device.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/descriptors.hpp"
+#include "graphics/frame_info.hpp"
 #include "scene/scene.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -24,12 +25,7 @@ namespace PXTEngine {
     class Application {
     public:
         Application();
-        virtual ~Application() {
-            for (auto& [_, system] : m_systems) {
-                system->onShutdown();
-                delete system;
-            }
-        };
+        ~Application();
 
         static Application& get() { return *Instance; }
 
@@ -62,13 +58,17 @@ namespace PXTEngine {
         void onEvent(Event& event);
         bool isRunning();
 
+        void initImGui(Window& window, Device& device);
+
+        void imGuiRenderUI(FrameInfo& frameInfo);
+
         bool m_running = true;
 
         Window m_window{WindowData()};
         Device m_device{m_window};
         Renderer m_renderer{m_window, m_device};
 
-        Unique<DescriptorPool> globalPool{};
+        Unique<DescriptorPool> m_globalPool{};
         Scene m_scene{};
 
         std::unordered_map<UUID, System*> m_systems;

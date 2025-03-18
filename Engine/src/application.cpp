@@ -17,6 +17,18 @@
 
 #include <chrono>
 
+// IMGUI
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imconfig.h"
+#include "imgui_tables.cpp"
+#include "imgui_internal.h"
+#include "imgui.h"
+#include "imgui_draw.cpp"
+#include "imgui_widgets.cpp"
+#include "imgui_demo.cpp"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
 namespace PXTEngine {
 
     Application* Application::Instance = nullptr;
@@ -24,10 +36,53 @@ namespace PXTEngine {
     Application::Application() {
         Instance = this;
 
-        globalPool = DescriptorPool::Builder(m_device)
-                .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+        m_globalPool = DescriptorPool::Builder(m_device)
+                .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
+                .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
                 .build();
+
+        // to enable imgui functionality (FIGATA)
+        initImGui(m_window, m_device);
+    }
+
+    Application::~Application() {
+            for (auto& [_, system] : m_systems) {
+                system->onShutdown();
+                delete system;
+            }
+
+            ImGui_ImplVulkan_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            ImGui::DestroyContext();
+        };
+
+    void Application::initImGui(Window& window, Device& device) {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGui::StyleColorsDark();
+
+        ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+        ImGui_ImplGlfw_InitForVulkan(window.getBaseWindow(), true);
+        ImGui_ImplVulkan_InitInfo initInfo{};
+        initInfo.Instance = device.getVkInstance();
+        initInfo.PhysicalDevice = device.getPhysicalDevice();
+        initInfo.Device = device.getDevice();
+        initInfo.QueueFamily = device.getGraphicsQueueFamily();
+        initInfo.Queue = device.graphicsQueue();
+        initInfo.RenderPass = m_renderer.getSwapChainRenderPass();
+        initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        initInfo.PipelineCache = VK_NULL_HANDLE;
+        initInfo.DescriptorPool = m_globalPool->getDescriptorPool();
+        initInfo.Allocator = nullptr;
+        initInfo.MinImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
+        initInfo.ImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
+        initInfo.CheckVkResultFn = nullptr;
+        ImGui_ImplVulkan_Init(&initInfo);
+
+        ImGui_ImplVulkan_CreateFontsTexture();
     }
 
     void Application::run() {
@@ -51,7 +106,7 @@ namespace PXTEngine {
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
         for(int i = 0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            DescriptorWriter(*globalSetLayout, *globalPool)
+            DescriptorWriter(*globalSetLayout, *m_globalPool)
                 .writeBuffer(0, &bufferInfo)
                 .build(globalDescriptorSets[i]);
         }
@@ -134,12 +189,14 @@ namespace PXTEngine {
                 simpleRenderSystem.render(frameInfo);
                 pointLightSystem.render(frameInfo);
 
+                imGuiRenderUI(frameInfo);
+
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }
         }
 
-        vkDeviceWaitIdle(m_device.device());
+        vkDeviceWaitIdle(m_device.getDevice());
     }
 
     bool Application::isRunning() {
@@ -160,6 +217,17 @@ namespace PXTEngine {
 
             system->onEvent(event);
         }
+    }
+
+    void Application::imGuiRenderUI(FrameInfo& frameInfo) {
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::ShowDemoWindow();
+
+        ImGui::Render();
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
     }
 
     Entity Application::createPointLight(float intensity, float radius, glm::vec3 color) {

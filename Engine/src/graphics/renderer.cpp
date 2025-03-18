@@ -21,7 +21,7 @@ namespace PXTEngine {
             extent = m_window.getExtent();
             glfwWaitEvents();
         }
-        vkDeviceWaitIdle(m_device.device());
+        vkDeviceWaitIdle(m_device.getDevice());
 
         if (m_swapChain == nullptr) {
             m_swapChain = createUnique<SwapChain>(m_device, extent);
@@ -44,14 +44,14 @@ namespace PXTEngine {
         allocInfo.commandPool = m_device.getCommandPool();
         allocInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
 
-        if (vkAllocateCommandBuffers(m_device.device(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
+        if (vkAllocateCommandBuffers(m_device.getDevice(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate command buffers!");
         }
     }
 
     void Renderer::freeCommandBuffers() {
         vkFreeCommandBuffers(
-            m_device.device(),
+            m_device.getDevice(),
             m_device.getCommandPool(),
             static_cast<uint32_t>(m_commandBuffers.size()),
             m_commandBuffers.data());
@@ -79,6 +79,7 @@ namespace PXTEngine {
 
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
