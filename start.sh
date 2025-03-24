@@ -2,5 +2,5 @@
 mkdir -p build
 cd build
 cmake -S ../ -B .
-make && make Shaders && ./CG_Engine
+make && make Shaders && ./pxt_engine
 cd ..
