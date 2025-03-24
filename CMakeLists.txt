@@ -3,7 +3,7 @@ message(STATUS "Local .env: ${LOCAL_ENV}")
 
 cmake_minimum_required(VERSION 3.11.0)
 
-set(NAME CG_Engine)
+set(NAME PXT_Engine)
 
 # MinGW
 message(STATUS "using ${CMAKE_GENERATOR}")
