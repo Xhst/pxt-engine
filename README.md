@@ -1,22 +1,40 @@
 # PXT Engine
 
-PXT Engine is a graphics engine built using GLFW, Vulkan, and GLM.
-
+PXT Engine is a custom game engine built with C++, utilizing Vulkan for high-performance rendering, GLFW for window and input handling, and GLM for mathematics. The engine also integrates various third-party libraries like ImGui, tinyobjloader, and EnTT for ECS-based game architecture.
 
 ## Prerequisites
+Before building, ensure you have the following installed:
+- **CMake** (version 3.11.0 or higher)
+- **Vulkan SDK** (Ensure `VULKAN_SDK_PATH` is set)
+- **MinGW (if using MinGW Makefiles on Windows)**
+- **C++17 Compiler**
 
-- [GLFW](https://www.glfw.org/)
-- [GLM](https://github.com/g-truc/glm)
-- [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
-- [MinGW](http://www.mingw.org/) (for Windows)
+## Setup & Build Instructions
 
-## Setup
+### Windows (MinGW)
+1. Clone the repository:
+   ```sh
+   git clone --recursive https://github.com/Prox747/pxt-engine
+   cd pxt_engine
+   ```
+2. Set up environment variables in `.env` (optional but recommended):
+   ```sh
+   MINGW_PATH=C:/mingw64
+   VULKAN_SDK_PATH=C:/VulkanSDK/x.x.x.x
+   ```
+3. Run the `start.bat` script to build and run the project.
 
-### Windows
+### Linux/Unix
+1. Clone the repository:
+   ```sh
+   git clone --recursive https://github.com/Prox747/pxt-engine
+   cd pxt_engine
+   ```
+2. Install dependencies:
+   ```sh
+   sudo apt install build-essential cmake vulkan-sdk
+   ```
+3. Run the `start.bat` script to build and run the project.
 
-1. Set up the environment variables by copying `.env.example.windows`to `.env` and updating the paths as necessary.
-2. Run the `start.bat` script to build and run the project.
-
-### Unix
-
-1. Run the `start.sh` script to build and run the project.
+## Shader Compilation
+The engine automatically compiles shaders using `glslangValidator`. Ensure the Vulkan SDK is properly installed and accessible. All `.frag` and `.vert` shaders in `assets/shaders/` are compiled into SPIR-V and stored in `build/shaders/`.
