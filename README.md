@@ -38,3 +38,4 @@ Before building, ensure you have the following installed:
 
 ## Shader Compilation
 The engine automatically compiles shaders using `glslangValidator`. Ensure the Vulkan SDK is properly installed and accessible. All `.frag` and `.vert` shaders in `assets/shaders/` are compiled into SPIR-V and stored in `build/shaders/`.
+When the project is built with the start script it will automatically compile the shaders.
