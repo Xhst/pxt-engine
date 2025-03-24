@@ -4,6 +4,13 @@
 
 namespace PXTEngine {
 
+    /**
+     * @class Event
+     * @brief Base class for all event types.
+     * 
+     * The Event class is the base class for all event types in the engine. 
+     * It provides an interface for getting the event type, name, and string representation.
+     */
     class Event {
     public:
         virtual ~Event() = default;
