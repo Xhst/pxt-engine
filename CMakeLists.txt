@@ -157,3 +157,6 @@ add_custom_target(
     Shaders
     DEPENDS ${SPIRV_BINARY_FILES}
 )
+
+# Add Shaders as dependency of executable
+add_dependencies(${PROJECT_NAME} Shaders)
