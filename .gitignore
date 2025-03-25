@@ -32,6 +32,7 @@
 
 # Build directory
 /build/*
+/out/*
 
 # Environment variables
 .env
@@ -39,8 +40,9 @@
 # Compiled Shader files
 *.spv
 
-# vscode
+# vscode / vs
 .vscode/*
+.vs/*
 
 # jetbrains
 .idea/*
