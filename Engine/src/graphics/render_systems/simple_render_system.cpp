@@ -1,5 +1,6 @@
 #include "graphics/render_systems/simple_render_system.hpp"
 #include "core/memory.hpp"
+#include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <iostream>
@@ -62,8 +63,8 @@ namespace PXTEngine {
 
         m_pipeline = createUnique<Pipeline>(
             m_device,
-            "../build/shaders/simple_shader.vert.spv",
-            "../build/shaders/simple_shader.frag.spv",
+            SPV_SHADERS_PATH + "simple_shader.vert.spv",
+            SPV_SHADERS_PATH + "simple_shader.frag.spv",
             pipelineConfig
         );
     }

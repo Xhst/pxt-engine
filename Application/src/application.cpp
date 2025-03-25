@@ -24,7 +24,7 @@ public:
         
         camera.addAndGet<ScriptComponent>().bind<CameraController>();
 
-        Shared<Model> quad = Model::createModelFromFile(getDevice(), "../assets/models/quad.obj");
+        Shared<Model> quad = Model::createModelFromFile(getDevice(), MODELS_PATH + "quad.obj");
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
@@ -59,7 +59,7 @@ public:
         glm::vec4 colorGold = glm::vec4{1.0f, 0.843f, 0.0f, 1.0f};
 
         // Bunny
-        Shared<Model> model_bunny = Model::createModelFromFile(getDevice(), "../assets/models/stanford_bunny.obj");
+        Shared<Model> model_bunny = Model::createModelFromFile(getDevice(), MODELS_PATH + "stanford_bunny.obj");
         entity = getScene().createEntity("bunny")
             .add<TransformComponent>(glm::vec3{0.0f, 0.f, 0.f}, glm::vec3{1.0f, 1.0f, 1.0}, glm::vec3{0.0f, glm::pi<float>(), 0.0f})
             .add<ModelComponent>(model_bunny)

@@ -1,5 +1,6 @@
 #include "graphics/render_systems/point_light_system.hpp"
 #include "core/memory.hpp"
+#include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <iostream>
@@ -67,8 +68,8 @@ namespace PXTEngine {
 
         m_pipeline = createUnique<Pipeline>(
             m_device,
-            "../build/shaders/point_light.vert.spv",
-            "../build/shaders/point_light.frag.spv",
+            SPV_SHADERS_PATH + "point_light.vert.spv",
+            SPV_SHADERS_PATH + "point_light.frag.spv",
             pipelineConfig
         );
     }

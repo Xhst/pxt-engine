@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/constants.hpp"
+
 #include "application.hpp"
 
 #include "core/memory.hpp"
