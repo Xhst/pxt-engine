@@ -39,6 +39,11 @@ add_subdirectory(Engine/vendor/glm)
 add_subdirectory(Engine/vendor/tinyobjloader)  
 add_subdirectory(Engine/vendor/entt)
 
+# STB IMAGE library
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE ${CMAKE_SOURCE_DIR}/Engine/vendor/stb)
+
+
 # IMGUI Library
 set(IMGUI_DIR ${PROJECT_SOURCE_DIR}/Engine/vendor/imgui)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
@@ -100,7 +105,8 @@ if (WIN32)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw                     
     glm                      
-    tinyobjloader      
+    tinyobjloader
+    stb
     vulkan-1  # This is the name of the Vulkan library
     imgui
   )
@@ -116,6 +122,7 @@ elseif (UNIX)
     glfw 
     ${Vulkan_LIBRARIES}
     imgui
+    stb
   )
 endif()
 
