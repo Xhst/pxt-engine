@@ -6,10 +6,11 @@
 
 
 namespace PXTEngine {
-	Image::Image(const char* filename, Device& device) : m_device{ device } {
-		createTextureImage(filename);
+	Image::Image(const std::string filename, Device& device) : m_device{ device } {
+		createTextureImage(filename.c_str());
 	}
 	Image::~Image() {
+		vkDestroySampler(m_device.getDevice(), m_textureSampler, nullptr);
 		vkDestroyImageView(m_device.getDevice(), m_textureImageView, nullptr);
 
 		vkDestroyImage(m_device.getDevice(), m_textureImage, nullptr);
@@ -82,5 +83,30 @@ namespace PXTEngine {
 
 	void Image::createTextureImageView() {
 		m_textureImageView = m_device.createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	}
+
+	// view https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler for info (there are a lot)
+	void Image::createTextureSampler() {
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR; // nearest is pixelated, linear is smooth
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT; // what to do when image is smaller than surface
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT; // the repeat mode is probably the most common mode,
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT; // because it can be used to tile textures like floors and walls.
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = m_device.properties.limits.maxSamplerAnisotropy;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK; // which color to use when sampling outside the image borders (only if address mode is clamp to border)
+		samplerInfo.unnormalizedCoordinates = VK_FALSE; // false uses [0,1) coordinates. Useful for giving same coords to different resolution textures.
+		samplerInfo.compareEnable = VK_FALSE;		  // This is mainly used for percentage-closer filtering on shadow maps.
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS; // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR; // mipMapping stuff for later
+		samplerInfo.mipLodBias = 0.0f;
+		samplerInfo.minLod = 0.0f;
+		samplerInfo.maxLod = 0.0f;
+		
+		if (vkCreateSampler(m_device.getDevice(), &samplerInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
 	}
 }

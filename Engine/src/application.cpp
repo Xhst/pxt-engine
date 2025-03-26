@@ -3,11 +3,13 @@
 #include "core/memory.hpp"
 #include "core/events/event_dispatcher.hpp"
 #include "core/events/window_event.hpp"
+#include "core/constants.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
 #include "scene/camera.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
 #include "graphics/render_systems/point_light_system.hpp"
+#include "graphics/image.hpp"
 #include "scene/script/script.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -43,7 +45,7 @@ namespace PXTEngine {
                 .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
                 .build();
 
-        // to enable imgui functionality (FIGATA)
+        // to enable imGui functionality (FIGATA)
         initImGui(m_window, m_device);
     }
 
@@ -99,15 +101,23 @@ namespace PXTEngine {
             uboBuffers[i]->map();
         }
 
+        Image texture = Image(TEXTURES_PATH + "texture.jpg", m_device);
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = texture.getImageView();
+		imageInfo.sampler = texture.getImageSampler();
+
         auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
-        for(int i = 0; i < globalDescriptorSets.size(); i++) {
+        for (int i = 0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
             DescriptorWriter(*globalSetLayout, *m_globalPool)
                 .writeBuffer(0, &bufferInfo)
+                .writeImage(1, &imageInfo)
                 .build(globalDescriptorSets[i]);
         }
 
