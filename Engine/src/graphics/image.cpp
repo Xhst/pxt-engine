@@ -10,7 +10,8 @@ namespace PXTEngine {
 		createTextureImage(filename);
 	}
 	Image::~Image() {
-
+		vkDestroyImage(m_device.getDevice(), m_textureImage, nullptr);
+		vkFreeMemory(m_device.getDevice(), m_textureImageMemory, nullptr);
 	}
 
 	void Image::createTextureImage(const char* filename) {
@@ -36,6 +37,7 @@ namespace PXTEngine {
 
 		stbi_image_free(pixels);
 
+		// create an empty vkImage
 		createImage(texWidth, texHeight,
 					VK_FORMAT_R8G8B8A8_SRGB,
 					VK_IMAGE_TILING_OPTIMAL,
@@ -43,6 +45,15 @@ namespace PXTEngine {
 					VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 					m_textureImage, m_textureImageMemory);
+		
+		// we now change the layout of the image for better destination copy performance (VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+		m_device.transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		// then we copy the contents of the image (that were inside the stagingBuffer) into the vkImage
+		m_device.copyBufferToImage(stagingBuffer->getBuffer(), m_textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+
+		// finally, we change the image layout again to be accessed from the shaders (VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+		m_device.transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	void Image::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
@@ -57,27 +68,13 @@ namespace PXTEngine {
 		imageInfo.format = format;
 		imageInfo.tiling = tiling;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED; // Not usable by the GPU and the very first transition will discard the texels.
+															 // We don't care about the texels now that the image is empty, we will change
+															 // the layout later and then copy the pixels to this vkImage.
 		imageInfo.usage = usage;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT; // msaa makes no sense here
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT; // MSAA makes no sense here
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // we want this image to be used only by one queue family (in this case the graphics queue)
 		imageInfo.flags = 0; // optional
 
-		if (vkCreateImage(m_device.getDevice(), &imageInfo, nullptr, &image) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create image!");
-		}
-
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(m_device.getDevice(), image, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = m_device.findMemoryType(memRequirements.memoryTypeBits, properties);
-
-		if (vkAllocateMemory(m_device.getDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate image memory!");
-		}
-
-		vkBindImageMemory(m_device.getDevice(), image, imageMemory, 0);
+		m_device.createImageWithInfo(imageInfo, properties, image, imageMemory);
 	}
 }
