@@ -17,6 +17,8 @@ namespace PXTEngine {
 		 * @brief Deleted copy assignment operator.
 		 */
 		Image& operator=(const Image&) = delete;
+		Image(Image&&) = delete;
+		Image& operator=(Image&&) = delete;
 
 		void createTextureImage(const char* filename);
 		const VkImageView getImageView() { return m_textureImageView; }
