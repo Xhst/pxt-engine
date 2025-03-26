@@ -187,26 +187,13 @@ namespace PXTEngine {
         m_swapChainExtent = extent;
     }
 
-    void SwapChain::createImageViews() {
-        m_swapChainImageViews.resize(m_swapChainImages.size());
-        for (size_t i = 0; i < m_swapChainImages.size(); i++) {
-            VkImageViewCreateInfo viewInfo{};
-            viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.image = m_swapChainImages[i];
-            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            viewInfo.format = m_swapChainImageFormat;
-            viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            viewInfo.subresourceRange.baseMipLevel = 0;
-            viewInfo.subresourceRange.levelCount = 1;
-            viewInfo.subresourceRange.baseArrayLayer = 0;
-            viewInfo.subresourceRange.layerCount = 1;
+	void SwapChain::createImageViews() {
+		m_swapChainImageViews.resize(m_swapChainImages.size());
 
-            if (vkCreateImageView(m_device.getDevice(), &viewInfo, nullptr,
-                                  &m_swapChainImageViews[i]) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create texture image view!");
-            }
-        }
-    }
+		for (uint32_t i = 0; i < m_swapChainImages.size(); i++) {
+			m_swapChainImageViews[i] = m_device.createImageView(m_swapChainImages[i], m_swapChainImageFormat);
+		}
+	}
 
     void SwapChain::createRenderPass() {
         VkAttachmentDescription depthAttachment{};

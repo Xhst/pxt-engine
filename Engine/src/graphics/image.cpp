@@ -10,6 +10,8 @@ namespace PXTEngine {
 		createTextureImage(filename);
 	}
 	Image::~Image() {
+		vkDestroyImageView(m_device.getDevice(), m_textureImageView, nullptr);
+
 		vkDestroyImage(m_device.getDevice(), m_textureImage, nullptr);
 		vkFreeMemory(m_device.getDevice(), m_textureImageMemory, nullptr);
 	}
@@ -76,5 +78,9 @@ namespace PXTEngine {
 		imageInfo.flags = 0; // optional
 
 		m_device.createImageWithInfo(imageInfo, properties, image, imageMemory);
+	}
+
+	void Image::createTextureImageView() {
+		m_textureImageView = m_device.createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB);
 	}
 }
