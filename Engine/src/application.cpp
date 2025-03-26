@@ -103,7 +103,7 @@ namespace PXTEngine {
 
         Image texture = Image(TEXTURES_PATH + "texture.jpg", m_device);
 		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageLayout = texture.getImageLayout();
 		imageInfo.imageView = texture.getImageView();
 		imageInfo.sampler = texture.getImageSampler();
 
