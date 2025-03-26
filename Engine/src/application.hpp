@@ -7,7 +7,7 @@
 #include "graphics/window.hpp"
 #include "graphics/device.hpp"
 #include "graphics/renderer.hpp"
-#include "graphics/descriptors.hpp"
+#include "graphics/descriptors/descriptors.hpp"
 #include "graphics/frame_info.hpp"
 #include "scene/scene.hpp"
 
