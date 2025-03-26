@@ -8,6 +8,8 @@
 namespace PXTEngine {
 	Image::Image(const std::string filename, Device& device) : m_device{ device } {
 		createTextureImage(filename.c_str());
+		createTextureImageView();
+		createTextureSampler();
 	}
 	Image::~Image() {
 		vkDestroySampler(m_device.getDevice(), m_textureSampler, nullptr);
