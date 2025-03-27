@@ -9,7 +9,7 @@
 
 
 namespace PXTEngine {
-
+    
     Model::Model(Device& device, const Model::Builder& builder)
         : m_device{device} {
         createVertexBuffers(builder.vertices);
