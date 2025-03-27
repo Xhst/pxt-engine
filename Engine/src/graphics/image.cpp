@@ -52,32 +52,74 @@ namespace PXTEngine {
 					m_textureImage, m_textureImageMemory);
 		
 		// we now change the layout of the image for better destination copy performance (VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-		m_device.transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		m_device.transitionImageLayout(
+			m_textureImage, 
+			VK_FORMAT_R8G8B8A8_SRGB, 
+			VK_IMAGE_LAYOUT_UNDEFINED, 
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		);
 
 		// then we copy the contents of the image (that were inside the stagingBuffer) into the vkImage
-		m_device.copyBufferToImage(stagingBuffer->getBuffer(), m_textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+		m_device.copyBufferToImage(
+			stagingBuffer->getBuffer(), 
+			m_textureImage, 
+			static_cast<uint32_t>(texWidth), 
+			static_cast<uint32_t>(texHeight)
+		);
 
 		// finally, we change the image layout again to be accessed from the shaders (VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-		m_device.transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		m_device.transitionImageLayout(
+			m_textureImage, 
+			VK_FORMAT_R8G8B8A8_SRGB, 
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		);
 	}
 
-	void Image::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+	void Image::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+		 VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+			
 		VkImageCreateInfo imageInfo{};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = width;
-		imageInfo.extent.height = height;
-		imageInfo.extent.depth = 1;
+		imageInfo.extent = { width, height, 1 };
+		
+		// The number of mip levels (1 means no mip mapping).
+		// A full mipmap chain would be 1 + log2(max(width, height, depth)) levels
 		imageInfo.mipLevels = 1;
+
+		// The number of layers in the image (1 means that it's a regular image).
+		// Values > 1 are used for array textures (e.g., for cube maps, 3D texture atlases, or layered framebuffers).
 		imageInfo.arrayLayers = 1;
+
+		// Specifies the format of the image (color depth, channels, etc.).
+		// The format affects memory usage and compatibility
 		imageInfo.format = format;
+
+		// Specifies how image data is stored in memory.
+		// VK_IMAGE_TILING_LINEAR: Texels are laid out in row-major order (similar to CPU memory).
+		// VK_IMAGE_TILING_OPTIMAL: Texels are laid out in an implementation-defined order for optimal access for GPU.
 		imageInfo.tiling = tiling;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED; // Not usable by the GPU and the very first transition will discard the texels.
-															 // We don't care about the texels now that the image is empty, we will change
-															 // the layout later and then copy the pixels to this vkImage.
+
+		// The initialLayout specifies the layout of the image data on the GPU at the start.
+		// VK_IMAGE_LAYOUT_UNDEFINED: Not usable by the GPU and the very first transition will discard the texels.
+		// We don't care about the texels now that the image is empty, we will change the layout later and then copy
+		// the pixels to this vkImage.
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		// Specifies the way the image will be used.
+		// Multiple values can be combined using bitwise OR.
+		// https://registry.khronos.org/vulkan/specs/latest/man/html/VkImageUsageFlagBits.html#_description
 		imageInfo.usage = usage;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT; // MSAA makes no sense here
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // we want this image to be used only by one queue family (in this case the graphics queue)
+
+		// Specifies the number of samples per pixel (used for anti-aliasing).
+		// We don't use MSAA here so we leave it at one sample.
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT; 
+
+		// Defines how the image is shared between queues.
+		// We want this image to be used only by one queue family (in this case the graphics queue)
+		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
 		imageInfo.flags = 0; // optional
 
 		m_device.createImageWithInfo(imageInfo, properties, image, imageMemory);
