@@ -87,22 +87,45 @@ namespace PXTEngine {
 		m_textureImageView = m_device.createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB);
 	}
 
-	// view https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler for info (there are a lot)
 	void Image::createTextureSampler() {
 		VkSamplerCreateInfo samplerInfo{};
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR; // nearest is pixelated, linear is smooth
+
+		// magFilter & minFilter determine how the texture is sampled when scaled up (mag) or down (min).
+		// VK_FILTER_LINEAR: linear interpolation (blurry but smooth)
+		// VK_FILTER_LINEAR: nearest neighbor interpolation (pixelated appearance)
+		samplerInfo.magFilter = VK_FILTER_LINEAR; 
 		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT; // what to do when image is smaller than surface
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT; // the repeat mode is probably the most common mode,
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT; // because it can be used to tile textures like floors and walls.
+
+		// addressMode (U-V-W): determine what happens when texture coordinates go beyond the image boundaries.
+		// Example: https://vulkan-tutorial.com/images/texture_addressing.png
+		// VK_SAMPLER_ADDRESS_MODE_REPEAT: repeats the texture
+		// VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT: flips every repeat
+		// VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE: stretches edge texels
+		// VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER: uses a specified border color
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT; 
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT; 
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT; 
+
+		// enable anisotropic filtering, which improves texture quality at oblique angles.
+		// https://en.wikipedia.org/wiki/Anisotropic_filtering
 		samplerInfo.anisotropyEnable = VK_TRUE;
 		samplerInfo.maxAnisotropy = m_device.properties.limits.maxSamplerAnisotropy;
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK; // which color to use when sampling outside the image borders (only if address mode is clamp to border)
-		samplerInfo.unnormalizedCoordinates = VK_FALSE; // false uses [0,1) coordinates. Useful for giving same coords to different resolution textures.
-		samplerInfo.compareEnable = VK_FALSE;		  // This is mainly used for percentage-closer filtering on shadow maps.
-		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS; // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR; // mipMapping stuff for later
+
+		// which color to use when sampling outside the image borders (only if address mode is clamp to border)
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+
+		// VK_FALSE: Uses normalized texture coordinates [0,1) range, useful for giving same coords to different resolution textures.
+		// VK_TRUE: Uses actual texel coordinates [0, texWidth) and [0, texHeight)]
+		samplerInfo.unnormalizedCoordinates = VK_FALSE; 
+
+		// Those are mainly used for percentage-closer filtering on shadow maps.
+		// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
+		samplerInfo.compareEnable = VK_FALSE;		  
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS; 
+
+		// Mipmapping settings
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR; 
 		samplerInfo.mipLodBias = 0.0f;
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = 0.0f;
