@@ -101,7 +101,7 @@ namespace PXTEngine {
             uboBuffers[i]->map();
         }
 
-        Image texture = Image(TEXTURES_PATH + "texture.jpg", m_device);
+        Image texture = Image(TEXTURES_PATH + "shrek_420x420.png", m_device);
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = texture.getImageView();
