@@ -9,28 +9,87 @@
 namespace PXTEngine {
     class DescriptorWriter {
     public:
+
+        DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
         DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
 
+        /**
+         * @brief Writes a single buffer descriptor to the specified binding.
+         * 
+         * @param binding The binding index.
+         * @param bufferInfo Pointer to the buffer descriptor info.
+         * 
+         * @return Reference to the DescriptorWriter instance.
+         */
         DescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo) {
             return write(binding, bufferInfo, 1);
         }
     
+        /**
+         * @brief Writes multiple buffer descriptors to the specified binding.
+         * 
+         * @param binding The binding index.
+         * @param buffersInfo Pointer to the array of buffer descriptor infos.
+         * @param count The number of descriptors.
+         * 
+         * @return Reference to the DescriptorWriter instance.
+         */
         DescriptorWriter& writeBuffers(uint32_t binding, VkDescriptorBufferInfo* buffersInfo, uint32_t count) {
             return write(binding, buffersInfo, count);
         }
     
+        /**
+         * @brief Writes a single image descriptor to the specified binding.
+         * 
+         * @param binding The binding index.
+         * @param imageInfo Pointer to the image descriptor info.
+         * 
+         * @return Reference to the DescriptorWriter instance.
+         */
         DescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo) {
             return write(binding, imageInfo, 1);
         }
     
+        /**
+         * @brief Writes multiple image descriptors to the specified binding.
+         * 
+         * @param binding The binding index.
+         * @param imagesInfo Pointer to the array of image descriptor infos.
+         * @param count The number of descriptors.
+         * 
+         * @return Reference to the DescriptorWriter instance.
+         */
         DescriptorWriter& writeImages(uint32_t binding, VkDescriptorImageInfo* imagesInfo, uint32_t count) {
             return write(binding, imagesInfo, count);
         }
 
+        /**
+         * @brief Builds and allocates a descriptor set.
+         * 
+         * @param set Reference to the descriptor set to be built.
+         * 
+         * @return True if successful, false otherwise.
+         */
         bool build(VkDescriptorSet& set);
+
+        /**
+         * @brief Overwrites an existing descriptor set with the stored writes.
+         * 
+         * @param set Reference to the descriptor set to be overwritten.
+         */
         void overwrite(VkDescriptorSet& set);
 
     private:
+        /**
+         * @brief Generic template function to write descriptor data.
+         * 
+         * @tparam T Type of descriptor info (VkDescriptorBufferInfo or VkDescriptorImageInfo).
+         * @param binding The binding index.
+         * @param info Pointer to descriptor info.
+         * @param count Number of descriptors.
+         * 
+         * @return Reference to the DescriptorWriter instance.
+         */
         template <typename T>
         DescriptorWriter& write(uint32_t binding, T* info, uint32_t count) {
             assert(m_setLayout.m_bindings.count(binding) == 1 && "Layout does not contain specified binding");
