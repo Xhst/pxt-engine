@@ -27,32 +27,32 @@ public:
         Shared<Model> quad = Model::createModelFromFile(getDevice(), MODELS_PATH + "quad.obj");
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(1).build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("Roof")
             .add<TransformComponent>(glm::vec3{0.f, -2.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("BackWall")
             .add<TransformComponent>(glm::vec3{0.0f, -1.f, 1.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{glm::pi<float>()/2, 0.0f, 0.0f})
-            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(2).build())
             .add<ModelComponent>(quad);
 
             entity = getScene().createEntity("FrontWall")
             .add<TransformComponent>(glm::vec3{0.0f, -1.f, -1.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{-glm::pi<float>()/2, 0.0f, 0.0f})
-            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(2).build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("RightWall")
             .add<TransformComponent>(glm::vec3{1.0f, -1.f, 0.0f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{glm::pi<float>()/2, glm::pi<float>()/2, 0.0f})
-            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).build())
             .add<ModelComponent>(quad);
         
         entity = getScene().createEntity("LeftWall")
             .add<TransformComponent>(glm::vec3{-1.0f, -1.f, 0.0f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{glm::pi<float>()/2, -glm::pi<float>()/2, 0.0f})
-            .add<MaterialComponent>(glm::vec3{1.0f, 1.0f, 1.0f})
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).build())
             .add<ModelComponent>(quad);
 
         glm::vec4 colorWhite = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
@@ -64,7 +64,11 @@ public:
             .add<TransformComponent>(glm::vec3{0.0f, 0.f, 0.f}, glm::vec3{1.0f, 1.0f, 1.0}, glm::vec3{0.0f, glm::pi<float>(), 0.0f})
             .add<ModelComponent>(model_bunny)
             //.add<MaterialComponent>(colorWhite)
-            .add<MaterialComponent>(colorGold, 2.0f, 140.0f);
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                    .setColor(colorGold)
+                    .setSpecularIntensity(2.0f)
+                    .setShininess(140.0f)
+                    .build());
 
         // Light above the bunny
         entity = createPointLight(0.025f, 0.02f, glm::vec3{1.f, 1.f, 1.f});

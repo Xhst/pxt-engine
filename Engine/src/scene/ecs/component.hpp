@@ -44,18 +44,53 @@ namespace PXTEngine
     };
 
     struct MaterialComponent {
-        glm::vec4 color;
-        float specularIntensity;
-        float shininess;
+        glm::vec4 color{1.0f};
+        float specularIntensity = 0.0f;
+        float shininess = 1.0f;
+        int textureIndex = 0;
 
         MaterialComponent() = default;
         MaterialComponent(const MaterialComponent&) = default;
-        MaterialComponent(const glm::vec4& color, float specularIntensity = 0.0f, float shininess = 1.0f) 
-        : color(color), specularIntensity(specularIntensity), shininess(shininess) {}
+        MaterialComponent(MaterialComponent&&) = default; // Explicit move constructor
+        MaterialComponent& operator=(MaterialComponent&&) = default; // Explicit move assignment
+        
+        struct Builder {
+            glm::vec4 color{1.0f};
+            float specularIntensity = 0.0f;
+            float shininess = 1.0f;
+            int textureIndex = 0;
 
-        /* w can be anything (intensity, alpha etc.)*/
-        MaterialComponent(const glm::vec3& color, float w = 1.f, float specularIntensity = 0.0f, float shininess = 1.0f) 
-        : color(glm::vec4{color, w}), specularIntensity(specularIntensity), shininess(shininess) {}
+            Builder& setColor(const glm::vec4& color) {
+                this->color = color;
+                return *this;
+            }
+
+            Builder& setColor(const glm::vec3& color, float w = 1.f) {
+                this->color = glm::vec4{color, w};
+                return *this;
+            }
+
+            Builder& setSpecularIntensity(float specularIntensity) {
+                this->specularIntensity = specularIntensity;
+                return *this;
+            }
+
+            Builder& setShininess(float shininess) {
+                this->shininess = shininess;
+                return *this;
+            }
+
+            Builder& setTextureIndex(int textureIndex) {
+                if (textureIndex < 0) textureIndex = 0;
+                
+                this->textureIndex = textureIndex;
+                return *this;
+            }
+
+            MaterialComponent build() {
+                return MaterialComponent{color, specularIntensity, shininess, textureIndex};
+            }
+        };
     };
 
     struct Transform2dComponent {
