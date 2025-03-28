@@ -11,7 +11,6 @@ namespace PXTEngine {
     public:
 
         DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
-        DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
 
         /**
          * @brief Writes a single buffer descriptor to the specified binding.
