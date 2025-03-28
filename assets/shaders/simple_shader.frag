@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_nonuniform_qualifier : enable
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
@@ -23,7 +24,7 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
   int numLights;
 } ubo;
 
-layout(set = 0, binding = 1) uniform sampler2D image;
+layout(set = 0, binding = 1) uniform sampler2D textures[];
 
 layout(push_constant) uniform Push {
   mat4 modelMatrix;
@@ -31,6 +32,7 @@ layout(push_constant) uniform Push {
   vec4 color;
   float specularIntensity;
   float shininess;
+  int textureIndex;
 } push;
 
 void main() {
@@ -61,7 +63,7 @@ void main() {
     specularLight += lightColor * blinnTerm * push.specularIntensity; 
   }
 
-  vec3 imageColor = texture(image, fragUV).rgb;
+  vec3 imageColor = texture(textures[push.textureIndex], fragUV).rgb;
 
   /* we need to add control coefficients to regulate both terms
      for now we use fragColor for both which is ideal for metallic objects

@@ -101,15 +101,29 @@ namespace PXTEngine {
             uboBuffers[i]->map();
         }
 
-        Image texture = Image(TEXTURES_PATH + "shrek_420x420.png", m_device);
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = texture.getImageView();
-		imageInfo.sampler = texture.getImageSampler();
+        std::vector<std::string> textures_name = {
+            "white_pixel.png",
+            "shrek_420x420.png",
+            "texture.jpg",
+        };
+
+        std::vector<Unique<Image>> textures;
+        for (const auto& texture_name : textures_name) {
+            textures.push_back(createUnique<Image>(TEXTURES_PATH + texture_name, m_device));
+        }
+
+        std::vector<VkDescriptorImageInfo> imageInfos;
+        for (const auto& texture : textures) {
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = texture->getImageView();
+            imageInfo.sampler = texture->getImageSampler();
+            imageInfos.push_back(imageInfo);
+        }
 
         auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, textures.size())
             .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -117,7 +131,7 @@ namespace PXTEngine {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
             DescriptorWriter(*globalSetLayout, *m_globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, &imageInfo)
+                .writeImages(1, imageInfos.data(), textures.size())
                 .build(globalDescriptorSets[i]);
         }
 

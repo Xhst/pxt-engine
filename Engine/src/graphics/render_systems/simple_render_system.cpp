@@ -21,6 +21,7 @@ namespace PXTEngine {
         glm::vec4 color{1.f};
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
+        int textureIndex = -1;
     };
 
     SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_device(device) {
@@ -94,6 +95,7 @@ namespace PXTEngine {
             push.color = material.color;
             push.specularIntensity = material.specularIntensity;
             push.shininess = material.shininess;
+            push.textureIndex = material.textureIndex;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
