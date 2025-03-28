@@ -154,8 +154,28 @@ namespace PXTEngine {
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
+        VkPhysicalDeviceDescriptorIndexingFeaturesEXT indexingFeatures{};
+        indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+        indexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+        indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+        indexingFeatures.runtimeDescriptorArray = VK_TRUE;
+
+        VkPhysicalDeviceFeatures2 deviceFeatures2{};
+        deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        deviceFeatures2.pNext = &indexingFeatures;
+
+        vkGetPhysicalDeviceFeatures2(m_physicalDevice, &deviceFeatures2);
+
+        // Check if the required features are supported
+        if (!indexingFeatures.shaderSampledImageArrayNonUniformIndexing ||
+            !indexingFeatures.descriptorBindingPartiallyBound ||
+            !indexingFeatures.runtimeDescriptorArray) {
+            throw std::runtime_error("Required descriptor indexing features are not supported!");
+        }
+
         VkPhysicalDeviceFeatures deviceFeatures = {};
-        deviceFeatures.samplerAnisotropy = VK_TRUE;
+        deviceFeatures.samplerAnisotropy = VK_TRUE; 
+
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -164,7 +184,10 @@ namespace PXTEngine {
             static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
+        createInfo.pNext = &deviceFeatures2; // Attach extended features
+
         createInfo.pEnabledFeatures = &deviceFeatures;
+
         createInfo.enabledExtensionCount =
             static_cast<uint32_t>(m_deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = m_deviceExtensions.data();
