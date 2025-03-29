@@ -114,7 +114,23 @@ namespace PXTEngine {
         const bool enableValidationLayers = true;
 #endif
 
+        /**
+         * @brief Constructor for the Device class.
+         *
+         * This constructor initializes the Vulkan device, including creating the instance,
+         * setting up the debug messenger, creating the surface, picking a physical device,
+         * creating the logical device, and creating the command pool.
+         *
+         * @param window The window to create the surface from.
+         */
         Device(Window &window);
+
+        /**
+         * @brief Destructor for the Device class.
+         *
+         * This destructor destroys the Vulkan device, including destroying the command pool,
+         * logical device, debug messenger (if enabled), surface, and instance.
+         */
         ~Device();
 
         // Not copyable or movable
@@ -135,59 +151,287 @@ namespace PXTEngine {
         SwapChainSupportDetails getSwapChainSupport() {
             return querySwapChainSupport(m_physicalDevice);
         }
-        uint32_t findMemoryType(uint32_t typeFilter,
-                                VkMemoryPropertyFlags properties);
+
+        /**
+         * @brief Finds a suitable memory type for a buffer or image.
+         *
+         * This function finds a suitable memory type for a buffer or image, given the type filter
+         * and the required memory properties.
+         *
+         * @param typeFilter The type filter.
+         * @param properties The required memory properties.
+         * @return The memory type index.
+         */
+        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+        /**
+         * @brief Finds the queue families for the physical device.
+         *
+         * This function finds the graphics and present queue families for the physical device.
+         *
+         * @return The queue family indices.
+         */
         QueueFamilyIndices findPhysicalQueueFamilies() {
             return findQueueFamilies(m_physicalDevice);
         }
+
+        /**
+         * @brief Gets the graphics and present queue family indices.
+         *
+         * This function returns the graphics and present queue family indices for the physical device.
+         *
+         * @return The graphics and present queue family indices.
+         */
         int32_t getGraphicsQueueFamily() {
             return findPhysicalQueueFamilies().graphicsFamily;
         }
+
+        /**
+         * @brief Gets the present queue family index.
+         *
+         * This function returns the present queue family index for the physical device.
+         *
+         * @return The present queue family index.
+         */
         int32_t getPresentQueueFamily() {
             return findPhysicalQueueFamilies().presentFamily;
         }
-        VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates,
-                                     VkImageTiling tiling,
+
+        /**
+         * @brief Finds a supported format for an image.
+         *
+         * This function finds a supported format for an image, given a list of candidate formats,
+         * the tiling mode, and the required features.
+         *
+         * @param candidates The list of candidate formats.
+         * @param tiling The tiling mode.
+         * @param features The required features.
+         * @return The supported format.
+         */
+        VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, 
                                      VkFormatFeatureFlags features);
 
-        // Buffer Helper Functions
-        void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                          VkMemoryPropertyFlags properties, VkBuffer &buffer,
-                          VkDeviceMemory &bufferMemory);
-        VkCommandBuffer beginSingleTimeCommands();
-        void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
-                        VkDeviceSize size);
-        void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
-                               uint32_t height, uint32_t layerCount = 1);
 
-        void createImageWithInfo(const VkImageCreateInfo &imageInfo,
-                                 VkMemoryPropertyFlags properties,
+        /* ----------------------- Buffer Helper Functions ----------------------- */
+
+        /**
+         * @brief Creates a buffer.
+         *
+         * This function creates a buffer with the given size, usage, and memory properties.
+         *
+         * @param size The size of the buffer.
+         * @param usage The usage of the buffer.
+         * @param properties The memory properties of the buffer.
+         * @param buffer The buffer handle.
+         * @param bufferMemory The buffer memory handle.
+         */
+        void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, 
+                          VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+
+        /**
+         * @brief Begins single-time commands.
+         *
+         * This function begins a command buffer for single-time commands.
+         *
+         * @return The command buffer handle.
+         */
+        VkCommandBuffer beginSingleTimeCommands();
+
+        /**
+         * @brief Ends single-time commands.
+         *
+         * This function ends a command buffer for single-time commands and submits it to the graphics queue.
+         *
+         * @param commandBuffer The command buffer handle.
+         */
+        void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+        /**
+         * @brief Copies data from a source buffer to a destination buffer.
+         *
+         * This function copies data from a source buffer to a destination buffer using a command buffer.
+         *
+         * @param srcBuffer The source buffer handle.
+         * @param dstBuffer The destination buffer handle.
+         * @param size The size of the data to copy.
+         */
+        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+        /**
+         * @brief Copies data from a buffer to an image.
+         *
+         * This function copies data from a buffer to an image using a command buffer.
+         *
+         * @param buffer The source buffer handle.
+         * @param image The destination image handle.
+         * @param width The width of the image.
+         * @param height The height of the image.
+         * @param layerCount The number of image layers.
+         */
+        void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount = 1);
+
+        /**
+         * @brief Creates an image with the given create info and memory properties.
+         *
+         * This function creates an image and allocates memory for it.
+         *
+         * @param imageInfo The image create info.
+         * @param properties The memory properties.
+         * @param image The image handle.
+         * @param imageMemory The image memory handle.
+         */
+        void createImageWithInfo(const VkImageCreateInfo &imageInfo, VkMemoryPropertyFlags properties,
                                  VkImage &image, VkDeviceMemory &imageMemory);
 
+        /**
+         * @brief Creates an image view for an image.
+         *
+         * This function creates an image view for an image, which is used to access the image data.
+         *
+         * @param image The image handle.
+         * @param format The format of the image.
+         * @return The image view handle.
+         */
         VkImageView createImageView(VkImage image, VkFormat format);
 
+        /**
+         * @brief Transitions the layout of an image.
+         *
+         * This function transitions the layout of an image, which is required when changing the way the image is accessed.
+         *
+         * @param image The image handle.
+         * @param format The format of the image.
+         * @param oldLayout The old layout of the image.
+         * @param newLayout The new layout of the image.
+         */
         void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
         VkPhysicalDeviceProperties properties;
 
        private:
+       /**
+         * @brief Creates a Vulkan instance.
+         *
+         * This function creates a Vulkan instance, which is the entry point for all Vulkan commands.
+         * It also sets up the validation layers if they are enabled.
+         */
         void createInstance();
-        void setupDebugMessenger();
-        void createSurface();
+        
+        /**
+         * @brief Picks a suitable physical device.
+         *
+         * This function enumerates the available physical devices and selects one that
+         * supports the required features and extensions.
+         */
         void pickPhysicalDevice();
+
+        /**
+         * @brief Creates a logical device.
+         *
+         * This function creates a logical device, which is used to interact with the physical device.
+         * It also creates the graphics and present queues.
+         */
         void createLogicalDevice();
+
+        /**
+         * @brief Creates a command pool.
+         *
+         * This function creates a command pool, which is used to allocate command buffers.
+         */
         void createCommandPool();
 
-        // helper functions
+        /**
+         * @brief Creates a Vulkan surface.
+         *
+         * This function creates a Vulkan surface, which is used to present images to the window.
+         */
+        void createSurface();
+
+        /**
+         * @brief Sets up the debug messenger.
+         *
+         * This function creates a debug messenger if validation layers are enabled.
+         */
+        void setupDebugMessenger();
+
+
+
+        /* ---------------------------- Helper functions ---------------------------- */
+
+        /**
+         * @brief Checks if a physical device is suitable.
+         *
+         * This function checks if a physical device supports the required features and extensions.
+         *
+         * @param device The physical device to check.
+         * @return true if the device is suitable, false otherwise.
+         */
         bool isDeviceSuitable(VkPhysicalDevice device);
+
+        /**
+         * @brief Gets the required extensions for the Vulkan instance.
+         *
+         * This function gets the required extensions for the Vulkan instance, including the GLFW extensions
+         * and the debug utils extension if validation layers are enabled.
+         *
+         * @return A vector of required extensions.
+         */
         std::vector<const char*> getRequiredExtensions();
+
+        /**
+         * @brief Checks if the validation layers are supported.
+         *
+         * This function checks if all the required validation layers are supported by the Vulkan instance.
+         *
+         * @return true if all layers are supported, false otherwise.
+         */
         bool checkValidationLayerSupport();
+
+        /**
+         * @brief Finds the queue families for a physical device.
+         *
+         * This function finds the graphics and present queue families for a physical device.
+         *
+         * @param device The physical device to find the queue families for.
+         * @return The queue family indices.
+         */
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-        void populateDebugMessengerCreateInfo(
-            VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+
+        /**
+         * @brief Populates the debug messenger create info structure.
+         *
+         * This function populates the debug messenger create info structure with the required parameters.
+         *
+         * @param createInfo The debug messenger create info structure.
+         */
+        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+
+        /**
+         * @brief Checks if the required GLFW extensions are supported.
+         *
+         * This function checks if all the required GLFW extensions are supported by the Vulkan instance.
+         */
         void hasGflwRequiredInstanceExtensions();
+
+        /**
+         * @brief Checks if the required device extensions are supported.
+         *
+         * This function checks if all the required device extensions are supported by the physical device.
+         *
+         * @param device The physical device to check.
+         * @return true if all extensions are supported, false otherwise.
+         */
         bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+
+        /**
+         * @brief Queries the swap chain support details for a physical device.
+         *
+         * This function queries the swap chain support details for a physical device, including the surface capabilities,
+         * formats, and present modes.
+         *
+         * @param device The physical device to query the swap chain support details for.
+         * @return The swap chain support details.
+         */
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
         VkInstance m_instance;

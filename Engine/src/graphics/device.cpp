@@ -7,7 +7,20 @@
 
 namespace PXTEngine {
 
-    // local callback functions
+    /* ------------------------ Local callback functions ------------------------ */
+    
+    /**
+     * @brief Debug callback function for Vulkan validation layers.
+     *
+     * This function is called by the Vulkan validation layers to report debug messages.
+     * It prints the message to the standard error stream.
+     *
+     * @param messageSeverity The severity of the message.
+     * @param messageType The type of the message.
+     * @param pCallbackData Pointer to the message data.
+     * @param pUserData Pointer to user data (unused).
+     * @return VK_FALSE to indicate that the Vulkan call should not be aborted.
+     */
     static VKAPI_ATTR VkBool32 VKAPI_CALL
     debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                   VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -19,6 +32,18 @@ namespace PXTEngine {
         return VK_FALSE;
     }
 
+    /**
+     * @brief Creates a Vulkan debug utils messenger.
+     *
+     * This function creates a debug utils messenger, which is used to receive debug messages
+     * from the Vulkan validation layers.
+     *
+     * @param instance The Vulkan instance.
+     * @param pCreateInfo Pointer to the create info structure.
+     * @param pAllocator Pointer to the allocation callbacks.
+     * @param pDebugMessenger Pointer to the debug messenger handle.
+     * @return VK_SUCCESS if the messenger was created successfully, or a Vulkan error code.
+     */
     VkResult CreateDebugUtilsMessengerEXT(
         VkInstance instance,
         const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
@@ -33,6 +58,15 @@ namespace PXTEngine {
         }
     }
 
+    /**
+     * @brief Destroys a Vulkan debug utils messenger.
+     *
+     * This function destroys a debug utils messenger.
+     *
+     * @param instance The Vulkan instance.
+     * @param debugMessenger The debug messenger handle.
+     * @param pAllocator Pointer to the allocation callbacks.
+     */
     void DestroyDebugUtilsMessengerEXT(
         VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
         const VkAllocationCallbacks *pAllocator) {
@@ -43,7 +77,8 @@ namespace PXTEngine {
         }
     }
 
-    // class member functions
+    /* ------------------------- Class member functions ------------------------- */
+
     Device::Device(Window& window) : m_window{window} {
         createInstance();
         setupDebugMessenger();
