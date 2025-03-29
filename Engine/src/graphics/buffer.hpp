@@ -203,13 +203,16 @@ namespace PXTEngine {
         private:
         /**
          * @brief Calculates the aligned instance size.
+         * 
+         * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
+         * (rounds up instanceSize to the next multiple of minOffsetAlignment, if 1 -> returns instanceSize
          *
          * @param instanceSize The original instance size.
          * @param minOffsetAlignment The minimum required alignment, in bytes, for the offset member 
-    *                                (eg. minUniformBufferOffsetAlignment)
-         * @return The aligned instance size.
+         *                           (eg. minUniformBufferOffsetAlignment)
+         * 
+         * @return VkResult of the buffer mapping call
          */
-        
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
         Device& m_device;

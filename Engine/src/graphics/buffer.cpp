@@ -5,16 +5,6 @@
 
 namespace PXTEngine {
 
-    /**
-     * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
-     * (rounds up instanceSize to the next multiple of minOffsetAlignment, if 1 -> returns instanceSize
-     *
-     * @param instanceSize The size of an instance
-     * @param minOffsetAlignment The minimum required alignment, in bytes, for the offset member (eg
-     * minUniformBufferOffsetAlignment)
-     *
-     * @return VkResult of the buffer mapping call
-     */
     VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
         if (minOffsetAlignment > 0) {
             return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
