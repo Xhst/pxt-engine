@@ -4,6 +4,7 @@
 #include "core/uuid.hpp"
 #include "core/system.hpp"
 #include "core/events/event.hpp"
+#include "graphics/instance.hpp"
 #include "graphics/window.hpp"
 #include "graphics/device.hpp"
 #include "graphics/renderer.hpp"
@@ -64,6 +65,7 @@ namespace PXTEngine {
 
         bool m_running = true;
 
+        Instance m_instance{"PXTEngine"};
         Window m_window{WindowData()};
         Device m_device{m_window};
         Renderer m_renderer{m_window, m_device};

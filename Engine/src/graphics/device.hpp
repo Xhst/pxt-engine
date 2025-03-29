@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "graphics/instance.hpp"
 #include "graphics/window.hpp"
 
 namespace PXTEngine {
@@ -123,7 +124,7 @@ namespace PXTEngine {
          *
          * @param window The window to create the surface from.
          */
-        Device(Window &window);
+        Device(Instance& instance, Window& window);
 
         /**
          * @brief Destructor for the Device class.
@@ -145,7 +146,7 @@ namespace PXTEngine {
         VkQueue graphicsQueue() { return m_graphicsQueue; }
         VkQueue presentQueue() { return m_presentQueue; }
 
-        VkInstance getVkInstance() {return m_instance;}
+        VkInstance getVkInstance() {return m_instance.getVkInstance();}
         VkPhysicalDevice getPhysicalDevice() {return m_physicalDevice;}
 
         SwapChainSupportDetails getSwapChainSupport() {
@@ -308,15 +309,7 @@ namespace PXTEngine {
 
         VkPhysicalDeviceProperties properties;
 
-       private:
-       /**
-         * @brief Creates a Vulkan instance.
-         *
-         * This function creates a Vulkan instance, which is the entry point for all Vulkan commands.
-         * It also sets up the validation layers if they are enabled.
-         */
-        void createInstance();
-        
+       private:        
         /**
          * @brief Picks a suitable physical device.
          *
@@ -347,14 +340,6 @@ namespace PXTEngine {
          */
         void createSurface();
 
-        /**
-         * @brief Sets up the debug messenger.
-         *
-         * This function creates a debug messenger if validation layers are enabled.
-         */
-        void setupDebugMessenger();
-
-
 
         /* ---------------------------- Helper functions ---------------------------- */
 
@@ -369,25 +354,6 @@ namespace PXTEngine {
         bool isDeviceSuitable(VkPhysicalDevice device);
 
         /**
-         * @brief Gets the required extensions for the Vulkan instance.
-         *
-         * This function gets the required extensions for the Vulkan instance, including the GLFW extensions
-         * and the debug utils extension if validation layers are enabled.
-         *
-         * @return A vector of required extensions.
-         */
-        std::vector<const char*> getRequiredExtensions();
-
-        /**
-         * @brief Checks if the validation layers are supported.
-         *
-         * This function checks if all the required validation layers are supported by the Vulkan instance.
-         *
-         * @return true if all layers are supported, false otherwise.
-         */
-        bool checkValidationLayerSupport();
-
-        /**
          * @brief Finds the queue families for a physical device.
          *
          * This function finds the graphics and present queue families for a physical device.
@@ -396,22 +362,6 @@ namespace PXTEngine {
          * @return The queue family indices.
          */
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-
-        /**
-         * @brief Populates the debug messenger create info structure.
-         *
-         * This function populates the debug messenger create info structure with the required parameters.
-         *
-         * @param createInfo The debug messenger create info structure.
-         */
-        void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
-
-        /**
-         * @brief Checks if the required GLFW extensions are supported.
-         *
-         * This function checks if all the required GLFW extensions are supported by the Vulkan instance.
-         */
-        void hasGflwRequiredInstanceExtensions();
 
         /**
          * @brief Checks if the required device extensions are supported.
@@ -434,19 +384,16 @@ namespace PXTEngine {
          */
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-        VkInstance m_instance;
-        VkDebugUtilsMessengerEXT m_debugMessenger;
+
         VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-        Window &m_window;
+        Instance& m_instance;
+        Window& m_window;
         VkCommandPool m_commandPool;
 
         VkDevice m_device;
         VkSurfaceKHR m_surface;
         VkQueue m_graphicsQueue;
         VkQueue m_presentQueue;
-
-        const std::vector<const char*> m_validationLayers = {"VK_LAYER_KHRONOS_validation"};
-        const std::vector<const char*> m_deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     };
 
 }
