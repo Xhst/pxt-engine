@@ -7,6 +7,12 @@
 
 namespace PXTEngine {
 
+    /**
+     * @struct PipelineConfigInfo
+     * @brief Configuration information for the graphics pipeline.
+     *
+     * This structure contains various settings and configurations for creating a Vulkan graphics pipeline.
+     */
     struct PipelineConfigInfo {
         PipelineConfigInfo() = default;
         PipelineConfigInfo(const PipelineConfigInfo&) = delete;
@@ -29,13 +35,18 @@ namespace PXTEngine {
         uint32_t subpass = 0;
     };
 
+    /**
+     * @class Pipeline
+     * @brief Represents a Vulkan graphics pipeline.
+     *
+     * This class encapsulates the creation and management of a Vulkan graphics pipeline, including shader modules,
+     * pipeline layout, and render pass. It provides methods for binding the pipeline to a command buffer.
+     */
     class Pipeline {
        public:
-        Pipeline(
-            Context& context,
-            const std::string& vertFilepath,
-            const std::string& fragFilepath,
-            const PipelineConfigInfo& configInfo);
+        Pipeline(Context& context, const std::string& vertFilepath, const std::string& fragFilepath,
+                 const PipelineConfigInfo& configInfo);
+                 
         ~Pipeline();
 
         Pipeline(const Pipeline&) = delete;

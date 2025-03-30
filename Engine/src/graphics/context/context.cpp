@@ -26,8 +26,7 @@ namespace PXTEngine {
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
-        poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
-            VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
         if (vkCreateCommandPool(m_device.getDevice(), &poolInfo, nullptr,
             &m_commandPool) != VK_SUCCESS) {
@@ -35,10 +34,10 @@ namespace PXTEngine {
         }
     }
 
-    uint32_t Context::findMemoryType(uint32_t typeFilter,
-        VkMemoryPropertyFlags properties) {
+    uint32_t Context::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(m_physicalDevice.getDevice(), &memProperties);
+
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((typeFilter & (1 << i)) &&
                 (memProperties.memoryTypes[i].propertyFlags & properties) ==
@@ -51,7 +50,7 @@ namespace PXTEngine {
     }
 
 	void Context::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-                              VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
+                               VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.size = size;
@@ -113,8 +112,7 @@ namespace PXTEngine {
     }
 
 
-    void Context::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
-                            VkDeviceSize size) {
+    void Context::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
         // TODO: we can try to implement a memory barrier to avoid waiting the copy
         //       to be finished before we can start rendering again.
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -147,15 +145,13 @@ namespace PXTEngine {
         vkCmdCopyBufferToImage(commandBuffer, buffer, image,
                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                                &region);
+
         endSingleTimeCommands(commandBuffer);
     }
 
-    void Context::createImageWithInfo(const VkImageCreateInfo &imageInfo,
-                                     VkMemoryPropertyFlags properties,
-                                     VkImage &image,
-                                     VkDeviceMemory &imageMemory) {
-        if (vkCreateImage(m_device.getDevice(), &imageInfo, nullptr, &image) !=
-            VK_SUCCESS) {
+    void Context::createImageWithInfo(const VkImageCreateInfo &imageInfo, VkMemoryPropertyFlags properties,
+                                      VkImage &image, VkDeviceMemory &imageMemory) {
+        if (vkCreateImage(m_device.getDevice(), &imageInfo, nullptr, &image) != VK_SUCCESS) {
             throw std::runtime_error("failed to create image!");
         }
 
@@ -165,11 +161,9 @@ namespace PXTEngine {
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex =
-            findMemoryType(memRequirements.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-        if (vkAllocateMemory(m_device.getDevice(), &allocInfo, nullptr, &imageMemory) !=
-            VK_SUCCESS) {
+        if (vkAllocateMemory(m_device.getDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate image memory!");
         }
 
@@ -213,8 +207,6 @@ namespace PXTEngine {
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0; // if it's an array (1D image)
 		barrier.subresourceRange.layerCount = 1;
-		barrier.srcAccessMask = 0; // TODO
-		barrier.dstAccessMask = 0; // TODO
 
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
@@ -227,7 +219,10 @@ namespace PXTEngine {
 			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
 			sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT; // is not a real stage within the graphics and compute pipelines. It is more of a pseudo-stage where transfers happen.
+
+            // is not a real stage within the graphics and compute pipelines.
+            // It is more of a pseudo-stage where transfers happen.
+			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT; 
 		}
         // in this case, since the (fragment) shader will read the data, it needs to wait until the transfer (write) is complete
 		else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
@@ -253,22 +248,20 @@ namespace PXTEngine {
 		endSingleTimeCommands(commandBuffer);
 	}
 
-    VkFormat Context::findSupportedFormat(
-        const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-        VkFormatFeatureFlags features) {
+    VkFormat Context::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, 
+                                          VkFormatFeatureFlags features) {
+
         for (VkFormat format : candidates) {
             VkFormatProperties props;
             vkGetPhysicalDeviceFormatProperties(m_physicalDevice.getDevice(), format,
                 &props);
 
-            if (tiling == VK_IMAGE_TILING_LINEAR &&
-                (props.linearTilingFeatures & features) == features) {
-                return format;
-            } else if (tiling == VK_IMAGE_TILING_OPTIMAL &&
-                (props.optimalTilingFeatures & features) == features) {
+            if ((tiling == VK_IMAGE_TILING_LINEAR  && (props.linearTilingFeatures  & features) == features) ||
+                (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)) {
                 return format;
             }
         }
+
         throw std::runtime_error("failed to find supported format!");
     }
 } 

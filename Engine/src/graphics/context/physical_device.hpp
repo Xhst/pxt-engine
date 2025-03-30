@@ -104,6 +104,13 @@ namespace PXTEngine {
         }
     };
 
+    /**
+     * @class PhysicalDevice
+     * @brief Represents a Vulkan physical device (GPU) and its capabilities.
+     *
+     * This class is responsible for selecting a suitable physical device for rendering operations.
+     * It checks for required features, extensions, and queue families needed for the application.
+     */
 	class PhysicalDevice {
 	public:
         PhysicalDevice(Instance& instance, Surface& surface);

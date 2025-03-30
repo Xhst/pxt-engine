@@ -9,26 +9,18 @@
 
 namespace PXTEngine {
 
+    /**
+     * @class LogicalDevice
+     * 
+     * @brief Manages the Vulkan logical device and its associated resources.
+     * 
+     * This class is responsible for creating and managing the Vulkan logical device, which is used to interact with 
+     * the physical device. It also provides methods to retrieve the graphics and present queues.
+     */
     class LogicalDevice {
        public:
 
-        /**
-         * @brief Constructor for the Device class.
-         *
-         * This constructor initializes the Vulkan device, including creating the instance,
-         * setting up the debug messenger, creating the surface, picking a physical device,
-         * creating the logical device, and creating the command pool.
-         *
-         * @param window The window to create the surface from.
-         */
         LogicalDevice(Window& window, Instance& instance, Surface& surface, PhysicalDevice& physicalDevice);
-
-        /**
-         * @brief Destructor for the Device class.
-         *
-         * This destructor destroys the Vulkan device, including destroying the command pool,
-         * logical device, debug messenger (if enabled), surface, and instance.
-         */
         ~LogicalDevice();
 
         // Not copyable or movable
@@ -43,7 +35,6 @@ namespace PXTEngine {
         VkQueue getPresentQueue() { return m_presentQueue; }
 
     private:
-
         /**
          * @brief Creates a logical device.
          *

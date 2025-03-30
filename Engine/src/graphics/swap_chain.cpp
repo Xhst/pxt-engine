@@ -10,13 +10,12 @@
 
 namespace PXTEngine {
 
-    SwapChain::SwapChain(Context& context, VkExtent2D extent)
-        : m_context{ context }, m_windowExtent{extent} {
+    SwapChain::SwapChain(Context& context, VkExtent2D extent) : m_context{ context }, m_windowExtent{extent} {
         init();
     }
 
     SwapChain::SwapChain(Context& context, VkExtent2D extent, Shared<SwapChain> previous)
-        : m_context{ context }, m_windowExtent{extent}, m_oldSwapChain{previous} {
+                : m_context{ context }, m_windowExtent{extent}, m_oldSwapChain{previous} {
         init();
 
         m_oldSwapChain = nullptr;
@@ -35,6 +34,7 @@ namespace PXTEngine {
         for (auto imageView : m_swapChainImageViews) {
             vkDestroyImageView(m_context.getDevice(), imageView, nullptr);
         }
+
         m_swapChainImageViews.clear();
 
         if (m_swapChain != nullptr) {
@@ -80,6 +80,7 @@ namespace PXTEngine {
             vkWaitForFences(m_context.getDevice(), 1, &m_imagesInFlight[*imageIndex], VK_TRUE,
                             UINT64_MAX);
         }
+        
         m_imagesInFlight[*imageIndex] = m_inFlightFences[m_currentFrame];
 
         VkSubmitInfo submitInfo = {};

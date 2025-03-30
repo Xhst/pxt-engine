@@ -7,6 +7,14 @@
 
 namespace PXTEngine {
 
+	/**
+	 * @class Context
+	 * 
+	 * @brief Manages the Vulkan context, including instance, surface, physical device, and logical device.
+	 * 
+	 * This class is responsible for creating and managing the Vulkan context, including the instance,
+	 * surface, physical device, and logical device. It also provides helper functions for buffer and image operations.
+	 */
 	class Context {
 	public:
 		Context(Window& window);

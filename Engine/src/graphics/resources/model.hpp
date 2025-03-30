@@ -80,7 +80,7 @@ namespace PXTEngine {
         /**
          * @brief Creates a Model from a file.
          * 
-         * @param device Reference to the Vulkan device.
+         * @param context Reference to the Vulkan context.
          * @param filepath Path to the model file.
          * 
          * @return A unique pointer to the created Model.

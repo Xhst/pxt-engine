@@ -24,13 +24,8 @@ namespace PXTEngine {
          * @param memoryPropertyFlags Vulkan memory property flags.
          * @param minOffsetAlignment Minimum offset alignment for the buffer.
          */
-        Buffer(
-            Context& context,
-            VkDeviceSize instanceSize,
-            uint32_t instanceCount,
-            VkBufferUsageFlags usageFlags,
-            VkMemoryPropertyFlags memoryPropertyFlags,
-            VkDeviceSize minOffsetAlignment = 1);
+        Buffer(Context& context, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags,
+               VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment = 1);
 
         /**
          * @brief Destructor for the Buffer class.

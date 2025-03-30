@@ -14,12 +14,8 @@ namespace PXTEngine {
         int32_t maxLights;
     };
 
-    Pipeline::Pipeline(
-        Context& context, 
-        const std::string& vertFilepath, 
-        const std::string& fragFilepath,
-        const PipelineConfigInfo& configInfo
-    ) : m_context{ context } {
+    Pipeline::Pipeline(Context& context, const std::string& vertFilepath, const std::string& fragFilepath,
+                       const PipelineConfigInfo& configInfo) : m_context{ context } {
         createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
     }
 

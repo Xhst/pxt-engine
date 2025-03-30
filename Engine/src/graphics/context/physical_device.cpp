@@ -55,15 +55,13 @@ namespace PXTEngine {
         if (extensionsSupported) {
             SwapChainSupportDetails swapChainSupport = querySwapChainSupportForDevice(device);
 
-            swapChainAdequate = !swapChainSupport.formats.empty() &&
-                !swapChainSupport.presentModes.empty();
+            swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
         }
 
         VkPhysicalDeviceFeatures supportedFeatures;
         vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-        return indices.isComplete() && extensionsSupported &&
-            swapChainAdequate && supportedFeatures.samplerAnisotropy;
+        return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
     }
 
     bool PhysicalDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
@@ -102,8 +100,7 @@ namespace PXTEngine {
 
         int i = 0;
         for (const auto& queueFamily : queueFamilies) {
-            if (queueFamily.queueCount > 0 &&
-                queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
                 indices.graphicsFamilyHasValue = true;
             }

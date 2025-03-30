@@ -22,12 +22,9 @@ namespace PXTEngine {
      * @return VK_FALSE to indicate that the Vulkan call should not be aborted.
      */
     static VKAPI_ATTR VkBool32 VKAPI_CALL
-    debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                  VkDebugUtilsMessageTypeFlagsEXT messageType,
-                  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                  void *pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage
-                  << std::endl;
+    debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
+                  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,  void *pUserData) {
+        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
         return VK_FALSE;
     }
@@ -84,6 +81,7 @@ namespace PXTEngine {
         if (enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
         }
+
         vkDestroyInstance(m_instance, nullptr);
     }
 
@@ -151,8 +149,7 @@ namespace PXTEngine {
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
         populateDebugMessengerCreateInfo(createInfo);
 
-        if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr,
-                                         &m_debugMessenger) != VK_SUCCESS) {
+        if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS) {
             throw std::runtime_error("failed to set up debug messenger!");
         }
     }
@@ -170,6 +167,7 @@ namespace PXTEngine {
 
         std::cout << "available extensions:" << std::endl;
         std::unordered_set<std::string> available;
+
         for (const auto& extension : extensions) {
             std::cout << "\t" << extension.extensionName << std::endl;
             available.insert(extension.extensionName);
@@ -177,6 +175,7 @@ namespace PXTEngine {
 
         std::cout << "required extensions:" << std::endl;
         auto requiredExtensions = getRequiredExtensions();
+        
         for (const auto& required : requiredExtensions) {
             std::cout << "\t" << required << std::endl;
             if (available.find(required) == available.end()) {

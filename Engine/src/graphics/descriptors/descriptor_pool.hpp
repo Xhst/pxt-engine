@@ -21,11 +21,9 @@ namespace PXTEngine {
             VkDescriptorPoolCreateFlags m_poolFlags = 0;
         };
 
-        DescriptorPool(
-            Context& context,
-            uint32_t maxSets,
-            VkDescriptorPoolCreateFlags poolFlags,
-            const std::vector<VkDescriptorPoolSize> &poolSizes);
+        DescriptorPool(Context& context, uint32_t maxSets, VkDescriptorPoolCreateFlags poolFlags,
+                       const std::vector<VkDescriptorPoolSize> &poolSizes);
+                       
         ~DescriptorPool();
         
         DescriptorPool(const DescriptorPool &) = delete;
