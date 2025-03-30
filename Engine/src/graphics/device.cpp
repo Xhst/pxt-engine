@@ -5,9 +5,8 @@
 
 namespace PXTEngine {
 
-    Device::Device(Window& window, Instance& instance, Surface& surface)
-		: m_window{ window }, m_instance{ instance }, m_surface(surface) {
-        pickPhysicalDevice();
+    Device::Device(Window& window, Instance& instance, Surface& surface, PhysicalDevice& physicalDevice)
+		: m_window{ window }, m_instance{ instance }, m_surface(surface), m_physicalDevice(physicalDevice) {
         createLogicalDevice();
         createCommandPool();
     }
@@ -17,34 +16,8 @@ namespace PXTEngine {
         vkDestroyDevice(m_device, nullptr);
     }
 
-    void Device::pickPhysicalDevice() {
-        uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(m_instance.getVkInstance(), &deviceCount, nullptr);
-        if (deviceCount == 0) {
-            throw std::runtime_error(
-                "failed to find GPUs with Vulkan support!");
-        }
-        std::cout << "Device count: " << deviceCount << std::endl;
-        std::vector<VkPhysicalDevice> devices(deviceCount);
-        vkEnumeratePhysicalDevices(m_instance.getVkInstance(), &deviceCount, devices.data());
-
-        for (const auto& device : devices) {
-            if (isDeviceSuitable(device)) {
-                m_physicalDevice = device;
-                break;
-            }
-        }
-
-        if (m_physicalDevice == VK_NULL_HANDLE) {
-            throw std::runtime_error("failed to find a suitable GPU!");
-        }
-
-        vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
-        std::cout << "physical device: " << properties.deviceName << std::endl;
-    }
-
     void Device::createLogicalDevice() {
-        QueueFamilyIndices indices = findQueueFamilies(m_physicalDevice);
+        QueueFamilyIndices indices = m_physicalDevice.findQueueFamilies();
 
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily,
@@ -70,7 +43,7 @@ namespace PXTEngine {
         deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
         deviceFeatures2.pNext = &indexingFeatures;
 
-        vkGetPhysicalDeviceFeatures2(m_physicalDevice, &deviceFeatures2);
+        vkGetPhysicalDeviceFeatures2(m_physicalDevice.getDevice(), &deviceFeatures2);
 
         // Check if the required features are supported
         if (!indexingFeatures.shaderSampledImageArrayNonUniformIndexing ||
@@ -100,7 +73,7 @@ namespace PXTEngine {
 
         // might not really be necessary anymore because device specific
         // validation layers have been deprecated
-        if (enableValidationLayers) {
+        if (m_instance.enableValidationLayers) {
             createInfo.enabledLayerCount =
                 static_cast<uint32_t>(m_instance.validationLayers.size());
             createInfo.ppEnabledLayerNames = m_instance.validationLayers.data();
@@ -108,7 +81,7 @@ namespace PXTEngine {
             createInfo.enabledLayerCount = 0;
         }
 
-        if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr,
+        if (vkCreateDevice(m_physicalDevice.getDevice(), &createInfo, nullptr,
                            &m_device) != VK_SUCCESS) {
             throw std::runtime_error("failed to create logical device!");
         }
@@ -132,115 +105,12 @@ namespace PXTEngine {
         }
     }
 
-    bool Device::isDeviceSuitable(VkPhysicalDevice device) {
-        QueueFamilyIndices indices = findQueueFamilies(device);
-
-        bool extensionsSupported = checkDeviceExtensionSupport(device);
-
-        bool swapChainAdequate = false;
-        if (extensionsSupported) {
-            SwapChainSupportDetails swapChainSupport =
-                querySwapChainSupport(device);
-            swapChainAdequate = !swapChainSupport.formats.empty() &&
-                                !swapChainSupport.presentModes.empty();
-        }
-
-        VkPhysicalDeviceFeatures supportedFeatures;
-        vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-
-        return indices.isComplete() && extensionsSupported &&
-               swapChainAdequate && supportedFeatures.samplerAnisotropy;
-    }
-
-    bool Device::checkDeviceExtensionSupport(VkPhysicalDevice device) {
-        uint32_t extensionCount;
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
-                                             nullptr);
-
-        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
-                                             availableExtensions.data());
-
-        std::set<std::string> requiredExtensions(m_instance.deviceExtensions.begin(),
-            m_instance.deviceExtensions.end());
-
-        for (const auto& extension : availableExtensions) {
-            requiredExtensions.erase(extension.extensionName);
-        }
-
-        return requiredExtensions.empty();
-    }
-
-    QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device) {
-        QueueFamilyIndices indices;
-
-        uint32_t queueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                                 nullptr);
-
-        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                                 queueFamilies.data());
-
-        int i = 0;
-        for (const auto& queueFamily : queueFamilies) {
-            if (queueFamily.queueCount > 0 &&
-                queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                indices.graphicsFamily = i;
-                indices.graphicsFamilyHasValue = true;
-            }
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_surface.getSurface(),
-                                                 &presentSupport);
-            if (queueFamily.queueCount > 0 && presentSupport) {
-                indices.presentFamily = i;
-                indices.presentFamilyHasValue = true;
-            }
-            if (indices.isComplete()) {
-                break;
-            }
-
-            i++;
-        }
-
-        return indices;
-    }
-
-    SwapChainSupportDetails Device::querySwapChainSupport(
-        VkPhysicalDevice device) {
-        SwapChainSupportDetails details;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface.getSurface(),
-                                                  &details.capabilities);
-
-        uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface.getSurface(), &formatCount,
-                                             nullptr);
-
-        if (formatCount != 0) {
-            details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(
-                device, m_surface.getSurface(), &formatCount, details.formats.data());
-        }
-
-        uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface.getSurface(),
-                                                  &presentModeCount, nullptr);
-
-        if (presentModeCount != 0) {
-            details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(
-                device, m_surface.getSurface(), &presentModeCount,
-                details.presentModes.data());
-        }
-        return details;
-    }
-
     VkFormat Device::findSupportedFormat(
         const std::vector<VkFormat> &candidates, VkImageTiling tiling,
         VkFormatFeatureFlags features) {
         for (VkFormat format : candidates) {
             VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(m_physicalDevice, format,
+            vkGetPhysicalDeviceFormatProperties(m_physicalDevice.getDevice(), format,
                                                 &props);
 
             if (tiling == VK_IMAGE_TILING_LINEAR &&
@@ -257,7 +127,7 @@ namespace PXTEngine {
     uint32_t Device::findMemoryType(uint32_t typeFilter,
                                     VkMemoryPropertyFlags properties) {
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
+        vkGetPhysicalDeviceMemoryProperties(m_physicalDevice.getDevice(), &memProperties);
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((typeFilter & (1 << i)) &&
                 (memProperties.memoryTypes[i].propertyFlags & properties) ==

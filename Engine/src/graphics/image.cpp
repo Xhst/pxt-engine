@@ -152,7 +152,7 @@ namespace PXTEngine {
 		// enable anisotropic filtering, which improves texture quality at oblique angles.
 		// https://en.wikipedia.org/wiki/Anisotropic_filtering
 		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = m_device.properties.limits.maxSamplerAnisotropy;
+		samplerInfo.maxAnisotropy = m_device.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
 
 		// which color to use when sampling outside the image borders (only if address mode is clamp to border)
 		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;

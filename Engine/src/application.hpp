@@ -7,6 +7,7 @@
 #include "graphics/instance.hpp"
 #include "graphics/window.hpp"
 #include "graphics/surface.hpp"
+#include "graphics/physical_device.hpp"
 #include "graphics/device.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/descriptors/descriptors.hpp"
@@ -66,11 +67,11 @@ namespace PXTEngine {
 
         bool m_running = true;
 
-        Instance m_instance{"PXTEngine"};
         Window m_window{WindowData()};
-        Instance m_instance{};
+        Instance m_instance{"PXT Engine"};
 		Surface m_surface{m_window, m_instance};
-        Device m_device{m_window, m_instance, m_surface};
+		PhysicalDevice m_physicalDevice{ m_instance, m_surface };
+        Device m_device{m_window, m_instance, m_surface, m_physicalDevice};
         Renderer m_renderer{m_window, m_device};
 
         Unique<DescriptorPool> m_globalPool{};
