@@ -5,6 +5,8 @@
 
 #include "graphics/instance.hpp"
 #include "graphics/window.hpp"
+#include "graphics/instance.hpp"
+#include "graphics/surface.hpp"
 
 namespace PXTEngine {
 
@@ -124,7 +126,7 @@ namespace PXTEngine {
          *
          * @param window The window to create the surface from.
          */
-        Device(Instance& instance, Window& window);
+        Device(Window& window, Instance& instance, Surface& surface);
 
         /**
          * @brief Destructor for the Device class.
@@ -142,7 +144,7 @@ namespace PXTEngine {
 
         VkCommandPool getCommandPool() { return m_commandPool; }
         VkDevice getDevice() { return m_device; }
-        VkSurfaceKHR surface() { return m_surface; }
+        VkSurfaceKHR getSurface() { return m_surface.getSurface(); }
         VkQueue graphicsQueue() { return m_graphicsQueue; }
         VkQueue presentQueue() { return m_presentQueue; }
 
@@ -309,7 +311,8 @@ namespace PXTEngine {
 
         VkPhysicalDeviceProperties properties;
 
-       private:        
+    private:
+        
         /**
          * @brief Picks a suitable physical device.
          *
@@ -333,12 +336,6 @@ namespace PXTEngine {
          */
         void createCommandPool();
 
-        /**
-         * @brief Creates a Vulkan surface.
-         *
-         * This function creates a Vulkan surface, which is used to present images to the window.
-         */
-        void createSurface();
 
 
         /* ---------------------------- Helper functions ---------------------------- */
@@ -384,14 +381,16 @@ namespace PXTEngine {
          */
         SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
+        Window& m_window;
+        Instance& m_instance;
+		Surface& m_surface;
 
         VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-        Instance& m_instance;
-        Window& m_window;
+        
         VkCommandPool m_commandPool;
 
         VkDevice m_device;
-        VkSurfaceKHR m_surface;
+        
         VkQueue m_graphicsQueue;
         VkQueue m_presentQueue;
     };

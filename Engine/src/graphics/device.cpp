@@ -1,87 +1,12 @@
 #include "graphics/device.hpp"
 
-#include <cstring>
 #include <iostream>
 #include <set>
-#include <unordered_set>
 
 namespace PXTEngine {
 
-    /* ------------------------ Local callback functions ------------------------ */
-    
-    /**
-     * @brief Debug callback function for Vulkan validation layers.
-     *
-     * This function is called by the Vulkan validation layers to report debug messages.
-     * It prints the message to the standard error stream.
-     *
-     * @param messageSeverity The severity of the message.
-     * @param messageType The type of the message.
-     * @param pCallbackData Pointer to the message data.
-     * @param pUserData Pointer to user data (unused).
-     * @return VK_FALSE to indicate that the Vulkan call should not be aborted.
-     */
-    static VKAPI_ATTR VkBool32 VKAPI_CALL
-    debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                  VkDebugUtilsMessageTypeFlagsEXT messageType,
-                  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                  void *pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage
-                  << std::endl;
-
-        return VK_FALSE;
-    }
-
-    /**
-     * @brief Creates a Vulkan debug utils messenger.
-     *
-     * This function creates a debug utils messenger, which is used to receive debug messages
-     * from the Vulkan validation layers.
-     *
-     * @param instance The Vulkan instance.
-     * @param pCreateInfo Pointer to the create info structure.
-     * @param pAllocator Pointer to the allocation callbacks.
-     * @param pDebugMessenger Pointer to the debug messenger handle.
-     * @return VK_SUCCESS if the messenger was created successfully, or a Vulkan error code.
-     */
-    VkResult CreateDebugUtilsMessengerEXT(
-        VkInstance instance,
-        const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
-        const VkAllocationCallbacks *pAllocator,
-        VkDebugUtilsMessengerEXT *pDebugMessenger) {
-        auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-            instance, "vkCreateDebugUtilsMessengerEXT");
-        if (func != nullptr) {
-            return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-        } else {
-            return VK_ERROR_EXTENSION_NOT_PRESENT;
-        }
-    }
-
-    /**
-     * @brief Destroys a Vulkan debug utils messenger.
-     *
-     * This function destroys a debug utils messenger.
-     *
-     * @param instance The Vulkan instance.
-     * @param debugMessenger The debug messenger handle.
-     * @param pAllocator Pointer to the allocation callbacks.
-     */
-    void DestroyDebugUtilsMessengerEXT(
-        VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
-        const VkAllocationCallbacks *pAllocator) {
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-            instance, "vkDestroyDebugUtilsMessengerEXT");
-        if (func != nullptr) {
-            func(instance, debugMessenger, pAllocator);
-        }
-    }
-
-    /* ------------------------- Class member functions ------------------------- */
-
-    Device::Device(Instance& instance, Window& window) : m_instance(instance), m_window{window} {
-
-        createSurface();
+    Device::Device(Window& window, Instance& instance, Surface& surface)
+		: m_window{ window }, m_instance{ instance }, m_surface(surface) {
         pickPhysicalDevice();
         createLogicalDevice();
         createCommandPool();
@@ -90,13 +15,6 @@ namespace PXTEngine {
     Device::~Device() {
         vkDestroyCommandPool(m_device, m_commandPool, nullptr);
         vkDestroyDevice(m_device, nullptr);
-
-        //if (enableValidationLayers) {
-        //    DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger,nullptr);
-        //}
-
-        vkDestroySurfaceKHR(m_instance.getVkInstance(), m_surface, nullptr);
-        //vkDestroyInstance(m_instance, nullptr);
     }
 
     void Device::pickPhysicalDevice() {
@@ -214,10 +132,6 @@ namespace PXTEngine {
         }
     }
 
-    void Device::createSurface() {
-        m_window.createWindowSurface(m_instance.getVkInstance(), &m_surface);
-    }
-
     bool Device::isDeviceSuitable(VkPhysicalDevice device) {
         QueueFamilyIndices indices = findQueueFamilies(device);
 
@@ -247,7 +161,8 @@ namespace PXTEngine {
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
                                              availableExtensions.data());
 
-        std::set<std::string> requiredExtensions(m_instance.deviceExtensions.begin(), m_instance.deviceExtensions.end());
+        std::set<std::string> requiredExtensions(m_instance.deviceExtensions.begin(),
+            m_instance.deviceExtensions.end());
 
         for (const auto& extension : availableExtensions) {
             requiredExtensions.erase(extension.extensionName);
@@ -275,7 +190,7 @@ namespace PXTEngine {
                 indices.graphicsFamilyHasValue = true;
             }
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_surface,
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_surface.getSurface(),
                                                  &presentSupport);
             if (queueFamily.queueCount > 0 && presentSupport) {
                 indices.presentFamily = i;
@@ -294,27 +209,27 @@ namespace PXTEngine {
     SwapChainSupportDetails Device::querySwapChainSupport(
         VkPhysicalDevice device) {
         SwapChainSupportDetails details;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface,
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface.getSurface(),
                                                   &details.capabilities);
 
         uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount,
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface.getSurface(), &formatCount,
                                              nullptr);
 
         if (formatCount != 0) {
             details.formats.resize(formatCount);
             vkGetPhysicalDeviceSurfaceFormatsKHR(
-                device, m_surface, &formatCount, details.formats.data());
+                device, m_surface.getSurface(), &formatCount, details.formats.data());
         }
 
         uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface,
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface.getSurface(),
                                                   &presentModeCount, nullptr);
 
         if (presentModeCount != 0) {
             details.presentModes.resize(presentModeCount);
             vkGetPhysicalDeviceSurfacePresentModesKHR(
-                device, m_surface, &presentModeCount,
+                device, m_surface.getSurface(), &presentModeCount,
                 details.presentModes.data());
         }
         return details;
