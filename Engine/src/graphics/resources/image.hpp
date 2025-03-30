@@ -1,11 +1,11 @@
 #pragma once
 
-#include "graphics/buffer.hpp"
+#include "graphics/resources/buffer.hpp"
 
 namespace PXTEngine {
 	class Image {
 	public:
-		Image(const std::string filename, Device& device);
+		Image(const std::string filename, Context& context);
 		~Image();
 
 		Image(const Image&) = delete;
@@ -49,7 +49,7 @@ namespace PXTEngine {
 		 */
 		void createTextureSampler();
 
-		Device& m_device;
+		Context& m_context;
 
 		VkImage m_textureImage; // the raw image pixels
 		VkDeviceMemory m_textureImageMemory; // the memory occupied by the image

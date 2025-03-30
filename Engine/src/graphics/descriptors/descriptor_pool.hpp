@@ -1,13 +1,13 @@
 #pragma once
 
-#include "graphics/device.hpp"
+#include "graphics/context/context.hpp"
 
 namespace PXTEngine { 
     class DescriptorPool {
     public:
         class Builder {
         public:
-            Builder(Device& device) : m_device{device} {}
+            Builder(Context& context) : m_context{context} {}
 
             Builder& addPoolSize(VkDescriptorType descriptorType, uint32_t count);
             Builder& setPoolFlags(VkDescriptorPoolCreateFlags flags);
@@ -15,14 +15,14 @@ namespace PXTEngine {
             Unique<DescriptorPool> build() const;
 
         private:
-            Device& m_device;
+            Context& m_context;
             std::vector<VkDescriptorPoolSize> m_poolSizes{};
             uint32_t m_maxSets = 1000;
             VkDescriptorPoolCreateFlags m_poolFlags = 0;
         };
 
         DescriptorPool(
-            Device& device,
+            Context& context,
             uint32_t maxSets,
             VkDescriptorPoolCreateFlags poolFlags,
             const std::vector<VkDescriptorPoolSize> &poolSizes);
@@ -41,7 +41,7 @@ namespace PXTEngine {
         void resetPool();
 
     private:
-        Device& m_device;
+        Context& m_context;
         VkDescriptorPool m_descriptorPool;
 
         friend class DescriptorWriter;

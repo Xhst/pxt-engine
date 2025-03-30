@@ -22,13 +22,13 @@ namespace PXTEngine {
         float radius;
     };
 
-    PointLightSystem::PointLightSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_device(device) {
+    PointLightSystem::PointLightSystem(Context& context, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_context(context) {
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
     }
 
     PointLightSystem::~PointLightSystem() {
-        vkDestroyPipelineLayout(m_device.getDevice(), m_pipelineLayout, nullptr);
+        vkDestroyPipelineLayout(m_context.getDevice(), m_pipelineLayout, nullptr);
     }
 
     void PointLightSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
@@ -47,7 +47,7 @@ namespace PXTEngine {
         pipelineLayoutInfo.pushConstantRangeCount = 1;
         pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
-        if (vkCreatePipelineLayout(m_device.getDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(m_context.getDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
@@ -67,7 +67,7 @@ namespace PXTEngine {
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
         m_pipeline = createUnique<Pipeline>(
-            m_device,
+            m_context,
             SPV_SHADERS_PATH + "point_light.vert.spv",
             SPV_SHADERS_PATH + "point_light.frag.spv",
             pipelineConfig

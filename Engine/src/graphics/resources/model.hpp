@@ -1,9 +1,11 @@
 #pragma once
 
-#include "device.hpp"
-#include "../core/memory.hpp"
+#include "graphics/context/context.hpp"
+
+#include "core/memory.hpp"
 #include "utils/hash_func.hpp"
-#include "graphics/buffer.hpp"
+
+#include "graphics/resources/buffer.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -69,7 +71,7 @@ namespace PXTEngine {
             void loadModel(const std::string& filepath);
         };
 
-        Model(Device& device, const Model::Builder& builder);
+        Model(Context& context, const Model::Builder& builder);
         ~Model();
 
         Model(const Model&) = delete;
@@ -83,7 +85,7 @@ namespace PXTEngine {
          * 
          * @return A unique pointer to the created Model.
          */
-        static Unique<Model> createModelFromFile(Device& device, const std::string& filepath);
+        static Unique<Model> createModelFromFile(Context& context, const std::string& filepath);
 
         /**
          * @brief Binds the model's vertex and index buffers to a command buffer.
@@ -114,7 +116,7 @@ namespace PXTEngine {
          */
         void createIndexBuffers(const std::vector<uint32_t>& indices);
 
-        Device& m_device;
+        Context& m_context;
 
         Unique<Buffer> m_vertexBuffer;
         uint32_t m_vertexCount;

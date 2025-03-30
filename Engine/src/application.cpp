@@ -9,14 +9,14 @@
 #include "scene/camera.hpp"
 #include "graphics/render_systems/simple_render_system.hpp"
 #include "graphics/render_systems/point_light_system.hpp"
-#include "graphics/image.hpp"
-#include "scene/script/script.hpp"
+#include "graphics/resources/image.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+#include <iostream>
 #include <chrono>
 
 // IMGUI
@@ -38,15 +38,15 @@ namespace PXTEngine {
     Application::Application() {
         Instance = this;
 
-        m_globalPool = DescriptorPool::Builder(m_device)
+        m_globalPool = DescriptorPool::Builder(m_context)
                 .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
                 .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
                 .build();
 
-        // to enable imGui functionality (FIGATA)
-        initImGui(m_window, m_device);
+        // to enable imGui functionality
+        initImGui();
     }
 
     Application::~Application() {
@@ -60,20 +60,20 @@ namespace PXTEngine {
             ImGui::DestroyContext();
         };
 
-    void Application::initImGui(Window& window, Device& device) {
+    void Application::initImGui() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
 
         ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-        ImGui_ImplGlfw_InitForVulkan(window.getBaseWindow(), true);
+        ImGui_ImplGlfw_InitForVulkan(m_window.getBaseWindow(), true);
         ImGui_ImplVulkan_InitInfo initInfo{};
-        initInfo.Instance = device.getVkInstance();
-        initInfo.PhysicalDevice = device.getPhysicalDevice();
-        initInfo.Device = device.getDevice();
-        initInfo.QueueFamily = device.getGraphicsQueueFamily();
-        initInfo.Queue = device.graphicsQueue();
+        initInfo.Instance = m_context.getInstance();
+        initInfo.PhysicalDevice = m_context.getPhysicalDevice();
+        initInfo.Device = m_context.getDevice();
+        initInfo.QueueFamily = m_context.findPhysicalQueueFamilies().graphicsFamily;
+        initInfo.Queue = m_context.getGraphicsQueue();
         initInfo.RenderPass = m_renderer.getSwapChainRenderPass();
         initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         initInfo.PipelineCache = VK_NULL_HANDLE;
@@ -92,7 +92,7 @@ namespace PXTEngine {
 
         for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
             uboBuffers[i] = createUnique<Buffer>(
-                m_device,
+                m_context,
                 sizeof(GlobalUbo),
                 1,
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -109,7 +109,7 @@ namespace PXTEngine {
 
         std::vector<Unique<Image>> textures;
         for (const auto& texture_name : textures_name) {
-            textures.push_back(createUnique<Image>(TEXTURES_PATH + texture_name, m_device));
+            textures.push_back(createUnique<Image>(TEXTURES_PATH + texture_name, m_context));
         }
 
         std::vector<VkDescriptorImageInfo> imageInfos;
@@ -121,7 +121,7 @@ namespace PXTEngine {
             imageInfos.push_back(imageInfo);
         }
 
-        auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
+        auto globalSetLayout = DescriptorSetLayout::Builder(m_context)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, textures.size())
             .build();
@@ -135,16 +135,18 @@ namespace PXTEngine {
                 .build(globalDescriptorSets[i]);
         }
 
-        m_window.setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
+        m_window.setEventCallback([this](auto&& PH1) {
+	        onEvent(std::forward<decltype(PH1)>(PH1));
+        });
 
         SimpleRenderSystem simpleRenderSystem{
-            m_device,
+            m_context,
             m_renderer.getSwapChainRenderPass(),
             globalSetLayout->getDescriptorSetLayout()
         };
 
         PointLightSystem pointLightSystem{
-            m_device,
+            m_context,
             m_renderer.getSwapChainRenderPass(),
             globalSetLayout->getDescriptorSetLayout()
         };
@@ -220,7 +222,7 @@ namespace PXTEngine {
             }
         }
 
-        vkDeviceWaitIdle(m_device.getDevice());
+        vkDeviceWaitIdle(m_context.getDevice());
     }
 
     bool Application::isRunning() {

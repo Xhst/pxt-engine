@@ -3,8 +3,6 @@
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 
-#include <iostream>
-#include <array>
 #include <stdexcept>
 #include <cassert>
 
@@ -24,13 +22,13 @@ namespace PXTEngine {
         int textureIndex = -1;
     };
 
-    SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_device(device) {
+    SimpleRenderSystem::SimpleRenderSystem(Context& context, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_context(context) {
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
     }
 
     SimpleRenderSystem::~SimpleRenderSystem() {
-        vkDestroyPipelineLayout(m_device.getDevice(), m_pipelineLayout, nullptr);
+        vkDestroyPipelineLayout(m_context.getDevice(), m_pipelineLayout, nullptr);
     }
 
     void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
@@ -49,7 +47,7 @@ namespace PXTEngine {
         pipelineLayoutInfo.pushConstantRangeCount = 1;
         pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
-        if (vkCreatePipelineLayout(m_device.getDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(m_context.getDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
@@ -63,7 +61,7 @@ namespace PXTEngine {
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
         m_pipeline = createUnique<Pipeline>(
-            m_device,
+            m_context,
             SPV_SHADERS_PATH + "simple_shader.vert.spv",
             SPV_SHADERS_PATH + "simple_shader.frag.spv",
             pipelineConfig

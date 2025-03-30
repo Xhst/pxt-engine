@@ -3,7 +3,7 @@
 
 #include "core/uuid.hpp"
 #include "core/memory.hpp"
-#include "graphics/model.hpp"
+#include "graphics/resources/model.hpp"
 #include "scene/camera.hpp"
 
 #include <glm/glm.hpp>

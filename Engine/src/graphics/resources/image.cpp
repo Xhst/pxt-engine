@@ -1,4 +1,4 @@
-#include "graphics/image.hpp"
+#include "graphics/resources/image.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -6,17 +6,17 @@
 
 
 namespace PXTEngine {
-	Image::Image(const std::string filename, Device& device) : m_device{ device } {
+	Image::Image(const std::string filename, Context& context) : m_context{ context } {
 		createTextureImage(filename.c_str());
 		createTextureImageView();
 		createTextureSampler();
 	}
 	Image::~Image() {
-		vkDestroySampler(m_device.getDevice(), m_textureSampler, nullptr);
-		vkDestroyImageView(m_device.getDevice(), m_textureImageView, nullptr);
+		vkDestroySampler(m_context.getDevice(), m_textureSampler, nullptr);
+		vkDestroyImageView(m_context.getDevice(), m_textureImageView, nullptr);
 
-		vkDestroyImage(m_device.getDevice(), m_textureImage, nullptr);
-		vkFreeMemory(m_device.getDevice(), m_textureImageMemory, nullptr);
+		vkDestroyImage(m_context.getDevice(), m_textureImage, nullptr);
+		vkFreeMemory(m_context.getDevice(), m_textureImageMemory, nullptr);
 	}
 
 	void Image::createTextureImage(const char* filename) {
@@ -30,7 +30,7 @@ namespace PXTEngine {
 		
 		// create a staging buffer visible to the host and copy the pixels to it
 		Unique<Buffer> stagingBuffer = createUnique<Buffer>(
-			m_device,
+			m_context,
 			imageSize,
 			1,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -52,7 +52,7 @@ namespace PXTEngine {
 					m_textureImage, m_textureImageMemory);
 		
 		// we now change the layout of the image for better destination copy performance (VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-		m_device.transitionImageLayout(
+		m_context.transitionImageLayout(
 			m_textureImage, 
 			VK_FORMAT_R8G8B8A8_SRGB, 
 			VK_IMAGE_LAYOUT_UNDEFINED, 
@@ -60,7 +60,7 @@ namespace PXTEngine {
 		);
 
 		// then we copy the contents of the image (that were inside the stagingBuffer) into the vkImage
-		m_device.copyBufferToImage(
+		m_context.copyBufferToImage(
 			stagingBuffer->getBuffer(), 
 			m_textureImage, 
 			static_cast<uint32_t>(texWidth), 
@@ -68,7 +68,7 @@ namespace PXTEngine {
 		);
 
 		// finally, we change the image layout again to be accessed from the shaders (VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-		m_device.transitionImageLayout(
+		m_context.transitionImageLayout(
 			m_textureImage, 
 			VK_FORMAT_R8G8B8A8_SRGB, 
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
@@ -122,11 +122,11 @@ namespace PXTEngine {
 
 		imageInfo.flags = 0; // optional
 
-		m_device.createImageWithInfo(imageInfo, properties, image, imageMemory);
+		m_context.createImageWithInfo(imageInfo, properties, image, imageMemory);
 	}
 
 	void Image::createTextureImageView() {
-		m_textureImageView = m_device.createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+		m_textureImageView = m_context.createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB);
 	}
 
 	void Image::createTextureSampler() {
@@ -152,7 +152,7 @@ namespace PXTEngine {
 		// enable anisotropic filtering, which improves texture quality at oblique angles.
 		// https://en.wikipedia.org/wiki/Anisotropic_filtering
 		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = m_device.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
+		samplerInfo.maxAnisotropy = m_context.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
 
 		// which color to use when sampling outside the image borders (only if address mode is clamp to border)
 		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -172,7 +172,7 @@ namespace PXTEngine {
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = 0.0f;
 		
-		if (vkCreateSampler(m_device.getDevice(), &samplerInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
+		if (vkCreateSampler(m_context.getDevice(), &samplerInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture sampler!");
 		}
 	}

@@ -1,137 +1,48 @@
-#include "graphics/device.hpp"
+#include "graphics/context/context.hpp"
 
-#include <iostream>
-#include <set>
+#include <stdexcept>
+
 
 namespace PXTEngine {
 
-    Device::Device(Window& window, Instance& instance, Surface& surface, PhysicalDevice& physicalDevice)
-		: m_window{ window }, m_instance{ instance }, m_surface(surface), m_physicalDevice(physicalDevice) {
-        createLogicalDevice();
-        createCommandPool();
+    Context::Context(Window& window)
+        : m_window(window),
+        m_instance{ "PXT Engine" },
+        m_surface{ m_window, m_instance },
+        m_physicalDevice{ m_instance, m_surface },
+        m_device{ m_window, m_instance, m_surface, m_physicalDevice } {
+
+		createCommandPool();
     }
 
-    Device::~Device() {
-        vkDestroyCommandPool(m_device, m_commandPool, nullptr);
-        vkDestroyDevice(m_device, nullptr);
-    }
+	Context::~Context() {
+        vkDestroyCommandPool(m_device.getDevice(), m_commandPool, nullptr);
+	}
+    
 
-    void Device::createLogicalDevice() {
-        QueueFamilyIndices indices = m_physicalDevice.findQueueFamilies();
-
-        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily,
-                                                  indices.presentFamily};
-
-        float queuePriority = 1.0f;
-        for (uint32_t queueFamily : uniqueQueueFamilies) {
-            VkDeviceQueueCreateInfo queueCreateInfo = {};
-            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queueCreateInfo.queueFamilyIndex = queueFamily;
-            queueCreateInfo.queueCount = 1;
-            queueCreateInfo.pQueuePriorities = &queuePriority;
-            queueCreateInfos.push_back(queueCreateInfo);
-        }
-
-        VkPhysicalDeviceDescriptorIndexingFeaturesEXT indexingFeatures{};
-        indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-        indexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-        indexingFeatures.runtimeDescriptorArray = VK_TRUE;
-
-        VkPhysicalDeviceFeatures2 deviceFeatures2{};
-        deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        deviceFeatures2.pNext = &indexingFeatures;
-
-        vkGetPhysicalDeviceFeatures2(m_physicalDevice.getDevice(), &deviceFeatures2);
-
-        // Check if the required features are supported
-        if (!indexingFeatures.shaderSampledImageArrayNonUniformIndexing ||
-            !indexingFeatures.descriptorBindingPartiallyBound ||
-            !indexingFeatures.runtimeDescriptorArray) {
-            throw std::runtime_error("Required descriptor indexing features are not supported!");
-        }
-
-        VkPhysicalDeviceFeatures deviceFeatures = {};
-        deviceFeatures.samplerAnisotropy = VK_TRUE; 
-
-
-        VkDeviceCreateInfo createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
-        createInfo.queueCreateInfoCount =
-            static_cast<uint32_t>(queueCreateInfos.size());
-        createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
-        createInfo.pNext = &deviceFeatures2; // Attach extended features
-
-        createInfo.pEnabledFeatures = &deviceFeatures;
-
-        createInfo.enabledExtensionCount =
-            static_cast<uint32_t>(m_instance.deviceExtensions.size());
-        createInfo.ppEnabledExtensionNames = m_instance.deviceExtensions.data();
-
-        // might not really be necessary anymore because device specific
-        // validation layers have been deprecated
-        if (m_instance.enableValidationLayers) {
-            createInfo.enabledLayerCount =
-                static_cast<uint32_t>(m_instance.validationLayers.size());
-            createInfo.ppEnabledLayerNames = m_instance.validationLayers.data();
-        } else {
-            createInfo.enabledLayerCount = 0;
-        }
-
-        if (vkCreateDevice(m_physicalDevice.getDevice(), &createInfo, nullptr,
-                           &m_device) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create logical device!");
-        }
-
-        vkGetDeviceQueue(m_device, indices.graphicsFamily, 0, &m_graphicsQueue);
-        vkGetDeviceQueue(m_device, indices.presentFamily, 0, &m_presentQueue);
-    }
-
-    void Device::createCommandPool() {
-        QueueFamilyIndices queueFamilyIndices = findPhysicalQueueFamilies();
+    void Context::createCommandPool() {
+        QueueFamilyIndices queueFamilyIndices = m_physicalDevice.findQueueFamilies();
 
         VkCommandPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
-                         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-        if (vkCreateCommandPool(m_device, &poolInfo, nullptr,
-                                &m_commandPool) != VK_SUCCESS) {
+        if (vkCreateCommandPool(m_device.getDevice(), &poolInfo, nullptr,
+            &m_commandPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create command pool!");
         }
     }
 
-    VkFormat Device::findSupportedFormat(
-        const std::vector<VkFormat> &candidates, VkImageTiling tiling,
-        VkFormatFeatureFlags features) {
-        for (VkFormat format : candidates) {
-            VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(m_physicalDevice.getDevice(), format,
-                                                &props);
-
-            if (tiling == VK_IMAGE_TILING_LINEAR &&
-                (props.linearTilingFeatures & features) == features) {
-                return format;
-            } else if (tiling == VK_IMAGE_TILING_OPTIMAL &&
-                       (props.optimalTilingFeatures & features) == features) {
-                return format;
-            }
-        }
-        throw std::runtime_error("failed to find supported format!");
-    }
-
-    uint32_t Device::findMemoryType(uint32_t typeFilter,
-                                    VkMemoryPropertyFlags properties) {
+    uint32_t Context::findMemoryType(uint32_t typeFilter,
+        VkMemoryPropertyFlags properties) {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(m_physicalDevice.getDevice(), &memProperties);
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
             if ((typeFilter & (1 << i)) &&
                 (memProperties.memoryTypes[i].propertyFlags & properties) ==
-                    properties) {
+                properties) {
                 return i;
             }
         }
@@ -139,8 +50,7 @@ namespace PXTEngine {
         throw std::runtime_error("failed to find suitable memory type!");
     }
 
-    void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                              VkMemoryPropertyFlags properties,
+	void Context::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
                               VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -148,30 +58,29 @@ namespace PXTEngine {
         bufferInfo.usage = usage;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        if (vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer) !=
+        if (vkCreateBuffer(m_device.getDevice(), &bufferInfo, nullptr, &buffer) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create vertex buffer!");
         }
 
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(m_device, buffer, &memRequirements);
+        vkGetBufferMemoryRequirements(m_device.getDevice(), buffer, &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex =
-            findMemoryType(memRequirements.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-        if (vkAllocateMemory(m_device, &allocInfo, nullptr, &bufferMemory) !=
+        if (vkAllocateMemory(m_device.getDevice(), &allocInfo, nullptr, &bufferMemory) !=
             VK_SUCCESS) {
             throw std::runtime_error(
                 "failed to allocate vertex buffer memory!");
         }
 
-        vkBindBufferMemory(m_device, buffer, bufferMemory, 0);
+        vkBindBufferMemory(m_device.getDevice(), buffer, bufferMemory, 0);
     }
 
-    VkCommandBuffer Device::beginSingleTimeCommands() {
+    VkCommandBuffer Context::beginSingleTimeCommands() {
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -179,7 +88,7 @@ namespace PXTEngine {
         allocInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(m_device, &allocInfo, &commandBuffer);
+        vkAllocateCommandBuffers(m_device.getDevice(), &allocInfo, &commandBuffer);
 
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -189,7 +98,7 @@ namespace PXTEngine {
         return commandBuffer;
     }
 
-    void Device::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+    void Context::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
         vkEndCommandBuffer(commandBuffer);
 
         VkSubmitInfo submitInfo{};
@@ -197,14 +106,14 @@ namespace PXTEngine {
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffer;
 
-        vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(m_graphicsQueue);
+        vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(m_device.getGraphicsQueue());
 
-        vkFreeCommandBuffers(m_device, m_commandPool, 1, &commandBuffer);
+        vkFreeCommandBuffers(m_device.getDevice(), m_commandPool, 1, &commandBuffer);
     }
 
 
-    void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
+    void Context::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer,
                             VkDeviceSize size) {
         // TODO: we can try to implement a memory barrier to avoid waiting the copy
         //       to be finished before we can start rendering again.
@@ -219,7 +128,7 @@ namespace PXTEngine {
         endSingleTimeCommands(commandBuffer);
     }
 
-    void Device::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount) {
+    void Context::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkBufferImageCopy region{};
@@ -241,17 +150,17 @@ namespace PXTEngine {
         endSingleTimeCommands(commandBuffer);
     }
 
-    void Device::createImageWithInfo(const VkImageCreateInfo &imageInfo,
+    void Context::createImageWithInfo(const VkImageCreateInfo &imageInfo,
                                      VkMemoryPropertyFlags properties,
                                      VkImage &image,
                                      VkDeviceMemory &imageMemory) {
-        if (vkCreateImage(m_device, &imageInfo, nullptr, &image) !=
+        if (vkCreateImage(m_device.getDevice(), &imageInfo, nullptr, &image) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create image!");
         }
 
         VkMemoryRequirements memRequirements;
-        vkGetImageMemoryRequirements(m_device, image, &memRequirements);
+        vkGetImageMemoryRequirements(m_device.getDevice(), image, &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -259,17 +168,17 @@ namespace PXTEngine {
         allocInfo.memoryTypeIndex =
             findMemoryType(memRequirements.memoryTypeBits, properties);
 
-        if (vkAllocateMemory(m_device, &allocInfo, nullptr, &imageMemory) !=
+        if (vkAllocateMemory(m_device.getDevice(), &allocInfo, nullptr, &imageMemory) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to allocate image memory!");
         }
 
-        if (vkBindImageMemory(m_device, image, imageMemory, 0) != VK_SUCCESS) {
+        if (vkBindImageMemory(m_device.getDevice(), image, imageMemory, 0) != VK_SUCCESS) {
             throw std::runtime_error("failed to bind image memory!");
         }
     }
 
-	VkImageView Device::createImageView(VkImage image, VkFormat format) {
+	VkImageView Context::createImageView(VkImage image, VkFormat format) {
 		VkImageViewCreateInfo viewInfo{};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = image;
@@ -282,14 +191,14 @@ namespace PXTEngine {
 		viewInfo.subresourceRange.layerCount = 1;
 
 		VkImageView imageView;
-		if (vkCreateImageView(m_device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+		if (vkCreateImageView(m_device.getDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture image view!");
 		}
 
 		return imageView;
 	}
 
-	void Device::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+	void Context::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
 		VkImageMemoryBarrier barrier{};
@@ -343,4 +252,23 @@ namespace PXTEngine {
 
 		endSingleTimeCommands(commandBuffer);
 	}
-}
+
+    VkFormat Context::findSupportedFormat(
+        const std::vector<VkFormat>& candidates, VkImageTiling tiling,
+        VkFormatFeatureFlags features) {
+        for (VkFormat format : candidates) {
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties(m_physicalDevice.getDevice(), format,
+                &props);
+
+            if (tiling == VK_IMAGE_TILING_LINEAR &&
+                (props.linearTilingFeatures & features) == features) {
+                return format;
+            } else if (tiling == VK_IMAGE_TILING_OPTIMAL &&
+                (props.optimalTilingFeatures & features) == features) {
+                return format;
+            }
+        }
+        throw std::runtime_error("failed to find supported format!");
+    }
+} 

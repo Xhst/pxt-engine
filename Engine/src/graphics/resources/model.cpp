@@ -1,4 +1,4 @@
-#include "model.hpp"
+#include "graphics/resources/model.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -10,19 +10,19 @@
 
 namespace PXTEngine {
     
-    Model::Model(Device& device, const Model::Builder& builder)
-        : m_device{device} {
+    Model::Model(Context& context, const Model::Builder& builder)
+        : m_context{ context } {
         createVertexBuffers(builder.vertices);
         createIndexBuffers(builder.indices);
     }
 
     Model::~Model() {}
 
-    Unique<Model> Model::createModelFromFile(Device& device, const std::string& filepath) {
+    Unique<Model> Model::createModelFromFile(Context& context, const std::string& filepath) {
         Builder builder{};
         builder.loadModel(filepath);
 
-        return createUnique<Model>(device, builder);
+        return createUnique<Model>(context, builder);
     }
 
     void Model::createVertexBuffers(const std::vector<Vertex>& vertices) {
@@ -35,7 +35,7 @@ namespace PXTEngine {
         uint32_t vertexSize = sizeof(vertices[0]);
 
         Buffer stagingBuffer{
-            m_device, 
+            m_context,
             vertexSize,
             m_vertexCount, 
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
@@ -46,14 +46,14 @@ namespace PXTEngine {
         stagingBuffer.writeToBuffer((void*) vertices.data());
 
         m_vertexBuffer = createUnique<Buffer>(
-            m_device, 
+            m_context, 
             vertexSize, 
             m_vertexCount, 
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
 
-        m_device.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
+        m_context.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
     }
 
     void Model::createIndexBuffers(const std::vector<uint32_t>& indices) {
@@ -66,7 +66,7 @@ namespace PXTEngine {
         uint32_t indexSize = sizeof(indices[0]);
 
         Buffer stagingBuffer{
-            m_device, 
+            m_context,
             indexSize,
             m_indexCount, 
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
@@ -77,14 +77,14 @@ namespace PXTEngine {
         stagingBuffer.writeToBuffer((void*) indices.data());
 
         m_indexBuffer = createUnique<Buffer>(
-            m_device, 
+            m_context, 
             indexSize, 
             m_indexCount, 
             VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
 
-        m_device.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);
+        m_context.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);
     }
 
     void Model::draw(VkCommandBuffer commandBuffer) {

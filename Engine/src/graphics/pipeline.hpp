@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "graphics/device.hpp"
+#include "graphics/context/context.hpp"
 
 namespace PXTEngine {
 
@@ -32,7 +32,7 @@ namespace PXTEngine {
     class Pipeline {
        public:
         Pipeline(
-            Device& device,
+            Context& context,
             const std::string& vertFilepath,
             const std::string& fragFilepath,
             const PipelineConfigInfo& configInfo);
@@ -56,7 +56,7 @@ namespace PXTEngine {
 
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 
-        Device& m_device;
+        Context& m_context;
         VkPipeline m_graphicsPipeline;
         VkShaderModule m_vertShaderModule;
         VkShaderModule m_fragShaderModule;

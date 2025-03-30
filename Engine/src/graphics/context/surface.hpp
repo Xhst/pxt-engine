@@ -1,7 +1,7 @@
 #pragma once
 
 #include "graphics/window.hpp"
-#include "graphics/instance.hpp"
+#include "graphics/context/instance.hpp"
 
 namespace PXTEngine {
 

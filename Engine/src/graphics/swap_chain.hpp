@@ -2,11 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
-#include <string>
 #include <vector>
 
 #include "core/memory.hpp"
-#include "device.hpp"
+#include "graphics/context/context.hpp"
 
 namespace PXTEngine {
 
@@ -33,8 +32,8 @@ namespace PXTEngine {
          */
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
-        SwapChain(Device& deviceRef, VkExtent2D windowExtent);
-        SwapChain(Device& deviceRef, VkExtent2D windowExtent, Shared<SwapChain> previous);
+        SwapChain(Context& context, VkExtent2D windowExtent);
+        SwapChain(Context& context, VkExtent2D windowExtent, Shared<SwapChain> previous);
         ~SwapChain();
 
         SwapChain(const SwapChain&) = delete;
@@ -286,7 +285,7 @@ namespace PXTEngine {
         std::vector<VkImage> m_swapChainImages;
         std::vector<VkImageView> m_swapChainImageViews;
 
-        Device& m_device;
+        Context& m_context;
         VkExtent2D m_windowExtent;
 
         VkSwapchainKHR m_swapChain;

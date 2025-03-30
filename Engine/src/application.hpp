@@ -4,11 +4,8 @@
 #include "core/uuid.hpp"
 #include "core/system.hpp"
 #include "core/events/event.hpp"
-#include "graphics/instance.hpp"
 #include "graphics/window.hpp"
-#include "graphics/surface.hpp"
-#include "graphics/physical_device.hpp"
-#include "graphics/device.hpp"
+#include "graphics/context/context.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/frame_info.hpp"
@@ -17,9 +14,6 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
-
-#include <iostream>
-#include <stdexcept>
 
 int main();
 
@@ -46,8 +40,8 @@ namespace PXTEngine {
             return m_scene;
         }
 
-        Device& getDevice() {
-            return m_device;
+        Context& getContext() {
+            return m_context;
         }
 
         Window& getWindow() {
@@ -61,18 +55,15 @@ namespace PXTEngine {
         void onEvent(Event& event);
         bool isRunning();
 
-        void initImGui(Window& window, Device& device);
+        void initImGui();
 
         void imGuiRenderUI(FrameInfo& frameInfo);
 
         bool m_running = true;
 
         Window m_window{WindowData()};
-        Instance m_instance{"PXT Engine"};
-		Surface m_surface{m_window, m_instance};
-		PhysicalDevice m_physicalDevice{ m_instance, m_surface };
-        Device m_device{m_window, m_instance, m_surface, m_physicalDevice};
-        Renderer m_renderer{m_window, m_device};
+        Context m_context{m_window};
+        Renderer m_renderer{m_window, m_context};
 
         Unique<DescriptorPool> m_globalPool{};
         Scene m_scene{};

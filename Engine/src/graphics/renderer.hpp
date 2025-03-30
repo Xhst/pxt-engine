@@ -3,7 +3,7 @@
 #include "core/memory.hpp"
 #include "graphics/window.hpp"
 #include "graphics/swap_chain.hpp"
-#include "graphics/device.hpp"
+#include "graphics/context/context.hpp"
 
 #include <cassert>
 
@@ -23,9 +23,9 @@ namespace PXTEngine {
          * Initializes the renderer by recreating the swap chain and creating command buffers.
          * 
          * @param window The window to render to.
-         * @param device The Vulkan device to use for rendering.
+         * @param context The Vulkan context to use for rendering.
          */
-        Renderer(Window& window, Device& device);
+        Renderer(Window& window, Context& context);
 
         /**
          * @brief Destructor for the Renderer class, frees the command buffers.
@@ -138,7 +138,7 @@ namespace PXTEngine {
         void recreateSwapChain();
 
         Window& m_window;
-        Device& m_device;
+        Context& m_context;
         Unique<SwapChain> m_swapChain;
         std::vector<VkCommandBuffer> m_commandBuffers;
 
