@@ -23,7 +23,7 @@ namespace PXTEngine {
 
         DescriptorPool(Context& context, uint32_t maxSets, VkDescriptorPoolCreateFlags poolFlags,
                        const std::vector<VkDescriptorPoolSize> &poolSizes);
-                       
+
         ~DescriptorPool();
         
         DescriptorPool(const DescriptorPool &) = delete;
@@ -31,8 +31,7 @@ namespace PXTEngine {
 
         VkDescriptorPool getDescriptorPool() {return m_descriptorPool;}
 
-        bool allocateDescriptorSet(
-            const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
+        bool allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
 
         void freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const;
 

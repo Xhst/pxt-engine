@@ -68,7 +68,7 @@ namespace PXTEngine {
 		 * @param bufferMemory The buffer memory handle.
 		 */
 		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-			VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+						  VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
 		/**
 		* @brief Begins single-time commands.
@@ -123,7 +123,7 @@ namespace PXTEngine {
 		* @param imageMemory The image memory handle.
 		*/
 		void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties,
-			VkImage& image, VkDeviceMemory& imageMemory);
+								 VkImage& image, VkDeviceMemory& imageMemory);
 
 		/**
 		* @brief Creates an image view for an image.
@@ -160,7 +160,7 @@ namespace PXTEngine {
 		 * @return The supported format.
 		 */
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-			VkFormatFeatureFlags features);
+				               		 VkFormatFeatureFlags features);
 
 		/* ----------------------- End Buffer Helper Functions ---------------------- */
 		
