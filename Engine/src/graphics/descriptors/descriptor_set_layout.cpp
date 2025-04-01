@@ -20,12 +20,12 @@ namespace PXTEngine {
     }
 
     Unique<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const {
-        return createUnique<DescriptorSetLayout>(m_device, m_bindings);
+        return createUnique<DescriptorSetLayout>(m_context, m_bindings);
     }
 
     DescriptorSetLayout::DescriptorSetLayout(
-        Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
-        : m_device{device}, m_bindings{bindings} {
+        Context& context, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
+        : m_context{context}, m_bindings{bindings} {
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
         for (auto kv : m_bindings) {
             setLayoutBindings.push_back(kv.second);
@@ -37,7 +37,7 @@ namespace PXTEngine {
         descriptorSetLayoutInfo.pBindings = setLayoutBindings.data();
         
         if (vkCreateDescriptorSetLayout(
-                m_device.getDevice(),
+                m_context.getDevice(),
                 &descriptorSetLayoutInfo,
                 nullptr,
                 &m_descriptorSetLayout) != VK_SUCCESS) {
@@ -46,6 +46,6 @@ namespace PXTEngine {
     }
 
     DescriptorSetLayout::~DescriptorSetLayout() {
-        vkDestroyDescriptorSetLayout(m_device.getDevice(), m_descriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(m_context.getDevice(), m_descriptorSetLayout, nullptr);
     }
 }

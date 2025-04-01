@@ -10,13 +10,12 @@
 
 namespace PXTEngine {
 
-    SwapChain::SwapChain(Device &deviceRef, VkExtent2D extent)
-        : m_device{deviceRef}, m_windowExtent{extent} {
+    SwapChain::SwapChain(Context& context, VkExtent2D extent) : m_context{ context }, m_windowExtent{extent} {
         init();
     }
 
-    SwapChain::SwapChain(Device &deviceRef, VkExtent2D extent, Shared<SwapChain> previous)
-        : m_device{deviceRef}, m_windowExtent{extent}, m_oldSwapChain{previous} {
+    SwapChain::SwapChain(Context& context, VkExtent2D extent, Shared<SwapChain> previous)
+                : m_context{ context }, m_windowExtent{extent}, m_oldSwapChain{previous} {
         init();
 
         m_oldSwapChain = nullptr;
@@ -33,41 +32,42 @@ namespace PXTEngine {
 
     SwapChain::~SwapChain() {
         for (auto imageView : m_swapChainImageViews) {
-            vkDestroyImageView(m_device.getDevice(), imageView, nullptr);
+            vkDestroyImageView(m_context.getDevice(), imageView, nullptr);
         }
+
         m_swapChainImageViews.clear();
 
         if (m_swapChain != nullptr) {
-            vkDestroySwapchainKHR(m_device.getDevice(), m_swapChain, nullptr);
+            vkDestroySwapchainKHR(m_context.getDevice(), m_swapChain, nullptr);
             m_swapChain = nullptr;
         }
 
         for (int i = 0; i < m_depthImages.size(); i++) {
-            vkDestroyImageView(m_device.getDevice(), m_depthImageViews[i], nullptr);
-            vkDestroyImage(m_device.getDevice(), m_depthImages[i], nullptr);
-            vkFreeMemory(m_device.getDevice(), m_depthImageMemorys[i], nullptr);
+            vkDestroyImageView(m_context.getDevice(), m_depthImageViews[i], nullptr);
+            vkDestroyImage(m_context.getDevice(), m_depthImages[i], nullptr);
+            vkFreeMemory(m_context.getDevice(), m_depthImageMemorys[i], nullptr);
         }
 
         for (auto framebuffer : m_swapChainFramebuffers) {
-            vkDestroyFramebuffer(m_device.getDevice(), framebuffer, nullptr);
+            vkDestroyFramebuffer(m_context.getDevice(), framebuffer, nullptr);
         }
 
-        vkDestroyRenderPass(m_device.getDevice(), m_renderPass, nullptr);
+        vkDestroyRenderPass(m_context.getDevice(), m_renderPass, nullptr);
 
         // cleanup synchronization objects
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(m_device.getDevice(), m_renderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(m_device.getDevice(), m_imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(m_device.getDevice(), m_inFlightFences[i], nullptr);
+            vkDestroySemaphore(m_context.getDevice(), m_renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(m_context.getDevice(), m_imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(m_context.getDevice(), m_inFlightFences[i], nullptr);
         }
     }
 
     VkResult SwapChain::acquireNextImage(uint32_t *imageIndex) {
-        vkWaitForFences(m_device.getDevice(), 1, &m_inFlightFences[m_currentFrame], VK_TRUE,
+        vkWaitForFences(m_context.getDevice(), 1, &m_inFlightFences[m_currentFrame], VK_TRUE,
                         std::numeric_limits<uint64_t>::max());
 
         VkResult result = vkAcquireNextImageKHR(
-            m_device.getDevice(), m_swapChain, std::numeric_limits<uint64_t>::max(),
+            m_context.getDevice(), m_swapChain, std::numeric_limits<uint64_t>::max(),
             m_imageAvailableSemaphores[m_currentFrame],  // must be a not
                                                          // signaled semaphore
             VK_NULL_HANDLE, imageIndex);
@@ -77,9 +77,10 @@ namespace PXTEngine {
 
     VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex) {
         if (m_imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
-            vkWaitForFences(m_device.getDevice(), 1, &m_imagesInFlight[*imageIndex], VK_TRUE,
+            vkWaitForFences(m_context.getDevice(), 1, &m_imagesInFlight[*imageIndex], VK_TRUE,
                             UINT64_MAX);
         }
+        
         m_imagesInFlight[*imageIndex] = m_inFlightFences[m_currentFrame];
 
         VkSubmitInfo submitInfo = {};
@@ -98,8 +99,8 @@ namespace PXTEngine {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        vkResetFences(m_device.getDevice(), 1, &m_inFlightFences[m_currentFrame]);
-        if (vkQueueSubmit(m_device.graphicsQueue(), 1, &submitInfo,
+        vkResetFences(m_context.getDevice(), 1, &m_inFlightFences[m_currentFrame]);
+        if (vkQueueSubmit(m_context.getGraphicsQueue(), 1, &submitInfo,
                           m_inFlightFences[m_currentFrame]) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit draw command buffer!");
         }
@@ -116,7 +117,7 @@ namespace PXTEngine {
 
         presentInfo.pImageIndices = imageIndex;
 
-        auto result = vkQueuePresentKHR(m_device.presentQueue(), &presentInfo);
+        auto result = vkQueuePresentKHR(m_context.getPresentQueue(), &presentInfo);
 
         m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -124,7 +125,7 @@ namespace PXTEngine {
     }
 
     void SwapChain::createSwapChain() {
-        SwapChainSupportDetails swapChainSupport = m_device.getSwapChainSupport();
+        SwapChainSupportDetails swapChainSupport = m_context.getSwapChainSupport();
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
@@ -138,7 +139,7 @@ namespace PXTEngine {
 
         VkSwapchainCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        createInfo.surface = m_device.surface();
+        createInfo.surface = m_context.getSurface();
 
         createInfo.minImageCount = imageCount;
         createInfo.imageFormat = surfaceFormat.format;
@@ -147,7 +148,7 @@ namespace PXTEngine {
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        QueueFamilyIndices indices = m_device.findPhysicalQueueFamilies();
+        QueueFamilyIndices indices = m_context.findPhysicalQueueFamilies();
         uint32_t queueFamilyIndices[] = {indices.graphicsFamily, indices.presentFamily};
 
         if (indices.graphicsFamily != indices.presentFamily) {
@@ -168,7 +169,7 @@ namespace PXTEngine {
 
         createInfo.oldSwapchain = m_oldSwapChain == nullptr ? VK_NULL_HANDLE : m_oldSwapChain->m_swapChain;
 
-        if (vkCreateSwapchainKHR(m_device.getDevice(), &createInfo, nullptr, &m_swapChain) !=
+        if (vkCreateSwapchainKHR(m_context.getDevice(), &createInfo, nullptr, &m_swapChain) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create swap chain!");
         }
@@ -178,9 +179,9 @@ namespace PXTEngine {
         // That's why we'll first query the final number of images with
         // vkGetSwapchainImagesKHR, then resize the container and finally call
         // it again to retrieve the handles.
-        vkGetSwapchainImagesKHR(m_device.getDevice(), m_swapChain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(m_context.getDevice(), m_swapChain, &imageCount, nullptr);
         m_swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(m_device.getDevice(), m_swapChain, &imageCount,
+        vkGetSwapchainImagesKHR(m_context.getDevice(), m_swapChain, &imageCount,
                                 m_swapChainImages.data());
 
         m_swapChainImageFormat = surfaceFormat.format;
@@ -191,7 +192,7 @@ namespace PXTEngine {
 		m_swapChainImageViews.resize(m_swapChainImages.size());
 
 		for (uint32_t i = 0; i < m_swapChainImages.size(); i++) {
-			m_swapChainImageViews[i] = m_device.createImageView(m_swapChainImages[i], m_swapChainImageFormat);
+			m_swapChainImageViews[i] = m_context.createImageView(m_swapChainImages[i], m_swapChainImageFormat);
 		}
 	}
 
@@ -248,7 +249,7 @@ namespace PXTEngine {
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        if (vkCreateRenderPass(m_device.getDevice(), &renderPassInfo, nullptr, &m_renderPass) !=
+        if (vkCreateRenderPass(m_context.getDevice(), &renderPassInfo, nullptr, &m_renderPass) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create render pass!");
         }
@@ -270,7 +271,7 @@ namespace PXTEngine {
             framebufferInfo.height = swapChainExtent.height;
             framebufferInfo.layers = 1;
 
-            if (vkCreateFramebuffer(m_device.getDevice(), &framebufferInfo, nullptr,
+            if (vkCreateFramebuffer(m_context.getDevice(), &framebufferInfo, nullptr,
                                     &m_swapChainFramebuffers[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create framebuffer!");
             }
@@ -303,7 +304,7 @@ namespace PXTEngine {
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             imageInfo.flags = 0;
 
-            m_device.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            m_context.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                          m_depthImages[i], m_depthImageMemorys[i]);
 
             VkImageViewCreateInfo viewInfo{};
@@ -317,7 +318,7 @@ namespace PXTEngine {
             viewInfo.subresourceRange.baseArrayLayer = 0;
             viewInfo.subresourceRange.layerCount = 1;
 
-            if (vkCreateImageView(m_device.getDevice(), &viewInfo, nullptr, &m_depthImageViews[i]) !=
+            if (vkCreateImageView(m_context.getDevice(), &viewInfo, nullptr, &m_depthImageViews[i]) !=
                 VK_SUCCESS) {
                 throw std::runtime_error("failed to create texture image view!");
             }
@@ -338,11 +339,11 @@ namespace PXTEngine {
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            if (vkCreateSemaphore(m_device.getDevice(), &semaphoreInfo, nullptr,
+            if (vkCreateSemaphore(m_context.getDevice(), &semaphoreInfo, nullptr,
                                   &m_imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(m_device.getDevice(), &semaphoreInfo, nullptr,
+                vkCreateSemaphore(m_context.getDevice(), &semaphoreInfo, nullptr,
                                   &m_renderFinishedSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(m_device.getDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) !=
+                vkCreateFence(m_context.getDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) !=
                     VK_SUCCESS) {
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
             }
@@ -398,7 +399,7 @@ namespace PXTEngine {
     }
 
     VkFormat SwapChain::findDepthFormat() {
-        return m_device.findSupportedFormat(
+        return m_context.findSupportedFormat(
             {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
             VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
     }

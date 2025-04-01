@@ -1,4 +1,4 @@
-#include "graphics/buffer.hpp"
+#include "graphics/resources/buffer.hpp"
 
 #include <cassert>
 #include <cstring>
@@ -12,37 +12,37 @@ namespace PXTEngine {
         return instanceSize;
     }
 
-    Buffer::Buffer(Device &device,
+    Buffer::Buffer(Context& context,
         VkDeviceSize instanceSize,
         uint32_t instanceCount,
         VkBufferUsageFlags usageFlags,
         VkMemoryPropertyFlags memoryPropertyFlags,
         VkDeviceSize minOffsetAlignment)
-        : m_device{device},
+        : m_context{context},
           m_instanceSize{instanceSize},
           m_instanceCount{instanceCount},
           m_usageFlags{usageFlags},
           m_memoryPropertyFlags{memoryPropertyFlags} {
         m_alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
         m_bufferSize = m_alignmentSize * instanceCount;
-        device.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_memory);
+        context.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_memory);
     }
 
     Buffer::~Buffer() {
         unmap();
-        vkDestroyBuffer(m_device.getDevice(), m_buffer, nullptr);
-        vkFreeMemory(m_device.getDevice(), m_memory, nullptr);
+        vkDestroyBuffer(m_context.getDevice(), m_buffer, nullptr);
+        vkFreeMemory(m_context.getDevice(), m_memory, nullptr);
     }
 
     VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset) {
         assert(m_buffer && m_memory && "Called map on buffer before create");
 
-        return vkMapMemory(m_device.getDevice(), m_memory, offset, size, 0, &m_mapped);
+        return vkMapMemory(m_context.getDevice(), m_memory, offset, size, 0, &m_mapped);
     }
 
     void Buffer::unmap() {
         if (m_mapped) {
-            vkUnmapMemory(m_device.getDevice(), m_memory);
+            vkUnmapMemory(m_context.getDevice(), m_memory);
             m_mapped = nullptr;
         }
     }
@@ -65,7 +65,7 @@ namespace PXTEngine {
         mappedRange.memory = m_memory;
         mappedRange.offset = offset;
         mappedRange.size = size;
-        return vkFlushMappedMemoryRanges(m_device.getDevice(), 1, &mappedRange);
+        return vkFlushMappedMemoryRanges(m_context.getDevice(), 1, &mappedRange);
     }
 
     VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
@@ -74,7 +74,7 @@ namespace PXTEngine {
         mappedRange.memory = m_memory;
         mappedRange.offset = offset;
         mappedRange.size = size;
-        return vkInvalidateMappedMemoryRanges(m_device.getDevice(), 1, &mappedRange);
+        return vkInvalidateMappedMemoryRanges(m_context.getDevice(), 1, &mappedRange);
     }
 
     VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) {

@@ -6,7 +6,7 @@
 
 namespace PXTEngine {
 
-    Renderer::Renderer(Window& window, Device& device) : m_window{window}, m_device{device} {
+    Renderer::Renderer(Window& window, Context& context) : m_window{window}, m_context{context} {
         recreateSwapChain();
         createCommandBuffers();
     }
@@ -21,13 +21,13 @@ namespace PXTEngine {
             extent = m_window.getExtent();
             glfwWaitEvents();
         }
-        vkDeviceWaitIdle(m_device.getDevice());
+        vkDeviceWaitIdle(m_context.getDevice());
 
         if (m_swapChain == nullptr) {
-            m_swapChain = createUnique<SwapChain>(m_device, extent);
+            m_swapChain = createUnique<SwapChain>(m_context, extent);
         } else {
             Shared<SwapChain> oldSwapChain = std::move(m_swapChain);
-            m_swapChain = createUnique<SwapChain>(m_device, extent, oldSwapChain);
+            m_swapChain = createUnique<SwapChain>(m_context, extent, oldSwapChain);
 
             if (!oldSwapChain->compareSwapFormats(*m_swapChain.get())) {
                 throw std::runtime_error("Swap chain image (format, color space, or size) has changed, not handled yet!");
@@ -41,18 +41,18 @@ namespace PXTEngine {
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = m_device.getCommandPool();
+        allocInfo.commandPool = m_context.getCommandPool();
         allocInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
 
-        if (vkAllocateCommandBuffers(m_device.getDevice(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
+        if (vkAllocateCommandBuffers(m_context.getDevice(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate command buffers!");
         }
     }
 
     void Renderer::freeCommandBuffers() {
         vkFreeCommandBuffers(
-            m_device.getDevice(),
-            m_device.getCommandPool(),
+            m_context.getDevice(),
+            m_context.getCommandPool(),
             static_cast<uint32_t>(m_commandBuffers.size()),
             m_commandBuffers.data());
         

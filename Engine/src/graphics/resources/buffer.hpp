@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/device.hpp"
+#include "graphics/context/context.hpp"
 
 namespace PXTEngine {
 
@@ -17,20 +17,15 @@ namespace PXTEngine {
         /**
          * @brief Constructor for the Buffer class.
          *
-         * @param device The Vulkan device to create the buffer on.
+         * @param context The Vulkan context used to create the buffer.
          * @param instanceSize The size of each instance within the buffer.
          * @param instanceCount The number of instances in the buffer.
          * @param usageFlags Vulkan buffer usage flags.
          * @param memoryPropertyFlags Vulkan memory property flags.
          * @param minOffsetAlignment Minimum offset alignment for the buffer.
          */
-        Buffer(
-            Device& device,
-            VkDeviceSize instanceSize,
-            uint32_t instanceCount,
-            VkBufferUsageFlags usageFlags,
-            VkMemoryPropertyFlags memoryPropertyFlags,
-            VkDeviceSize minOffsetAlignment = 1);
+        Buffer(Context& context, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags,
+               VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment = 1);
 
         /**
          * @brief Destructor for the Buffer class.
@@ -215,7 +210,7 @@ namespace PXTEngine {
          */
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
-        Device& m_device;
+        Context& m_context;
         void* m_mapped = nullptr;
         VkBuffer m_buffer = VK_NULL_HANDLE;
         VkDeviceMemory m_memory = VK_NULL_HANDLE;

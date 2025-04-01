@@ -1,11 +1,19 @@
 #pragma once
 
-#include "graphics/buffer.hpp"
+#include "graphics/resources/buffer.hpp"
 
 namespace PXTEngine {
+
+	/**
+	 * @class Image
+	 * @brief Represents a Vulkan image and its associated resources.
+	 *
+	 * This class encapsulates the creation and management of a Vulkan image, including its view and sampler.
+	 * It provides methods to load an image from a file and create the necessary Vulkan resources.
+	 */
 	class Image {
 	public:
-		Image(const std::string filename, Device& device);
+		Image(const std::string filename, Context& context);
 		~Image();
 
 		Image(const Image&) = delete;
@@ -49,7 +57,7 @@ namespace PXTEngine {
 		 */
 		void createTextureSampler();
 
-		Device& m_device;
+		Context& m_context;
 
 		VkImage m_textureImage; // the raw image pixels
 		VkDeviceMemory m_textureImageMemory; // the memory occupied by the image

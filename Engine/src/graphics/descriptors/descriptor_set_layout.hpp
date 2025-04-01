@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/device.hpp"
+#include "graphics/context/context.hpp"
 
 
 namespace PXTEngine {
@@ -8,7 +8,7 @@ namespace PXTEngine {
     public:
         class Builder {
         public:
-            Builder(Device& device) : m_device{device} {}
+            Builder(Context& context) : m_context{context} {}
 
             Builder& addBinding(
                 uint32_t binding,
@@ -19,12 +19,11 @@ namespace PXTEngine {
             Unique<DescriptorSetLayout> build() const;
 
         private:
-            Device& m_device;
+            Context& m_context;
             std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> m_bindings{};
         };
 
-        DescriptorSetLayout(
-            Device& m_device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
+        DescriptorSetLayout(Context& context, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
         ~DescriptorSetLayout();
         
         DescriptorSetLayout(const DescriptorSetLayout &) = delete;
@@ -33,7 +32,7 @@ namespace PXTEngine {
         VkDescriptorSetLayout getDescriptorSetLayout() const { return m_descriptorSetLayout; }
 
     private:
-        Device& m_device;
+        Context& m_context;
         VkDescriptorSetLayout m_descriptorSetLayout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> m_bindings;
 
