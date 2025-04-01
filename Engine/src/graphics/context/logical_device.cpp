@@ -53,27 +53,30 @@ namespace PXTEngine {
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-        createInfo.queueCreateInfoCount =
-            static_cast<uint32_t>(queueCreateInfos.size());
+        // These structures define the queues that the logical device will create. 
+        // Queues are used for submitting work to the device, such as graphics commands or compute operations.
+        createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
+        // This field is a pointer to an extension structure. 
+        // It allows to chain additional information, enabling the use of Vulkan extensions. 
+        // This is where you would place structures that enable newer Vulkan features.
         createInfo.pNext = &deviceFeatures2; 
         
         // pEnabledFeatures is the older, legacy way of specifying core Vulkan 1.0 features,
         // when using VkPhysicalDeviceFeatures2 set it to nullptr
         createInfo.pEnabledFeatures = nullptr;
 
-        createInfo.enabledExtensionCount =
-            static_cast<uint32_t>(m_instance.deviceExtensions.size());
+        // Device extensions provide additional functionality beyond the core Vulkan specification.
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(m_instance.deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = m_instance.deviceExtensions.data();
 
-        // might not really be necessary anymore because device specific
-        // validation layers have been deprecated
+        createInfo.enabledLayerCount = 0;
+
+        // might not really be necessary anymore because device specific validation layers have been deprecated
         if (m_instance.enableValidationLayers) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(m_instance.validationLayers.size());
             createInfo.ppEnabledLayerNames = m_instance.validationLayers.data();
-        } else {
-            createInfo.enabledLayerCount = 0;
         }
 
         if (vkCreateDevice(m_physicalDevice.getDevice(), &createInfo, nullptr,
