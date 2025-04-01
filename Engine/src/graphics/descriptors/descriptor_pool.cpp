@@ -40,7 +40,7 @@ namespace PXTEngine {
         vkDestroyDescriptorPool(m_context.getDevice(), m_descriptorPool, nullptr);
     }
 
-    bool DescriptorPool::allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, 
+    void DescriptorPool::allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, 
                                                VkDescriptorSet& descriptor) const {
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -51,9 +51,8 @@ namespace PXTEngine {
         //TODO: Might want to create a "DescriptorPoolManager" class that handles this case, and builds
         // a new pool whenever an old pool fills up.
         if (vkAllocateDescriptorSets(m_context.getDevice(), &allocInfo, &descriptor) != VK_SUCCESS) {
-            return false;
-        }
-        return true; 
+            throw std::runtime_error("failed to allocate descriptor set(s)! (pool full?)");
+        } 
     }
 
     void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const {

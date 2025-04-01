@@ -66,10 +66,8 @@ namespace PXTEngine {
          * @brief Builds and allocates a descriptor set.
          * 
          * @param set Reference to the descriptor set to be built.
-         * 
-         * @return True if successful, false otherwise.
          */
-        bool build(VkDescriptorSet& set);
+        void build(VkDescriptorSet& set);
 
         /**
          * @brief Overwrites an existing descriptor set with the stored writes.

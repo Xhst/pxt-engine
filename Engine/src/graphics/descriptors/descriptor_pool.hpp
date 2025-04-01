@@ -31,7 +31,7 @@ namespace PXTEngine {
 
         VkDescriptorPool getDescriptorPool() {return m_descriptorPool;}
 
-        bool allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
+        void allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
 
         void freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const;
 

@@ -7,13 +7,10 @@ namespace PXTEngine {
     DescriptorWriter::DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool)
         : m_setLayout{setLayout}, m_pool{pool} {}
 
-    bool DescriptorWriter::build(VkDescriptorSet& set) {
-        bool success = m_pool.allocateDescriptorSet(m_setLayout.getDescriptorSetLayout(), set);
-        if (!success) {
-            return false;
-        }
+    void DescriptorWriter::build(VkDescriptorSet& set) {
+        m_pool.allocateDescriptorSet(m_setLayout.getDescriptorSetLayout(), set);
+       
         overwrite(set);
-        return true;
     }
 
     void DescriptorWriter::overwrite(VkDescriptorSet& set) {

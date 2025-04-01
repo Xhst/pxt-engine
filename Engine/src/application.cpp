@@ -41,7 +41,7 @@ namespace PXTEngine {
         m_globalPool = DescriptorPool::Builder(m_context)
                 .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
+                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * 4)
                 .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
                 .build();
 
@@ -123,7 +123,7 @@ namespace PXTEngine {
 
         auto globalSetLayout = DescriptorSetLayout::Builder(m_context)
             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 100)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, textures.size())
             .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -131,7 +131,7 @@ namespace PXTEngine {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
             DescriptorWriter(*globalSetLayout, *m_globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImages(1, imageInfos.data(), textures.size())
+				.writeImages(1, imageInfos.data(), imageInfos.size())
                 .build(globalDescriptorSets[i]);
         }
 
