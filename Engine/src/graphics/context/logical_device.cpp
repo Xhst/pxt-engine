@@ -38,6 +38,7 @@ namespace PXTEngine {
 
         VkPhysicalDeviceFeatures2 deviceFeatures2{};
         deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        deviceFeatures2.features.samplerAnisotropy = VK_TRUE; // Enable anisotropic filtering
         deviceFeatures2.pNext = &indexingFeatures;
 
         vkGetPhysicalDeviceFeatures2(m_physicalDevice.getDevice(), &deviceFeatures2);
@@ -49,10 +50,6 @@ namespace PXTEngine {
             throw std::runtime_error("Required descriptor indexing features are not supported!");
         }
 
-        VkPhysicalDeviceFeatures deviceFeatures = {};
-        deviceFeatures.samplerAnisotropy = VK_TRUE; 
-
-
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -60,9 +57,11 @@ namespace PXTEngine {
             static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-        createInfo.pNext = &deviceFeatures2; // Attach extended features
-
-        createInfo.pEnabledFeatures = &deviceFeatures;
+        createInfo.pNext = &deviceFeatures2; 
+        
+        // pEnabledFeatures is the older, legacy way of specifying core Vulkan 1.0 features,
+        // when using VkPhysicalDeviceFeatures2 set it to nullptr
+        createInfo.pEnabledFeatures = nullptr;
 
         createInfo.enabledExtensionCount =
             static_cast<uint32_t>(m_instance.deviceExtensions.size());
@@ -71,8 +70,7 @@ namespace PXTEngine {
         // might not really be necessary anymore because device specific
         // validation layers have been deprecated
         if (m_instance.enableValidationLayers) {
-            createInfo.enabledLayerCount =
-                static_cast<uint32_t>(m_instance.validationLayers.size());
+            createInfo.enabledLayerCount = static_cast<uint32_t>(m_instance.validationLayers.size());
             createInfo.ppEnabledLayerNames = m_instance.validationLayers.data();
         } else {
             createInfo.enabledLayerCount = 0;
