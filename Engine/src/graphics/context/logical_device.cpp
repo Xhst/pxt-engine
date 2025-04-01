@@ -71,16 +71,7 @@ namespace PXTEngine {
         createInfo.enabledExtensionCount = static_cast<uint32_t>(m_instance.deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = m_instance.deviceExtensions.data();
 
-        createInfo.enabledLayerCount = 0;
-
-        // might not really be necessary anymore because device specific validation layers have been deprecated
-        if (m_instance.enableValidationLayers) {
-            createInfo.enabledLayerCount = static_cast<uint32_t>(m_instance.validationLayers.size());
-            createInfo.ppEnabledLayerNames = m_instance.validationLayers.data();
-        }
-
-        if (vkCreateDevice(m_physicalDevice.getDevice(), &createInfo, nullptr,
-                           &m_device) != VK_SUCCESS) {
+        if (vkCreateDevice(m_physicalDevice.getDevice(), &createInfo, nullptr,&m_device) != VK_SUCCESS) {
             throw std::runtime_error("failed to create logical device!");
         }
 
