@@ -30,17 +30,37 @@ namespace PXTEngine {
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
+        // This structure is an extension structure that holds information about descriptor indexing features.
         VkPhysicalDeviceDescriptorIndexingFeaturesEXT indexingFeatures{};
         indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+
+        // This enables the ability to use non-uniform indexing for sampled image arrays within shaders.
+        // Non-uniform indexing means that the index used to access an array can be dynamically calculated within 
+        // the shader, rather than being a constant. 
         indexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+
+        // This allows descriptor sets to have some bindings that are not bound to any resources.
+        // This is useful for situations where you don't need to bind all resources in a descriptor set.
         indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+
+        // This enables runtime-sized descriptor arrays, 
+        // which means that the size of descriptor arrays can be determined dynamically at runtime.
         indexingFeatures.runtimeDescriptorArray = VK_TRUE;
 
+
+        // This structure holds the physical device features that are required for the logical device.
         VkPhysicalDeviceFeatures2 deviceFeatures2{};
         deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        deviceFeatures2.features.samplerAnisotropy = VK_TRUE; // Enable anisotropic filtering
+
+        // Enable anisotropic filtering
+        // A texture filtering technique that improves the quality of textures when viewed at oblique angles.
+        deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
+
+        // Enable the descriptor indexing features
         deviceFeatures2.pNext = &indexingFeatures;
 
+
+        // Fetch the physical device features
         vkGetPhysicalDeviceFeatures2(m_physicalDevice.getDevice(), &deviceFeatures2);
 
         // Check if the required features are supported
@@ -49,6 +69,7 @@ namespace PXTEngine {
             !indexingFeatures.runtimeDescriptorArray) {
             throw std::runtime_error("Required descriptor indexing features are not supported!");
         }
+
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -71,6 +92,7 @@ namespace PXTEngine {
         createInfo.enabledExtensionCount = static_cast<uint32_t>(m_instance.deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = m_instance.deviceExtensions.data();
 
+        
         if (vkCreateDevice(m_physicalDevice.getDevice(), &createInfo, nullptr,&m_device) != VK_SUCCESS) {
             throw std::runtime_error("failed to create logical device!");
         }
