@@ -40,16 +40,10 @@ namespace PXTEngine {
 
 		std::vector<PoolSizeRatio> ratios = {
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f},
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2.0f},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5.0f},
 		};
 
 		m_descriptorAllocator = createUnique<DescriptorAllocatorGrowable>(m_context, SwapChain::MAX_FRAMES_IN_FLIGHT, ratios);
-
-        m_globalPool = DescriptorPool::Builder(m_context)
-            .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
-            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * 3)
-            .build();
 
         m_imGuiPool = DescriptorPool::Builder(m_context)
             .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
