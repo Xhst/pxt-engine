@@ -14,7 +14,7 @@ namespace PXTEngine
     struct IDComponent {
         UUID uuid;
 
-        IDComponent() = default;
+		IDComponent(UUID uuid) : uuid(uuid) {}
         IDComponent(const IDComponent&) = default;
 
         operator UUID&() { return uuid; }
@@ -50,6 +50,8 @@ namespace PXTEngine
         int textureIndex = 0;
 
         MaterialComponent() = default;
+        MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, int textureIndex)
+            : color(color), specularIntensity(specularIntensity), shininess(shininess), textureIndex(textureIndex) {}
         MaterialComponent(const MaterialComponent&) = default;
         MaterialComponent(MaterialComponent&&) = default; // Explicit move constructor
         MaterialComponent& operator=(MaterialComponent&&) = default; // Explicit move assignment

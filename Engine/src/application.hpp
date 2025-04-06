@@ -65,9 +65,11 @@ namespace PXTEngine {
         Context m_context{m_window};
         Renderer m_renderer{m_window, m_context};
 
+        Unique<DescriptorAllocatorGrowable> m_descriptorAllocator{};
         Unique<DescriptorPool> m_globalPool{};
-        Scene m_scene{};
+        Unique<DescriptorPool> m_imGuiPool{};
 
+        Scene m_scene{};
         std::unordered_map<UUID, System*> m_systems;
 
         static Application* Instance;

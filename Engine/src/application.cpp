@@ -38,13 +38,18 @@ namespace PXTEngine {
     Application::Application() {
         Instance = this;
 
-        m_globalPool = DescriptorPool::Builder(m_context)
-                .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT * 2)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT * 4)
-                .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
-                .build();
+		std::vector<PoolSizeRatio> ratios = {
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5.0f},
+		};
 
+		m_descriptorAllocator = createUnique<DescriptorAllocatorGrowable>(m_context, SwapChain::MAX_FRAMES_IN_FLIGHT, ratios);
+
+        m_imGuiPool = DescriptorPool::Builder(m_context)
+            .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+            .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
+            .build();
         // to enable imGui functionality
         initImGui();
     }
@@ -77,7 +82,7 @@ namespace PXTEngine {
         initInfo.RenderPass = m_renderer.getSwapChainRenderPass();
         initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         initInfo.PipelineCache = VK_NULL_HANDLE;
-        initInfo.DescriptorPool = m_globalPool->getDescriptorPool();
+        initInfo.DescriptorPool = m_imGuiPool->getDescriptorPool();
         initInfo.Allocator = nullptr;
         initInfo.MinImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
         initInfo.ImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
@@ -129,10 +134,13 @@ namespace PXTEngine {
         std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
             auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            DescriptorWriter(*globalSetLayout, *m_globalPool)
+
+			m_descriptorAllocator->allocate(globalSetLayout->getDescriptorSetLayout(), globalDescriptorSets[i]);
+
+            DescriptorWriter(m_context, *globalSetLayout)
                 .writeBuffer(0, &bufferInfo)
-				.writeImages(1, imageInfos.data(), imageInfos.size())
-                .build(globalDescriptorSets[i]);
+                .writeImages(1, imageInfos.data(), imageInfos.size())
+                .updateSet(globalDescriptorSets[i]);
         }
 
         m_window.setEventCallback([this](auto&& PH1) {

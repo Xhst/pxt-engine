@@ -2,6 +2,9 @@
 
 #include "graphics/context/context.hpp"
 
+#include <vector>
+#include <span>
+
 namespace PXTEngine { 
     class DescriptorPool {
     public:
@@ -10,6 +13,7 @@ namespace PXTEngine {
             Builder(Context& context) : m_context{context} {}
 
             Builder& addPoolSize(VkDescriptorType descriptorType, uint32_t count);
+            Builder& addPoolSizes(std::span<VkDescriptorPoolSize> poolSizes);
             Builder& setPoolFlags(VkDescriptorPoolCreateFlags flags);
             Builder& setMaxSets(uint32_t count);
             Unique<DescriptorPool> build() const;
@@ -29,9 +33,12 @@ namespace PXTEngine {
         DescriptorPool(const DescriptorPool &) = delete;
         DescriptorPool &operator=(const DescriptorPool &) = delete;
 
+		DescriptorPool(DescriptorPool&&) = default;
+
         VkDescriptorPool getDescriptorPool() {return m_descriptorPool;}
 
-        void allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const;
+        bool allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor,
+								   const void* pNext = nullptr) const;
 
         void freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const;
 
