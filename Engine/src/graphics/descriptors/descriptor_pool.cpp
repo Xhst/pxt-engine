@@ -4,7 +4,18 @@
 
 namespace PXTEngine {
     DescriptorPool::Builder& DescriptorPool::Builder::addPoolSize(VkDescriptorType descriptorType, uint32_t count) {
-        m_poolSizes.push_back({descriptorType, count});
+		VkDescriptorPoolSize poolSize{};
+		poolSize.type = descriptorType;
+		poolSize.descriptorCount = count;
+
+        m_poolSizes.emplace_back(descriptorType, count);
+        return *this;
+    }
+
+    DescriptorPool::Builder& DescriptorPool::Builder::addPoolSizes(std::span<VkDescriptorPoolSize> poolSizes) {
+        for (auto& poolSize : poolSizes) {
+            m_poolSizes.emplace_back(poolSize);
+        }
         return *this;
     }
 
@@ -40,19 +51,34 @@ namespace PXTEngine {
         vkDestroyDescriptorPool(m_context.getDevice(), m_descriptorPool, nullptr);
     }
 
-    void DescriptorPool::allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, 
-                                               VkDescriptorSet& descriptor) const {
+    bool DescriptorPool::allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, 
+                                               VkDescriptorSet& descriptor, const void* pNext) const {
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = m_descriptorPool;
         allocInfo.pSetLayouts = &descriptorSetLayout;
         allocInfo.descriptorSetCount = 1;
-        
-        //TODO: Might want to create a "DescriptorPoolManager" class that handles this case, and builds
-        // a new pool whenever an old pool fills up.
-        if (vkAllocateDescriptorSets(m_context.getDevice(), &allocInfo, &descriptor) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate descriptor set(s)! (pool full?)");
-        } 
+		allocInfo.pNext = pNext;
+
+        VkResult result = vkAllocateDescriptorSets(m_context.getDevice(), &allocInfo, &descriptor);
+
+		if (result == VK_ERROR_FRAGMENTED_POOL || result == VK_ERROR_OUT_OF_POOL_MEMORY) {
+			return false;
+		}
+
+		if (result == VK_ERROR_OUT_OF_DEVICE_MEMORY) {
+			throw std::runtime_error("failed to allocate descriptor set, device out of memory!");
+		}
+
+		if (result == VK_ERROR_OUT_OF_HOST_MEMORY) {
+			throw std::runtime_error("failed to allocate descriptor set, host out of memory!");
+		}
+
+		if (result != VK_SUCCESS) {
+			throw std::runtime_error("failed to allocate descriptor set!");
+		}
+
+        return true;
     }
 
     void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const {

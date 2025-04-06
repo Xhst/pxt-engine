@@ -10,7 +10,7 @@ namespace PXTEngine {
     class DescriptorWriter {
     public:
 
-        DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool);
+        DescriptorWriter(Context& context, DescriptorSetLayout& setLayout);
 
         /**
          * @brief Writes a single buffer descriptor to the specified binding.
@@ -62,19 +62,13 @@ namespace PXTEngine {
             return write(binding, imagesInfo, count);
         }
 
-        /**
-         * @brief Builds and allocates a descriptor set.
-         * 
-         * @param set Reference to the descriptor set to be built.
-         */
-        void build(VkDescriptorSet& set);
 
         /**
          * @brief Overwrites an existing descriptor set with the stored writes.
          * 
          * @param set Reference to the descriptor set to be overwritten.
          */
-        void overwrite(VkDescriptorSet& set);
+        void updateSet(VkDescriptorSet& set);
 
     private:
         /**
@@ -113,8 +107,8 @@ namespace PXTEngine {
             return *this;
         }
 
+		Context& m_context;
         DescriptorSetLayout& m_setLayout;
-        DescriptorPool& m_pool;
         std::vector<VkWriteDescriptorSet> m_writes;
     };
 }
