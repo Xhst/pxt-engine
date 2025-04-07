@@ -65,7 +65,7 @@ namespace PXTEngine {
 			.setMaxSets(setCount)
 			.build();
 
-		return createShared<DescriptorPool>(m_context, setCount, 0, poolSizes);
+		return pool;
 	}
 
 	void DescriptorAllocatorGrowable::allocate(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) {
