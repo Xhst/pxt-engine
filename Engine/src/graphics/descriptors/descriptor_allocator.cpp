@@ -53,19 +53,19 @@ namespace PXTEngine {
 		return newPool;
 	}
 
-	Shared<DescriptorPool> DescriptorAllocatorGrowable::createPool(uint32_t setCount, std::span<PoolSizeRatio> poolRatios) {
+	Unique<DescriptorPool> DescriptorAllocatorGrowable::createPool(uint32_t setCount, std::span<PoolSizeRatio> poolRatios) {
 
 		std::vector<VkDescriptorPoolSize> poolSizes;
 		for (PoolSizeRatio ratio : poolRatios) {
 			poolSizes.emplace_back(ratio.type, static_cast<uint32_t>(ratio.ratio * setCount));
 		}
 
-		Shared<DescriptorPool> pool = DescriptorPool::Builder(m_context)
+		Unique<DescriptorPool> pool = DescriptorPool::Builder(m_context)
 			.addPoolSizes(poolSizes)
 			.setMaxSets(setCount)
 			.build();
 
-		return createShared<DescriptorPool>(m_context, setCount, 0, poolSizes);
+		return pool;
 	}
 
 	void DescriptorAllocatorGrowable::allocate(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) {

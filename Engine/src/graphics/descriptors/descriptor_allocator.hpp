@@ -27,7 +27,7 @@ namespace PXTEngine {
 		void clearPools();
 	private:
 		Shared<DescriptorPool> getPool();
-		Shared<DescriptorPool> createPool(uint32_t setCount, std::span<PoolSizeRatio> poolRatios);
+		Unique<DescriptorPool> createPool(uint32_t setCount, std::span<PoolSizeRatio> poolRatios);
 
 		Context& m_context;
 
