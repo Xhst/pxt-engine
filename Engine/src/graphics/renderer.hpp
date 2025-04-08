@@ -109,13 +109,22 @@ namespace PXTEngine {
         void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
         /**
-         * @brief Ends the swap chain render pass.
+        * @brief Begins a render pass.
+        *
+        * @param commandBuffer The command buffer to record the render pass into.
+        *
+        * @throws std::runtime_error if called when frame is not in progress or command buffer is from a different frame.
+        */
+        void beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent);
+
+        /**
+         * @brief Ends the current render pass.
          * 
          * @param commandBuffer The command buffer to record the end of the render pass into.
          * 
          * @throws std::runtime_error if called when frame is not in progress or command buffer is from a different frame.
          */
-        void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+        void endRenderPass(VkCommandBuffer commandBuffer);
 
     private:
         /**
