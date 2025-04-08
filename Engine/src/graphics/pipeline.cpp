@@ -145,9 +145,11 @@ namespace PXTEngine {
 		}
 
 		// --- Clean up: Destroy the shader modules ---
-		for (const auto shaderModule : m_shaderModules) {
+		for (auto& shaderModule : m_shaderModules) {
 			vkDestroyShaderModule(m_context.getDevice(), shaderModule, nullptr);
+			shaderModule = VK_NULL_HANDLE;
 		}
+		m_shaderModules.clear();
 	}
 
     void Pipeline::bind(VkCommandBuffer commandBuffer) {

@@ -68,7 +68,7 @@ namespace PXTEngine {
 
         Context& m_context;
         VkPipeline m_graphicsPipeline;
+
         std::vector<VkShaderModule> m_shaderModules{};
-        VkShaderModule m_fragShaderModule;
     };
 }
