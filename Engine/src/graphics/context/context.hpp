@@ -21,6 +21,7 @@ namespace PXTEngine {
 		~Context();		
 	
 		VkInstance getInstance() { return m_instance.getVkInstance(); }
+		Window& getWindow() { return m_window; }
 		VkSurfaceKHR getSurface() { return m_surface.getSurface(); }
 		VkPhysicalDevice getPhysicalDevice() { return m_physicalDevice.getDevice(); }
 		VkDevice getDevice() { return m_device.getDevice(); }
@@ -134,7 +135,7 @@ namespace PXTEngine {
 		* @param format The format of the image.
 		* @return The image view handle.
 		*/
-		VkImageView createImageView(VkImage image, VkFormat format);
+		VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT);
 
 		/**
 		* @brief Transitions the layout of an image.

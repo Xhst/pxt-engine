@@ -13,7 +13,8 @@ namespace PXTEngine {
 	 */
 	class Image {
 	public:
-		Image(const std::string filename, Context& context);
+		Image(const std::string filename, Context& context, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
+		Image(Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags aspectFlags);
 		~Image();
 
 		Image(const Image&) = delete;
@@ -40,7 +41,7 @@ namespace PXTEngine {
 		/**
 		 * @brief Creates a Vulkan image.
 		 */
-		void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+		void createImage(uint32_t width, uint32_t height, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 		
 		/**
 		 * @brief Creates an image view.
@@ -48,7 +49,7 @@ namespace PXTEngine {
 		 * An image view is a way to interpret the image data. 
 		 * It describes how to access the image and which part of the image to access.
 		 */
-		void createTextureImageView();
+		void createTextureImageView(VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT);
 
 		/**
 		 * @brief Creates a texture sampler.
@@ -58,6 +59,8 @@ namespace PXTEngine {
 		void createTextureSampler();
 
 		Context& m_context;
+
+		VkFormat m_imageFormat;
 
 		VkImage m_textureImage; // the raw image pixels
 		VkDeviceMemory m_textureImageMemory; // the memory occupied by the image

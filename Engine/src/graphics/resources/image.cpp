@@ -6,11 +6,18 @@
 
 
 namespace PXTEngine {
-	Image::Image(const std::string filename, Context& context) : m_context{ context } {
+	Image::Image(const std::string filename, Context& context, VkFormat format) : m_context(context), m_imageFormat(format) {
 		createTextureImage(filename.c_str());
 		createTextureImageView();
 		createTextureSampler();
 	}
+
+	Image::Image(Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags aspectFlags) : m_context(context), m_imageFormat(format) {
+		createImage(width, height, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_textureImage, m_textureImageMemory);
+		createTextureImageView(aspectFlags);
+		createTextureSampler();
+	}
+
 	Image::~Image() {
 		vkDestroySampler(m_context.getDevice(), m_textureSampler, nullptr);
 		vkDestroyImageView(m_context.getDevice(), m_textureImageView, nullptr);
@@ -45,7 +52,6 @@ namespace PXTEngine {
 
 		// create an empty vkImage
 		createImage(texWidth, texHeight,
-					VK_FORMAT_R8G8B8A8_SRGB,
 					VK_IMAGE_TILING_OPTIMAL,
 					// we want the image to be a transfer destination and sampled to be used in the shaders
 					VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -77,7 +83,7 @@ namespace PXTEngine {
 		);
 	}
 
-	void Image::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+	void Image::createImage(uint32_t width, uint32_t height, VkImageTiling tiling,
 		 VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
 			
 		VkImageCreateInfo imageInfo{};
@@ -95,7 +101,7 @@ namespace PXTEngine {
 
 		// Specifies the format of the image (color depth, channels, etc.).
 		// The format affects memory usage and compatibility
-		imageInfo.format = format;
+		imageInfo.format = m_imageFormat;
 
 		// Specifies how image data is stored in memory.
 		// VK_IMAGE_TILING_LINEAR: Texels are laid out in row-major order (similar to CPU memory).
@@ -126,8 +132,8 @@ namespace PXTEngine {
 		m_context.createImageWithInfo(imageInfo, properties, image, imageMemory);
 	}
 
-	void Image::createTextureImageView() {
-		m_textureImageView = m_context.createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+	void Image::createTextureImageView(VkImageAspectFlags aspectFlags) {
+		m_textureImageView = m_context.createImageView(m_textureImage, m_imageFormat, aspectFlags);
 	}
 
 	void Image::createTextureSampler() {
