@@ -1,4 +1,4 @@
-#include "graphics/render_systems/simple_render_system.hpp"
+#include "graphics/render_systems/material_render_system.hpp"
 #include "core/memory.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
@@ -22,23 +22,73 @@ namespace PXTEngine {
         int textureIndex = -1;
     };
 
-    SimpleRenderSystem::SimpleRenderSystem(Context& context, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : m_context(context) {
+    MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) : m_context(context), m_descriptorAllocator(descriptorAllocator) {
+		loadTextures();
+		createDescriptorSets(globalSetLayout, shadowMapImageInfo);
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
     }
 
-    SimpleRenderSystem::~SimpleRenderSystem() {
+    MaterialRenderSystem::~MaterialRenderSystem() {
         vkDestroyPipelineLayout(m_context.getDevice(), m_pipelineLayout, nullptr);
     }
 
-    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+	void MaterialRenderSystem::loadTextures() {
+		std::vector<std::string> textures_name = {
+			"white_pixel.png",
+			"shrek_420x420.png",
+			"texture.jpg",
+		};
+
+		for (const auto& texture_name : textures_name) {
+			m_textures.push_back(createUnique<Image>(TEXTURES_PATH + texture_name, m_context));
+		}
+	}
+
+    void MaterialRenderSystem::createDescriptorSets(VkDescriptorSetLayout globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) {
+		// TEXTURE DESCRIPTOR SET
+        m_textureDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, m_textures.size())
+			.build();
+
+		std::vector<VkDescriptorImageInfo> imageInfos;
+		for (const auto& texture : m_textures) {
+			VkDescriptorImageInfo imageInfo{};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = texture->getImageView();
+			imageInfo.sampler = texture->getImageSampler();
+			imageInfos.push_back(imageInfo);
+		}
+
+		m_descriptorAllocator->allocate(m_textureDescriptorSetLayout->getDescriptorSetLayout(), m_textureDescriptorSet);
+
+		DescriptorWriter(m_context, *m_textureDescriptorSetLayout)
+			.writeImages(0, imageInfos.data(), imageInfos.size())
+			.updateSet(m_textureDescriptorSet);
+
+        // SHADOW MAP DESCRIPTOR SET
+		m_shadowMapDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.build();
+
+		m_descriptorAllocator->allocate(m_shadowMapDescriptorSetLayout->getDescriptorSetLayout(), m_shadowMapDescriptorSet);
+
+		DescriptorWriter(m_context, *m_shadowMapDescriptorSetLayout)
+			.writeImage(0, &shadowMapImageInfo)
+			.updateSet(m_shadowMapDescriptorSet);
+    }
+
+    void MaterialRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
 
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
-
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
+            globalSetLayout,
+            m_textureDescriptorSetLayout->getDescriptorSetLayout(),
+            m_shadowMapDescriptorSetLayout->getDescriptorSetLayout()
+        };
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -52,7 +102,7 @@ namespace PXTEngine {
         }
     }
 
-    void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
+    void MaterialRenderSystem::createPipeline(VkRenderPass renderPass) {
         assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipelineLayout");
 
         PipelineConfigInfo pipelineConfig{};
@@ -61,8 +111,8 @@ namespace PXTEngine {
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
 		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths = {
-			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "simple_shader.vert.spv"},
-			{VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "simple_shader.frag.spv"}
+			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "material_shader.vert.spv"},
+			{VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "material_shader.frag.spv"}
 		};
 
         m_pipeline = createUnique<Pipeline>(
@@ -72,16 +122,18 @@ namespace PXTEngine {
         );
     }
 
-    void SimpleRenderSystem::render(FrameInfo& frameInfo) {
+    void MaterialRenderSystem::render(FrameInfo& frameInfo) {
         m_pipeline->bind(frameInfo.commandBuffer);
+
+        std::array<VkDescriptorSet, 3> descriptorSets = { frameInfo.globalDescriptorSet, m_textureDescriptorSet, m_shadowMapDescriptorSet };
 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             m_pipelineLayout,
             0,
-            1,
-            &frameInfo.globalDescriptorSet,
+            descriptorSets.size(),
+            descriptorSets.data(),
             0,
             nullptr
         );

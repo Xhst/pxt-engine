@@ -23,7 +23,9 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
   int numLights;
 } ubo;
 
-layout(set = 0, binding = 1) uniform sampler2D textures[3];
+layout(set = 1, binding = 0) uniform sampler2D textures[3];
+
+layout(set = 2, binding = 0) uniform sampler2D shadowMap;
 
 layout(push_constant) uniform Push {
   mat4 modelMatrix;
