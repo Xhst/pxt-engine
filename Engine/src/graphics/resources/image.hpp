@@ -24,6 +24,7 @@ namespace PXTEngine {
 
 		const VkImageView getImageView() { return m_textureImageView; }
 		const VkSampler getImageSampler() { return m_textureSampler; }
+		void setImageSampler(VkSampler sampler) { m_textureSampler = sampler; }
 
 	private:
 		/**
