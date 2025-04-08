@@ -116,8 +116,6 @@ namespace PXTEngine {
 
             sorted[distanceSq] = entity;
         }
-
-
         
         m_pipeline->bind(frameInfo.commandBuffer);
 
