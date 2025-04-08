@@ -44,7 +44,7 @@ namespace PXTEngine {
      */
     class Pipeline {
        public:
-        Pipeline(Context& context, const std::string& vertFilepath, const std::string& fragFilepath,
+        Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths,
                  const PipelineConfigInfo& configInfo);
                  
         ~Pipeline();
@@ -61,15 +61,14 @@ namespace PXTEngine {
         static std::vector<char> readFile(const std::string& filename);
 
         void createGraphicsPipeline(
-            const std::string& vertFilepath,
-            const std::string& fragFilepath,
+            const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths,
             const PipelineConfigInfo& configInfo);
 
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 
         Context& m_context;
         VkPipeline m_graphicsPipeline;
-        VkShaderModule m_vertShaderModule;
+        std::vector<VkShaderModule> m_shaderModules{};
         VkShaderModule m_fragShaderModule;
     };
 }
