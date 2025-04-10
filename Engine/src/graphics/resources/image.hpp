@@ -13,7 +13,7 @@ namespace PXTEngine {
 	 */
 	class Image {
 	public:
-		Image(const std::string filename, Context& context, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
+		Image(const std::string& filename, Context& context, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 		Image(Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkImageAspectFlags aspectFlags);
 		~Image();
 

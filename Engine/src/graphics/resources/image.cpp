@@ -6,7 +6,7 @@
 
 
 namespace PXTEngine {
-	Image::Image(const std::string filename, Context& context, VkFormat format) : m_context(context), m_imageFormat(format) {
+	Image::Image(const std::string& filename, Context& context, VkFormat format) : m_context(context), m_imageFormat(format) {
 		createTextureImage(filename.c_str());
 		createTextureImageView();
 		createTextureSampler();
