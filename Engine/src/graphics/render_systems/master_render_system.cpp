@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "graphics/render_systems/master_render_system.hpp"
 
 // IMGUI
@@ -13,8 +15,12 @@
 #include "imgui_impl_vulkan.h"
 
 namespace PXTEngine {
-	MasterRenderSystem::MasterRenderSystem(Context& context, Renderer& renderer, Shared<DescriptorAllocatorGrowable> m_descriptorAllocator, Shared<DescriptorSetLayout> globalSetLayout)
-		: m_context(context), m_renderer(renderer), m_descriptorAllocator(m_descriptorAllocator), m_globalSetLayout(globalSetLayout) {
+	MasterRenderSystem::MasterRenderSystem(Context& context, Renderer& renderer, 
+			Shared<DescriptorAllocatorGrowable> descriptorAllocator, Shared<DescriptorSetLayout> globalSetLayout)
+		:	m_context(context), 
+			m_renderer(renderer),
+			m_descriptorAllocator(std::move(descriptorAllocator)),
+			m_globalSetLayout(std::move(globalSetLayout)) {
 
 		createRenderSystems();
 	}
@@ -115,7 +121,7 @@ namespace PXTEngine {
 		ImGui_ImplVulkan_CreateFontsTexture();
 	}
 
-	void MasterRenderSystem::imGuiRenderUI(FrameInfo& frameInfo) {
+	void MasterRenderSystem::imGuiRenderUI(const FrameInfo& frameInfo) {
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
