@@ -1,6 +1,6 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 
-#include "graphics/resources/image.hpp"
+#include "graphics/resources/texture2d.hpp"
 #include "core/memory.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
@@ -88,36 +88,7 @@ namespace PXTEngine {
 
 	void ShadowMapRenderSystem::createOffscreenFrameBuffer() {
 		// For shadow mapping we only need a depth attachment
-		m_shadowMap = createUnique<Image>(m_context,
-			m_shadowMapSize, m_shadowMapSize,
-			m_offscreenFormat, VK_IMAGE_TILING_OPTIMAL,
-			// We will sample directly from the depth attachment for the shadow mapping
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			VK_IMAGE_ASPECT_DEPTH_BIT);
-
-		// Create sampler to sample from depth attachment
-		// Used to sample in the fragment shader for shadowed rendering
-        VkSamplerCreateInfo samplerInfo = {};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.maxAnisotropy = 1.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = 1.0f;
-		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-
-		VkSampler sampler;
-
-		if (vkCreateSampler(m_context.getDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-			throw(std::runtime_error("failed to create shadow map sampler!"));
-		}
-
-		m_shadowMap->setImageSampler(sampler);
+		m_shadowMap = createUnique<Texture2D>(TEXTURES_PATH + "white_pixel.png", m_context);
 
 		// Create frame buffer
         VkImageView attachments[1] = { m_shadowMap->getImageView() };

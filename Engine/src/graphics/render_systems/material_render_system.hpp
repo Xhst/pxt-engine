@@ -6,7 +6,7 @@
 #include "graphics/context/context.hpp"
 #include "graphics/frame_info.hpp"
 #include "graphics/descriptors/descriptors.hpp"
-#include "graphics/resources/image.hpp"
+#include "graphics/resources/texture2d.hpp"
 #include "scene/scene.hpp"
 
 namespace PXTEngine {
@@ -39,6 +39,6 @@ namespace PXTEngine {
         VkDescriptorSet m_textureDescriptorSet{};
         VkDescriptorSet m_shadowMapDescriptorSet{};
 
-        std::vector<Unique<Image>> m_textures;
+        std::vector<Unique<Texture2D>> m_textures;
     };
 }

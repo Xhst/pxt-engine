@@ -41,7 +41,7 @@ namespace PXTEngine {
 		};
 
 		for (const auto& texture_name : textures_name) {
-			m_textures.push_back(createUnique<Image>(TEXTURES_PATH + texture_name, m_context));
+			m_textures.push_back(createUnique<Texture2D>(TEXTURES_PATH + texture_name, m_context));
 		}
 	}
 

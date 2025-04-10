@@ -192,7 +192,18 @@ namespace PXTEngine {
 		m_swapChainImageViews.resize(m_swapChainImages.size());
 
 		for (uint32_t i = 0; i < m_swapChainImages.size(); i++) {
-			m_swapChainImageViews[i] = m_context.createImageView(m_swapChainImages[i], m_swapChainImageFormat);
+			VkImageViewCreateInfo viewInfo{};
+			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			viewInfo.image = m_swapChainImages[i];
+			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			viewInfo.format = m_swapChainImageFormat;
+			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			viewInfo.subresourceRange.baseMipLevel = 0;
+			viewInfo.subresourceRange.levelCount = 1;
+			viewInfo.subresourceRange.baseArrayLayer = 0;
+			viewInfo.subresourceRange.layerCount = 1;
+
+			m_swapChainImageViews[i] = m_context.createImageView(viewInfo);
 		}
 	}
 

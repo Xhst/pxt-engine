@@ -131,11 +131,20 @@ namespace PXTEngine {
 		*
 		* This function creates an image view for an image, which is used to access the image data.
 		*
-		* @param image The image handle.
-		* @param format The format of the image.
+		* @param viewInfo The image view create info.
 		* @return The image view handle.
 		*/
-		VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT);
+		VkImageView createImageView(const VkImageViewCreateInfo& viewInfo);
+
+		/**
+		* @brief Creates a sampler for an image.
+		* 
+		* This function creates a sampler for an image, which is used to sample the image data.
+		* 
+		* @param samplerInfo The sampler create info.
+		* @return The sampler handle.
+		*/
+		VkSampler createSampler(const VkSamplerCreateInfo& samplerInfo);
 
 		/**
 		* @brief Transitions the layout of an image.
