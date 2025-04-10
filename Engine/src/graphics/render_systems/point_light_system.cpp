@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <array>
+#include <ranges>
 #include <stdexcept>
 #include <cassert>
 #include <map>
@@ -130,9 +131,8 @@ namespace PXTEngine {
             nullptr
         );
 
-        for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
-            auto entity = it->second;
-
+        for (auto& [_, entity] : std::ranges::reverse_view(sorted))
+        {
             const auto&[light, color, transform] = view.get<PointLightComponent, ColorComponent, TransformComponent>(entity);
 
             PointLightPushConstants push{};
