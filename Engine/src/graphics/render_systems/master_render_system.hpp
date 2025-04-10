@@ -15,7 +15,10 @@ namespace PXTEngine {
 
 	class MasterRenderSystem {
 	public:
-		MasterRenderSystem(Context& context, Renderer& renderer, Shared<DescriptorAllocatorGrowable> m_descriptorAllocator, Shared<DescriptorSetLayout> globalSetLayout);
+		MasterRenderSystem(Context& context, Renderer& renderer, 
+						   Shared<DescriptorAllocatorGrowable> descriptorAllocator, 
+						   Shared<DescriptorSetLayout> globalSetLayout);
+
 		~MasterRenderSystem();
 
 		MasterRenderSystem(const MasterRenderSystem&) = delete;
@@ -28,7 +31,7 @@ namespace PXTEngine {
 
 	private:
 		void initImGui();
-		void imGuiRenderUI(FrameInfo& frameInfo);
+		void imGuiRenderUI(const FrameInfo& frameInfo);
 		void createRenderSystems();
 
 		Context& m_context;
@@ -39,7 +42,7 @@ namespace PXTEngine {
 
 		Shared<DescriptorSetLayout> m_globalSetLayout{};
 
-		std::vector<Unique<Buffer>> m_uboBuffers{ SwapChain::MAX_FRAMES_IN_FLIGHT };
+		std::array<Unique<Buffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_uboBuffers;
 
 		Unique<MaterialRenderSystem> m_materialRenderSystem{};
 		Unique<PointLightSystem> m_pointLightSystem{};
