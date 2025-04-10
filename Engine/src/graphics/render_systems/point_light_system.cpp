@@ -66,14 +66,14 @@ namespace PXTEngine {
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths = {
+		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
 			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "point_light.vert.spv"},
 			{VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "point_light.frag.spv"}
 		};
 
 		m_pipeline = createUnique<Pipeline>(
 			m_context,
-			shaderFilepaths,
+            shaderFilePaths,
 			pipelineConfig
 		);
     }
