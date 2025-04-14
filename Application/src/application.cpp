@@ -1,9 +1,10 @@
-#include "pxtengine.h"
+﻿#include "pxtengine.h"
 
 #include "camera_controller.hpp"
 #include "rotating_light_controller.hpp"
 
 #include <iostream>
+#include <random>
 
 using namespace PXTEngine;
 
@@ -18,6 +19,18 @@ public:
     }
 
     void loadScene() {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+
+		// Position offset in a cube: [-10, 10] on each axis
+		std::uniform_real_distribution<float> posDist(-10.0f, 10.0f);
+
+		// Uniform scale: [0.5, 2.0]
+		std::uniform_real_distribution<float> scaleDist(0.5f, 2.0f);
+
+		// Rotation in radians: [0, 2π]
+		std::uniform_real_distribution<float> rotDist(0.0f, glm::two_pi<float>());
+
         Entity camera = getScene().createEntity("camera")
             .add<TransformComponent>(glm::vec3{0.0f, -1.2f, -1.0f}, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{-glm::pi<float>()/4, 0.0f, 0.0f})
             .add<CameraComponent>();
@@ -59,16 +72,20 @@ public:
         glm::vec4 colorGold = glm::vec4{1.0f, 0.843f, 0.0f, 1.0f};
 
         // Bunny
-        Shared<Model> model_bunny = Model::createModelFromFile(getContext(), MODELS_PATH + "stanford_bunny.obj");
-        entity = getScene().createEntity("bunny")
-            .add<TransformComponent>(glm::vec3{0.0f, 0.f, 0.f}, glm::vec3{1.0f, 1.0f, 1.0}, glm::vec3{0.0f, glm::pi<float>(), 0.0f})
-            .add<ModelComponent>(model_bunny)
-            //.add<MaterialComponent>(colorWhite)
-            .add<MaterialComponent>(MaterialComponent::Builder()
-                    .setColor(colorGold)
-                    .setSpecularIntensity(2.0f)
-                    .setShininess(140.0f)
-                    .build());
+        Shared<Model> model_bunny = Model::createModelFromFile(getContext(), MODELS_PATH + "smooth_vase.obj");
+		for (int i = 0; i < 500; i++) {
+			glm::vec3 pos = { posDist(gen), posDist(gen), posDist(gen) };
+			float uniformScale = scaleDist(gen);
+			glm::vec3 scale = { uniformScale, uniformScale, uniformScale };
+			glm::vec3 rotation = { rotDist(gen), rotDist(gen), rotDist(gen) };
+
+            entity = getScene().createEntity("bunny" + std::to_string(i))
+                .add<TransformComponent>(pos, scale, rotation)
+                .add<ModelComponent>(model_bunny)
+                .add<MaterialComponent>(MaterialComponent::Builder()
+                    .setTextureIndex(1)
+					.build());
+		}
 
         // Light above the bunny
         entity = createPointLight(0.025f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
