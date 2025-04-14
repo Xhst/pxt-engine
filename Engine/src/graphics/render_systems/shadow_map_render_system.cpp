@@ -13,15 +13,20 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+
 namespace PXTEngine {
 
     struct ShadowMapPushConstantData {
         glm::mat4 modelMatrix{ 1.f };
-        glm::mat4 normalMatrix{ 1.f };
     };
 
-    ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, VkDescriptorSetLayout setLayout, VkFormat offscreenFormat) : m_context(context), m_offscreenFormat(offscreenFormat) {
-        createRenderPass();
+    ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenFormat)
+		: m_context(context),
+		  m_offscreenFormat(offscreenFormat),
+		  m_descriptorAllocator(descriptorAllocator) {
+		createUniformBuffers();
+		createDescriptorSets(setLayout);
+		createRenderPass();
         createOffscreenFrameBuffer();
         createPipelineLayout(setLayout);
         createPipeline();
@@ -32,6 +37,31 @@ namespace PXTEngine {
 		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
 		vkDestroyRenderPass(m_context.getDevice(), m_renderPass, nullptr);
     }
+
+	void ShadowMapRenderSystem::createUniformBuffers() {
+		// Create uniform buffer for each frame in flight
+		for (size_t i = 0; i < m_lightUniformBuffers.size(); i++) {
+			m_lightUniformBuffers[i] = createUnique<Buffer>(
+				m_context,
+				sizeof(GlobalUbo),
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			);
+		}
+	}
+
+	void ShadowMapRenderSystem::createDescriptorSets(DescriptorSetLayout& setLayout) {
+		// Create descriptor set for each frame in flight
+		for (int i = 0; i < m_lightDescriptorSets.size(); i++) {
+			auto bufferInfo = m_lightUniformBuffers[i]->descriptorInfo();
+
+			m_descriptorAllocator->allocate(setLayout.getDescriptorSetLayout(), m_lightDescriptorSets[i]);
+
+			DescriptorWriter(m_context, setLayout)
+				.writeBuffer(0, &bufferInfo)
+				.updateSet(m_lightDescriptorSets[i]);
+		}
+	}
 
     void ShadowMapRenderSystem::createRenderPass() {
 		VkAttachmentDescription attachmentDescription{};
@@ -112,13 +142,13 @@ namespace PXTEngine {
 		m_shadowMapDescriptor.sampler = m_shadowMap->getImageSampler();
 	}
 
-    void ShadowMapRenderSystem::createPipelineLayout(VkDescriptorSetLayout setLayout) {
+    void ShadowMapRenderSystem::createPipelineLayout(DescriptorSetLayout& setLayout) {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(ShadowMapPushConstantData);
 
-        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{setLayout};
+        std::vector<VkDescriptorSetLayout> descriptorSetLayouts{setLayout.getDescriptorSetLayout()};
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -141,7 +171,8 @@ namespace PXTEngine {
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
 		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
-			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "shadow_map_creation.vert.spv"}
+			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "cube_shadow_map_creation.vert.spv"},
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "cube_shadow_map_creation.frag.spv" }
 		};
 
         m_pipeline = createUnique<Pipeline>(
@@ -150,6 +181,17 @@ namespace PXTEngine {
             pipelineConfig
         );
     }
+
+	void ShadowMapRenderSystem::update(FrameInfo& frameInfo) {
+		// to set the projection (square depth map)
+		uniformDataOffscreen.projection = glm::perspective((float)(M_PI / 2.0), 1.0f, zNear, zFar);
+		// to set the view matrix (will be overwritten depending on the cube face - for now is identity matrix)
+		uniformDataOffscreen.view = glm::mat4(1.0f);
+		// this will create a translation matrix to translate the model vertices by the light position
+		uniformDataOffscreen.model = glm::translate(glm::mat4(1.0f), glm::vec3(-lightPos.x, -lightPos.y, -lightPos.z));
+
+		memcpy(uniformBuffers.offscreen.mapped, &uniformDataOffscreen, sizeof(UniformData));
+	}
 
     void ShadowMapRenderSystem::render(FrameInfo& frameInfo) {
         m_pipeline->bind(frameInfo.commandBuffer);

@@ -22,9 +22,9 @@ namespace PXTEngine {
         int textureIndex = -1;
     };
 
-    MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) : m_context(context), m_descriptorAllocator(descriptorAllocator) {
+    MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) : m_context(context), m_descriptorAllocator(descriptorAllocator) {
 		loadTextures();
-		createDescriptorSets(globalSetLayout, shadowMapImageInfo);
+		createDescriptorSets(shadowMapImageInfo);
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
     }
@@ -45,7 +45,7 @@ namespace PXTEngine {
 		}
 	}
 
-    void MaterialRenderSystem::createDescriptorSets(VkDescriptorSetLayout globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) {
+    void MaterialRenderSystem::createDescriptorSets(VkDescriptorImageInfo shadowMapImageInfo) {
 		// TEXTURE DESCRIPTOR SET
         m_textureDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, m_textures.size())
@@ -78,14 +78,14 @@ namespace PXTEngine {
 			.updateSet(m_shadowMapDescriptorSet);
     }
 
-    void MaterialRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+    void MaterialRenderSystem::createPipelineLayout(DescriptorSetLayout& globalSetLayout) {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
-            globalSetLayout,
+            globalSetLayout.getDescriptorSetLayout(),
             m_textureDescriptorSetLayout->getDescriptorSetLayout(),
             m_shadowMapDescriptorSetLayout->getDescriptorSetLayout()
         };

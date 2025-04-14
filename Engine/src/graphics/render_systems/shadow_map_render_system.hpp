@@ -6,18 +6,20 @@
 #include "graphics/context/context.hpp"
 #include "graphics/frame_info.hpp"
 #include "graphics/resources/image.hpp"
+#include "graphics/descriptors/descriptors.hpp"
 #include "scene/scene.hpp"
 
 namespace PXTEngine {
 
     class ShadowMapRenderSystem {
     public:
-        ShadowMapRenderSystem(Context& context, VkDescriptorSetLayout setLayout, VkFormat offscreenFormat);
+        ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenFormat);
         ~ShadowMapRenderSystem();
 
         ShadowMapRenderSystem(const ShadowMapRenderSystem&) = delete;
         ShadowMapRenderSystem& operator=(const ShadowMapRenderSystem&) = delete;
 
+		void update(FrameInfo& frameInfo);
         void render(FrameInfo& frameInfo);
 
 		VkRenderPass getRenderPass() const { return m_renderPass; }
@@ -26,17 +28,24 @@ namespace PXTEngine {
 		VkDescriptorImageInfo getShadowMapImageInfo() const { return m_shadowMapDescriptor; }
 
     private:
+        void createUniformBuffers();
+		void createDescriptorSets(DescriptorSetLayout& setLayout);
         void createRenderPass();
         void createOffscreenFrameBuffer();
-        void createPipelineLayout(VkDescriptorSetLayout setLayout);
+        void createPipelineLayout(DescriptorSetLayout& setLayout);
         void createPipeline();  
         
-        const uint32_t m_shadowMapSize{ 2048 };
+        const uint32_t m_shadowMapSize{ 1024 };
 
         Context& m_context;
 
+		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
+
+        std::array<Unique<Buffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightUniformBuffers;
+        std::array<VkDescriptorSet, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightDescriptorSets;
+
         Unique<Image> m_shadowMap;
-		VkDescriptorImageInfo m_shadowMapDescriptor{};
+		VkDescriptorImageInfo m_shadowMapDescriptor{ VK_NULL_HANDLE };
 
 		VkRenderPass m_renderPass;
         VkFramebuffer m_offscreenFb;

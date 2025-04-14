@@ -13,7 +13,7 @@ namespace PXTEngine {
 
     class MaterialRenderSystem {
     public:
-        MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo);
+        MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo);
         ~MaterialRenderSystem();
 
         MaterialRenderSystem(const MaterialRenderSystem&) = delete;
@@ -23,8 +23,8 @@ namespace PXTEngine {
 
     private:
 		void loadTextures();
-        void createDescriptorSets(VkDescriptorSetLayout globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo);
-        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+        void createDescriptorSets(VkDescriptorImageInfo shadowMapImageInfo);
+        void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
         void createPipeline(VkRenderPass renderPass);  
         
         Context& m_context;

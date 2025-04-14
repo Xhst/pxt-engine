@@ -64,6 +64,9 @@ namespace PXTEngine {
 
 		// update light values into ubo
 		m_pointLightSystem->update(frameInfo, ubo);
+
+		// update shadow map
+		m_shadowMapRenderSystem->update(frameInfo, ubo);
 	}
 
 	void MasterRenderSystem::doRenderPasses(FrameInfo& frameInfo) {
