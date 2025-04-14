@@ -191,7 +191,7 @@ namespace PXTEngine {
 		return sampler;
 	}
 
-	void Context::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+	void Context::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, std::optional<VkImageSubresourceRange&> subresourceRange) {
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
 		VkImageMemoryBarrier barrier{};
@@ -201,11 +201,16 @@ namespace PXTEngine {
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // If you are using the barrier to transfer queue family ownership, then these two fields should be the indices of the queue families. 
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // They must be set to VK_QUEUE_FAMILY_IGNORED if you don't want to do this (not the default value!).
 		barrier.image = image;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0; // if you are using mipMapping
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0; // if it's an array (1D image)
-		barrier.subresourceRange.layerCount = 1;
+		if (subresourceRange.has_value()) {
+			barrier.subresourceRange = subresourceRange.value();
+		}
+		else {
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseMipLevel = 0; // if you are using mipMapping
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0; // if it's an array (1D image)
+			barrier.subresourceRange.layerCount = 1;
+		}
 
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
@@ -263,4 +268,30 @@ namespace PXTEngine {
 
         throw std::runtime_error("failed to find supported format!");
     }
+
+	bool Context::getSupportedDepthFormat(VkFormat* depthFormat)
+	{
+		// Since all depth formats may be optional, we need to find a suitable depth format to use
+		// Start with the highest precision packed format
+		std::vector<VkFormat> formatList = {
+			VK_FORMAT_D32_SFLOAT_S8_UINT,
+			VK_FORMAT_D32_SFLOAT,
+			VK_FORMAT_D24_UNORM_S8_UINT,
+			VK_FORMAT_D16_UNORM_S8_UINT,
+			VK_FORMAT_D16_UNORM
+		};
+
+		for (auto& format : formatList)
+		{
+			VkFormatProperties formatProps;
+			vkGetPhysicalDeviceFormatProperties(m_physicalDevice.getDevice(), format, &formatProps);
+			if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+			{
+				*depthFormat = format;
+				return true;
+			}
+		}
+
+		return false;
+	}
 } 

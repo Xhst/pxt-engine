@@ -1,5 +1,3 @@
-#include <utility>
-
 #include "graphics/render_systems/master_render_system.hpp"
 
 // IMGUI
@@ -40,7 +38,8 @@ namespace PXTEngine {
 
 		m_shadowMapRenderSystem = createUnique<ShadowMapRenderSystem>(
 			m_context,
-			m_globalSetLayout->getDescriptorSetLayout(),
+			m_descriptorAllocator,
+			*m_globalSetLayout,
 			VK_FORMAT_D16_UNORM
 		);
 
@@ -48,7 +47,7 @@ namespace PXTEngine {
 			m_context,
 			m_descriptorAllocator,
 			m_renderer.getSwapChainRenderPass(),
-			m_globalSetLayout->getDescriptorSetLayout(),
+			*m_globalSetLayout,
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 

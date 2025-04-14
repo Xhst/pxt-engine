@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "graphics/context/instance.hpp"
 #include "graphics/context/surface.hpp"
 #include "graphics/context/physical_device.hpp"
@@ -39,6 +41,8 @@ namespace PXTEngine {
 		QueueFamilyIndices findPhysicalQueueFamilies() {
 			return m_physicalDevice.findQueueFamilies();
 		}
+
+		bool getSupportedDepthFormat(VkFormat* format);
 
 		VkQueue getGraphicsQueue() { return m_device.getGraphicsQueue(); }
 		VkQueue getPresentQueue() { return m_device.getPresentQueue(); }
@@ -156,7 +160,7 @@ namespace PXTEngine {
 		* @param oldLayout The old layout of the image.
 		* @param newLayout The new layout of the image.
 		*/
-		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, std::optional<VkImageSubresourceRange&> subresourceRange = std::nullopt);
 
 		/**
 		 * @brief Finds a supported format for an image.

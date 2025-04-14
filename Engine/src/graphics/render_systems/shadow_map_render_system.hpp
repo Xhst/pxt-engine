@@ -19,7 +19,7 @@ namespace PXTEngine {
         ShadowMapRenderSystem(const ShadowMapRenderSystem&) = delete;
         ShadowMapRenderSystem& operator=(const ShadowMapRenderSystem&) = delete;
 
-		void update(FrameInfo& frameInfo);
+		void update(FrameInfo& frameInfo, GlobalUbo& ubo);
         void render(FrameInfo& frameInfo);
 
 		VkRenderPass getRenderPass() const { return m_renderPass; }
@@ -31,11 +31,16 @@ namespace PXTEngine {
         void createUniformBuffers();
 		void createDescriptorSets(DescriptorSetLayout& setLayout);
         void createRenderPass();
-        void createOffscreenFrameBuffer();
+        void createOffscreenFrameBuffers();
         void createPipelineLayout(DescriptorSetLayout& setLayout);
         void createPipeline();  
         
         const uint32_t m_shadowMapSize{ 1024 };
+
+		// Defines the depth range used for the shadow maps
+        // This should be kept as small as possible for precision
+		float zNear{ 0.1f };
+        float zFar{ 102 };
 
         Context& m_context;
 
@@ -44,12 +49,15 @@ namespace PXTEngine {
         std::array<Unique<Buffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightUniformBuffers;
         std::array<VkDescriptorSet, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightDescriptorSets;
 
-        Unique<Image> m_shadowMap;
+        Unique<Image> m_shadowCubeMap;
 		VkDescriptorImageInfo m_shadowMapDescriptor{ VK_NULL_HANDLE };
 
 		VkRenderPass m_renderPass;
-        VkFramebuffer m_offscreenFb;
-        VkFormat m_offscreenFormat;
+		// The framebuffer used for the offscreen render pass. They are created from the 
+		// shadowCubeMap image views (see createOffscreenFrameBuffers)
+        std::array<VkFramebuffer, 6> m_cubeFramebuffers;
+        VkFormat m_offscreenDepthFormat;
+		VkFormat m_offscreenColorFormat{ VK_FORMAT_R32_SFLOAT };
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;

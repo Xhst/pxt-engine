@@ -1,6 +1,6 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 
-#include "graphics/resources/texture2d.hpp"
+#include "graphics/resources/shadow_cube_map.hpp"
 #include "core/memory.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
@@ -17,17 +17,20 @@
 namespace PXTEngine {
 
     struct ShadowMapPushConstantData {
+		// it will be modified to translate the object to the light position (i think so?)
         glm::mat4 modelMatrix{ 1.f };
+		// it will be modified to render the different faces
+		glm::mat4 cubeFaceView{ 1.f };
     };
 
-    ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenFormat)
+    ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenDepthFormat)
 		: m_context(context),
-		  m_offscreenFormat(offscreenFormat),
+		  m_offscreenDepthFormat(offscreenDepthFormat),
 		  m_descriptorAllocator(descriptorAllocator) {
 		createUniformBuffers();
 		createDescriptorSets(setLayout);
 		createRenderPass();
-        createOffscreenFrameBuffer();
+        createOffscreenFrameBuffers();
         createPipelineLayout(setLayout);
         createPipeline();
     }
@@ -44,6 +47,7 @@ namespace PXTEngine {
 			m_lightUniformBuffers[i] = createUnique<Buffer>(
 				m_context,
 				sizeof(GlobalUbo),
+				1,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			);
@@ -64,82 +68,146 @@ namespace PXTEngine {
 	}
 
     void ShadowMapRenderSystem::createRenderPass() {
-		VkAttachmentDescription attachmentDescription{};
-		attachmentDescription.format = m_offscreenFormat;
-		attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
-		attachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;							// Clear depth at beginning of the render pass
-		attachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;						// We will read from depth, so it's important to store the depth attachment results
-		attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;					// We don't care about initial layout of the attachment
-		attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;// Attachment will be transitioned to shader read at render pass end
+		// offscreen attachments
+		VkAttachmentDescription osAttachments[2] = {};
+
+		// Find a suitable depth format for
+		bool isDepthFormatValid = m_context.getSupportedDepthFormat(&m_offscreenDepthFormat);
+		assert(isDepthFormatValid && "No depth format available");
+
+		// Color attachment
+		osAttachments[0].format = m_offscreenColorFormat;
+		osAttachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+		osAttachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		osAttachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		osAttachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		osAttachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		osAttachments[0].initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		osAttachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		// Depth attachment
+		osAttachments[1].format = m_offscreenDepthFormat;
+		osAttachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+		osAttachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		osAttachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		osAttachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		osAttachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		osAttachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		osAttachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference colorReference = {};
+		colorReference.attachment = 0;
+		colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentReference depthReference = {};
-		depthReference.attachment = 0;
-		depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;			// Attachment will be used as depth/stencil during render pass
+		depthReference.attachment = 1;
+		depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 0;													// No color attachments
-		subpass.pDepthStencilAttachment = &depthReference;									// Reference to our depth attachment
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorReference;
+		subpass.pDepthStencilAttachment = &depthReference;
 
-		// Use subpass dependencies for layout transitions
-		std::array<VkSubpassDependency, 2> dependencies;
-
-		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass = 0;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[1].srcSubpass = 0;
-		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-        VkRenderPassCreateInfo renderPassCreateInfo = {};
-        renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassCreateInfo.attachmentCount = 1;
-		renderPassCreateInfo.pAttachments = &attachmentDescription;
+		VkRenderPassCreateInfo renderPassCreateInfo = {};
+		renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassCreateInfo.attachmentCount = 2;
+		renderPassCreateInfo.pAttachments = osAttachments;
 		renderPassCreateInfo.subpassCount = 1;
 		renderPassCreateInfo.pSubpasses = &subpass;
-		renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
-		renderPassCreateInfo.pDependencies = dependencies.data();
 
-        if (vkCreateRenderPass(m_context.getDevice(), &renderPassCreateInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
-			throw(std::runtime_error("failed to create offscreen render pass!"));
-        }
+		if (vkCreateRenderPass(m_context.getDevice(), &renderPassCreateInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create offscreen render pass!");
+		}
     }
 
-	void ShadowMapRenderSystem::createOffscreenFrameBuffer() {
-		// For shadow mapping we only need a depth attachment
-		m_shadowMap = createUnique<Texture2D>(TEXTURES_PATH + "white_pixel.png", m_context);
+	void ShadowMapRenderSystem::createOffscreenFrameBuffers() {
+		// For shadow mapping here we need 6 framebuffers, one for each face of the cube map
+		// The class will handle this for us. It will create image views for each face, which
+		// we can use to then create the framebuffers for this class
+		m_shadowCubeMap = createUnique<ShadowCubeMap>(m_context, m_offscreenColorFormat, m_shadowMapSize);
 
-		// Create frame buffer
-        VkImageView attachments[1] = { m_shadowMap->getImageView() };
+		// ------------- Create framebuffers for each face of the cube map -------------
 
-		VkFramebufferCreateInfo fbufCreateInfo = {};
-		fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbufCreateInfo.renderPass = m_renderPass;
-		fbufCreateInfo.attachmentCount = 1;
+		// The color attachment is the cube map image view (we have 6, one for each framebuffer).
+		// While the depth stencil is the same for all framebuffers. We will create the latter now
+		// and then copy the cube face image views to the framebuffer color attachments
+
+		// Depth stencil attachment
+		VkImageCreateInfo imageCreateInfo = {};
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.format = m_offscreenDepthFormat;
+		imageCreateInfo.extent = { m_shadowMapSize, m_shadowMapSize, 1 };
+		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		// Image of the framebuffer is blit source
+		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkImageViewCreateInfo depthStencilView = {};
+		depthStencilView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		depthStencilView.format = m_offscreenDepthFormat;
+		depthStencilView.flags = 0;
+		depthStencilView.subresourceRange = {};
+		depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		if (offscreenDepthFormat >= VK_FORMAT_D16_UNORM_S8_UINT) {
+			depthStencilView.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+		depthStencilView.subresourceRange.baseMipLevel = 0;
+		depthStencilView.subresourceRange.levelCount = 1;
+		depthStencilView.subresourceRange.baseArrayLayer = 0;
+		depthStencilView.subresourceRange.layerCount = 1;
+
+		VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &offscreenPass.depth.image));
+
+		VkMemoryRequirements memReqs;
+		vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
+
+		VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
+		memAlloc.allocationSize = memReqs.size;
+		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
+		VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.depth.image, offscreenPass.depth.mem, 0));
+
+		vks::tools::setImageLayout(
+			layoutCmd,
+			offscreenPass.depth.image,
+			VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+		vulkanDevice->flushCommandBuffer(layoutCmd, queue, true);
+
+		depthStencilView.image = offscreenPass.depth.image;
+		VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &offscreenPass.depth.view));
+
+		VkImageView attachments[2];
+		attachments[1] = offscreenPass.depth.view;
+
+		VkFramebufferCreateInfo fbufCreateInfo = vks::initializers::framebufferCreateInfo();
+		fbufCreateInfo.renderPass = offscreenPass.renderPass;
+		fbufCreateInfo.attachmentCount = 2;
 		fbufCreateInfo.pAttachments = attachments;
-		fbufCreateInfo.width = m_shadowMapSize;
-		fbufCreateInfo.height = m_shadowMapSize;
+		fbufCreateInfo.width = offscreenPass.width;
+		fbufCreateInfo.height = offscreenPass.height;
 		fbufCreateInfo.layers = 1;
 
-		if (vkCreateFramebuffer(m_context.getDevice(), &fbufCreateInfo, nullptr, &m_offscreenFb) != VK_SUCCESS) {
-			throw(std::runtime_error("failed to create offscreen frame buffer!"));
+		for (uint32_t i = 0; i < 6; i++)
+		{
+			attachments[0] = shadowCubeMapFaceImageViews[i];
+			VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffers[i]));
 		}
+
+		// -----------------------------------------------------------------------------
 
 		// Create image descriptor info for shadow map
 		m_shadowMapDescriptor.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-		m_shadowMapDescriptor.imageView = m_shadowMap->getImageView();
-		m_shadowMapDescriptor.sampler = m_shadowMap->getImageSampler();
+		m_shadowMapDescriptor.imageView = m_shadowCubeMap->getImageView();
+		m_shadowMapDescriptor.sampler = m_shadowCubeMap->getImageSampler();
 	}
 
     void ShadowMapRenderSystem::createPipelineLayout(DescriptorSetLayout& setLayout) {
@@ -182,8 +250,9 @@ namespace PXTEngine {
         );
     }
 
-	void ShadowMapRenderSystem::update(FrameInfo& frameInfo) {
-		// to set the projection (square depth map)
+	void ShadowMapRenderSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo) {
+		#if 0
+// to set the projection (square depth map)
 		uniformDataOffscreen.projection = glm::perspective((float)(M_PI / 2.0), 1.0f, zNear, zFar);
 		// to set the view matrix (will be overwritten depending on the cube face - for now is identity matrix)
 		uniformDataOffscreen.view = glm::mat4(1.0f);
@@ -191,6 +260,7 @@ namespace PXTEngine {
 		uniformDataOffscreen.model = glm::translate(glm::mat4(1.0f), glm::vec3(-lightPos.x, -lightPos.y, -lightPos.z));
 
 		memcpy(uniformBuffers.offscreen.mapped, &uniformDataOffscreen, sizeof(UniformData));
+#endif
 	}
 
     void ShadowMapRenderSystem::render(FrameInfo& frameInfo) {
@@ -214,7 +284,6 @@ namespace PXTEngine {
 
             ShadowMapPushConstantData push{};
             push.modelMatrix = transform.mat4();
-            push.normalMatrix = transform.normalMatrix();
 
 			vkCmdPushConstants(
 				frameInfo.commandBuffer,
