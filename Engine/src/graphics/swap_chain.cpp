@@ -7,6 +7,7 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+#include <utility>
 
 namespace PXTEngine {
 
@@ -15,7 +16,8 @@ namespace PXTEngine {
     }
 
     SwapChain::SwapChain(Context& context, VkExtent2D extent, Shared<SwapChain> previous)
-                : m_context{ context }, m_windowExtent{extent}, m_oldSwapChain{previous} {
+                : m_context{ context }, m_windowExtent{extent}, m_oldSwapChain{std::move(previous)}
+            {
         init();
 
         m_oldSwapChain = nullptr;
