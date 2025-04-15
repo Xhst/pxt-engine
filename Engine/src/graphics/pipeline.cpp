@@ -14,9 +14,9 @@ namespace PXTEngine {
         int32_t maxLights;
     };
 
-    Pipeline::Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths,
+    Pipeline::Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
                        const PipelineConfigInfo& configInfo) : m_context(context) {
-        createGraphicsPipeline(shaderFilepaths, configInfo);
+        createGraphicsPipeline(shaderFilePaths, configInfo);
     }
 
     Pipeline::~Pipeline() {

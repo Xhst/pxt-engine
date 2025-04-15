@@ -44,7 +44,7 @@ namespace PXTEngine {
      */
     class Pipeline {
        public:
-        Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths,
+        Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
                  const PipelineConfigInfo& configInfo);
                  
         ~Pipeline();
@@ -61,7 +61,7 @@ namespace PXTEngine {
         static std::vector<char> readFile(const std::string& filename);
 
         void createGraphicsPipeline(
-            const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths,
+            const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
             const PipelineConfigInfo& configInfo);
 
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
