@@ -17,7 +17,6 @@ namespace PXTEngine {
 		ShadowCubeMap(Context& context, VkFormat format = VK_FORMAT_R32_SFLOAT, uint32_t size);
 		virtual ~ShadowCubeMap();
 
-		VkFramebuffer getFaceFramebuffer(uint32_t faceIndex) const { return m_cubeFramebuffers[faceIndex]; }
 		VkImageView getFaceImageView(uint32_t faceIndex) const { return m_cubeFaceViews[faceIndex]; }
 
 	private:

@@ -48,7 +48,14 @@ namespace PXTEngine {
 		subresourceRange.levelCount = 1;
 		subresourceRange.layerCount = 6;
 
-		m_context.transitionImageLayout(m_vkImage, m_imageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, subresourceRange);
+		m_context.transitionImageLayout(
+			m_vkImage,
+			m_imageFormat,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			subresourceRange);
 	}
 
 	void ShadowCubeMap::createSCMImageViews() {

@@ -24,8 +24,10 @@ namespace PXTEngine {
 		Image(Image&&) = delete;
 		Image& operator=(Image&&) = delete;
 
+		VkImage getVkImage() { return m_vkImage; }
 		const VkImageView getImageView() { return m_imageView; }
 		const VkSampler getImageSampler() { return m_sampler; }
+		const VkFormat getImageFormat() { return m_imageFormat; }
 
 		Image& createImageView(const VkImageViewCreateInfo& viewInfo);
 		Image& createSampler(const VkSamplerCreateInfo& samplerInfo);
