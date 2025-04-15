@@ -13,7 +13,7 @@ namespace PXTEngine {
 
     class ShadowMapRenderSystem {
     public:
-        ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenFormat);
+        ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenDepthFormat);
         ~ShadowMapRenderSystem();
 
         ShadowMapRenderSystem(const ShadowMapRenderSystem&) = delete;

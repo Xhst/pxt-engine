@@ -24,8 +24,8 @@ namespace PXTEngine {
 
     ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenDepthFormat)
 		: m_context(context),
-		  m_offscreenDepthFormat(offscreenDepthFormat),
-		  m_descriptorAllocator(descriptorAllocator) {
+		  m_descriptorAllocator(std::move(descriptorAllocator)),
+		  m_offscreenDepthFormat(offscreenDepthFormat) {
 		createUniformBuffers();
 		createDescriptorSets(setLayout);
 		createRenderPass();
