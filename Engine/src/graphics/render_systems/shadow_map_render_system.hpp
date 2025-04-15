@@ -5,7 +5,7 @@
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"
 #include "graphics/frame_info.hpp"
-#include "graphics/resources/image.hpp"
+#include "graphics/resources/shadow_cube_map.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "scene/scene.hpp"
 
@@ -23,7 +23,7 @@ namespace PXTEngine {
         void render(FrameInfo& frameInfo);
 
 		VkRenderPass getRenderPass() const { return m_renderPass; }
-		VkFramebuffer getOffscreenFramebuffer() const { return m_offscreenFb; }
+		VkFramebuffer getCubeFaceFramebuffer(uint32_t face_index) const { return m_cubeFramebuffers[face_index]; }
 		VkExtent2D getExtent() const { return { m_shadowMapSize, m_shadowMapSize }; }
 		VkDescriptorImageInfo getShadowMapImageInfo() const { return m_shadowMapDescriptor; }
 
@@ -40,7 +40,7 @@ namespace PXTEngine {
 		// Defines the depth range used for the shadow maps
         // This should be kept as small as possible for precision
 		float zNear{ 0.1f };
-        float zFar{ 102 };
+        float zFar{ 1024.0f };
 
         Context& m_context;
 
@@ -49,7 +49,7 @@ namespace PXTEngine {
         std::array<Unique<Buffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightUniformBuffers;
         std::array<VkDescriptorSet, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightDescriptorSets;
 
-        Unique<Image> m_shadowCubeMap;
+        Unique<ShadowCubeMap> m_shadowCubeMap;
 		VkDescriptorImageInfo m_shadowMapDescriptor{ VK_NULL_HANDLE };
 
 		VkRenderPass m_renderPass;

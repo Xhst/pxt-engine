@@ -1,6 +1,5 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 
-#include "graphics/resources/shadow_cube_map.hpp"
 #include "core/memory.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
@@ -37,8 +36,11 @@ namespace PXTEngine {
 
     ShadowMapRenderSystem::~ShadowMapRenderSystem() {
         vkDestroyPipelineLayout(m_context.getDevice(), m_pipelineLayout, nullptr);
-		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
 		vkDestroyRenderPass(m_context.getDevice(), m_renderPass, nullptr);
+
+		for (auto& framebuffer : m_cubeFramebuffers) {
+			vkDestroyFramebuffer(m_context.getDevice(), framebuffer, nullptr);
+		}
     }
 
 	void ShadowMapRenderSystem::createUniformBuffers() {
@@ -147,59 +149,60 @@ namespace PXTEngine {
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		VkImageViewCreateInfo depthStencilView = {};
-		depthStencilView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		depthStencilView.format = m_offscreenDepthFormat;
-		depthStencilView.flags = 0;
-		depthStencilView.subresourceRange = {};
-		depthStencilView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		if (offscreenDepthFormat >= VK_FORMAT_D16_UNORM_S8_UINT) {
-			depthStencilView.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-		}
-		depthStencilView.subresourceRange.baseMipLevel = 0;
-		depthStencilView.subresourceRange.levelCount = 1;
-		depthStencilView.subresourceRange.baseArrayLayer = 0;
-		depthStencilView.subresourceRange.layerCount = 1;
+		Unique<Image> depthStencilImage = createUnique<Image>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		VK_CHECK_RESULT(vkCreateImage(device, &imageCreateInfo, nullptr, &offscreenPass.depth.image));
+		VkImageSubresourceRange subresourceRange = {};
+		subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		subresourceRange.baseMipLevel = 0;
+		subresourceRange.levelCount = 1;
+		subresourceRange.layerCount = 1;
 
-		VkMemoryRequirements memReqs;
-		vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
-
-		VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
-		memAlloc.allocationSize = memReqs.size;
-		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
-		VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.depth.image, offscreenPass.depth.mem, 0));
-
-		vks::tools::setImageLayout(
-			layoutCmd,
-			offscreenPass.depth.image,
-			VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+		// TODO: verify source and destination access masks
+		m_context.transitionImageLayout(
+			depthStencilImage->getVkImage(), 
+			depthStencilImage->getImageFormat(),
 			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			subresourceRange);
 
-		vulkanDevice->flushCommandBuffer(layoutCmd, queue, true);
+		VkImageViewCreateInfo depthStencilViewInfo = {};
+		depthStencilViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		depthStencilViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		depthStencilViewInfo.format = m_offscreenDepthFormat;
+		depthStencilViewInfo.flags = 0;
+		depthStencilViewInfo.subresourceRange = {};
+		depthStencilViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		if (m_offscreenDepthFormat >= VK_FORMAT_D16_UNORM_S8_UINT) {
+			depthStencilViewInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+		depthStencilViewInfo.subresourceRange.baseMipLevel = 0;
+		depthStencilViewInfo.subresourceRange.levelCount = 1;
+		depthStencilViewInfo.subresourceRange.baseArrayLayer = 0;
+		depthStencilViewInfo.subresourceRange.layerCount = 1;
 
-		depthStencilView.image = offscreenPass.depth.image;
-		VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &offscreenPass.depth.view));
+		depthStencilImage->createImageView(depthStencilViewInfo);
 
+		// Create framebuffers for each face of the cube map
 		VkImageView attachments[2];
-		attachments[1] = offscreenPass.depth.view;
+		attachments[1] = depthStencilImage->getImageView();
 
-		VkFramebufferCreateInfo fbufCreateInfo = vks::initializers::framebufferCreateInfo();
-		fbufCreateInfo.renderPass = offscreenPass.renderPass;
+		VkFramebufferCreateInfo fbufCreateInfo = {};
+		fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		fbufCreateInfo.renderPass = m_renderPass;
 		fbufCreateInfo.attachmentCount = 2;
 		fbufCreateInfo.pAttachments = attachments;
-		fbufCreateInfo.width = offscreenPass.width;
-		fbufCreateInfo.height = offscreenPass.height;
+		fbufCreateInfo.width = m_shadowMapSize;
+		fbufCreateInfo.height = m_shadowMapSize;
 		fbufCreateInfo.layers = 1;
 
 		for (uint32_t i = 0; i < 6; i++)
 		{
-			attachments[0] = shadowCubeMapFaceImageViews[i];
-			VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffers[i]));
+			attachments[0] = m_shadowCubeMap->getFaceImageView(i);
+			if (vkCreateFramebuffer(m_context.getDevice(), &fbufCreateInfo, nullptr, &m_cubeFramebuffers[i]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create shadow map render system framebuffer (face " + std::to_string(i) + ")!");
+			}
 		}
 
 		// -----------------------------------------------------------------------------
@@ -260,6 +263,7 @@ namespace PXTEngine {
 		uniformDataOffscreen.model = glm::translate(glm::mat4(1.0f), glm::vec3(-lightPos.x, -lightPos.y, -lightPos.z));
 
 		memcpy(uniformBuffers.offscreen.mapped, &uniformDataOffscreen, sizeof(UniformData));
+
 #endif
 	}
 
