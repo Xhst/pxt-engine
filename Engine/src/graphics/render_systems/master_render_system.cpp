@@ -69,17 +69,12 @@ namespace PXTEngine {
 	}
 
 	void MasterRenderSystem::doRenderPasses(FrameInfo& frameInfo) {
-#if 0
-		// render shadow map
-		m_renderer.beginRenderPass(frameInfo.commandBuffer, m_shadowMapRenderSystem->getRenderPass(),
-			m_shadowMapRenderSystem->getOffscreenFramebuffer(), m_shadowMapRenderSystem->getExtent());
+		// render shadow cube map
+		// the render function of the shadow map render system will
+		// do how many passes it needs to do (6 in this case - 1 point light)
+		m_shadowMapRenderSystem->render(frameInfo, m_renderer);
 
-		m_shadowMapRenderSystem->render(frameInfo);
-
-		m_renderer.endRenderPass(frameInfo.commandBuffer);
-#endif
-
-		// render frame
+		// render main frame
 		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
 
 		m_materialRenderSystem->render(frameInfo);

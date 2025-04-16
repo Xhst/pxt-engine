@@ -22,6 +22,14 @@ namespace PXTEngine {
 		glm::mat4 cubeFaceView{ 1.f };
     };
 
+	struct ShadowUbo {
+		glm::mat4 projection{ 1.f };
+		// this is a matrix that translates model coordinates to light coordinates
+		glm::mat4 lightOriginModel{ 1.f };
+		PointLight pointLights[MAX_LIGHTS];
+		int numLights;
+	};
+
     ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenDepthFormat)
 		: m_context(context),
 		  m_descriptorAllocator(std::move(descriptorAllocator)),
@@ -48,7 +56,7 @@ namespace PXTEngine {
 		for (size_t i = 0; i < m_lightUniformBuffers.size(); i++) {
 			m_lightUniformBuffers[i] = createUnique<Buffer>(
 				m_context,
-				sizeof(GlobalUbo),
+				sizeof(ShadowUbo),
 				1,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
@@ -229,7 +237,7 @@ namespace PXTEngine {
         pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
         if (vkCreatePipelineLayout(m_context.getDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout!");
+            throw std::runtime_error("failed to create pipeline layout for shadow render system!");
         }
     }
 
@@ -254,20 +262,27 @@ namespace PXTEngine {
     }
 
 	void ShadowMapRenderSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo) {
-		#if 0
-// to set the projection (square depth map)
-		uniformDataOffscreen.projection = glm::perspective((float)(M_PI / 2.0), 1.0f, zNear, zFar);
-		// to set the view matrix (will be overwritten depending on the cube face - for now is identity matrix)
-		uniformDataOffscreen.view = glm::mat4(1.0f);
+		// Get the light position from the scene and set the other ubo values for offscreen rendering
+		glm::vec4 lightPos = ubo.pointLights[0].position;
+
+		ShadowUbo uboOffscreen{};
+		// to set the projection (square depth map)
+		uboOffscreen.projection = glm::perspective(glm::pi<float>() / 2.0f, 1.0f, zNear, zFar);
 		// this will create a translation matrix to translate the model vertices by the light position
-		uniformDataOffscreen.model = glm::translate(glm::mat4(1.0f), glm::vec3(-lightPos.x, -lightPos.y, -lightPos.z));
+		uboOffscreen.lightOriginModel = glm::translate(glm::mat4(1.0f), glm::vec3(-lightPos.x, -lightPos.y, -lightPos.z));
+		uboOffscreen.numLights = ubo.numLights;
 
-		memcpy(uniformBuffers.offscreen.mapped, &uniformDataOffscreen, sizeof(UniformData));
+		// set the light position and color
+		for (int i = 0; i < ubo.numLights; i++) {
+			uboOffscreen.pointLights[i].position = ubo.pointLights[i].position;
+			uboOffscreen.pointLights[i].color = ubo.pointLights[i].color;
+		}
 
-#endif
+		m_lightUniformBuffers[frameInfo.frameIndex]->writeToBuffer(&uboOffscreen, sizeof(GlobalUbo), 0);
+		m_lightUniformBuffers[frameInfo.frameIndex]->flush();
 	}
 
-    void ShadowMapRenderSystem::render(FrameInfo& frameInfo) {
+    void ShadowMapRenderSystem::render(FrameInfo& frameInfo, Renderer& renderer) {
         m_pipeline->bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
@@ -281,21 +296,80 @@ namespace PXTEngine {
             nullptr
         );
 
-        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MaterialComponent, ModelComponent>();
-        for (auto entity : view) {
+		// Set the viewport and scissor for the cube's faces framebuffers
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(m_shadowMapSize);
+		viewport.height = static_cast<float>(m_shadowMapSize);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		VkRect2D scissor{ {0, 0}, this->getExtent() };
+		vkCmdSetViewport(frameInfo.commandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(frameInfo.commandBuffer, 0, 1, &scissor);
 
-            const auto&[transform, material, model] = view.get<TransformComponent, MaterialComponent, ModelComponent>(entity);
+		// get all the entities with a transform and model component (for later)
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ModelComponent>();
 
-            ShadowMapPushConstantData push{};
-            push.modelMatrix = transform.mat4();
+		// Loop through each face of the cube map and render the scene from that perspective
+		// we need one render pass per face of the cube map, each time we modify the view matrix
+		for (uint32_t face = 0; face < 6; face++) {
 
-			vkCmdPushConstants(
-				frameInfo.commandBuffer,
-				m_pipelineLayout,
-				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-				0,
-				sizeof(ShadowMapPushConstantData),
-				&push);
-        }
+			renderer.beginRenderPass(frameInfo.commandBuffer, m_renderPass, this->getCubeFaceFramebuffer(face), this->getExtent());
+
+			ShadowMapPushConstantData push{};
+			push.cubeFaceView = this->getFaceViewMatrix(face);
+
+			for (auto entity : view) {
+
+				const auto& [transform, model] = view.get<TransformComponent, ModelComponent>(entity);
+
+				push.modelMatrix = transform.mat4();
+
+				vkCmdPushConstants(
+					frameInfo.commandBuffer,
+					m_pipelineLayout,
+					VK_SHADER_STAGE_VERTEX_BIT,
+					0,
+					sizeof(ShadowMapPushConstantData),
+					&push);
+
+				auto modelPtr = model.model;
+
+				modelPtr->bind(frameInfo.commandBuffer);
+				modelPtr->draw(frameInfo.commandBuffer);
+			}
+
+			renderer.endRenderPass(frameInfo.commandBuffer);
+		}
     }
+
+	glm::mat4 ShadowMapRenderSystem::getFaceViewMatrix(uint32_t faceIndex) {
+		glm::mat4 viewMatrix = glm::mat4(1.0f);
+		switch (faceIndex)
+		{
+		case 0: // POSITIVE_X
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+		case 1:	// NEGATIVE_X
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+		case 2:	// POSITIVE_Y
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+		case 3:	// NEGATIVE_Y
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+		case 4:	// POSITIVE_Z
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			break;
+		case 5:	// NEGATIVE_Z
+			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			break;
+		}
+
+		return viewMatrix;
+	}
 }

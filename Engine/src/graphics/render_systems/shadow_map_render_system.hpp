@@ -2,6 +2,7 @@
 
 #include "core/memory.hpp"
 #include "graphics/pipeline.hpp"
+#include "graphics/renderer.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"
 #include "graphics/frame_info.hpp"
@@ -10,7 +11,6 @@
 #include "scene/scene.hpp"
 
 namespace PXTEngine {
-
     class ShadowMapRenderSystem {
     public:
         ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenDepthFormat);
@@ -20,7 +20,7 @@ namespace PXTEngine {
         ShadowMapRenderSystem& operator=(const ShadowMapRenderSystem&) = delete;
 
 		void update(FrameInfo& frameInfo, GlobalUbo& ubo);
-        void render(FrameInfo& frameInfo);
+        void render(FrameInfo& frameInfo, Renderer& renderer);
 
 		VkRenderPass getRenderPass() const { return m_renderPass; }
 		VkFramebuffer getCubeFaceFramebuffer(uint32_t face_index) const { return m_cubeFramebuffers[face_index]; }
@@ -34,6 +34,8 @@ namespace PXTEngine {
         void createOffscreenFrameBuffers();
         void createPipelineLayout(DescriptorSetLayout& setLayout);
         void createPipeline();  
+
+        glm::mat4 getFaceViewMatrix(uint32_t faceIndex);
         
         const uint32_t m_shadowMapSize{ 1024 };
 

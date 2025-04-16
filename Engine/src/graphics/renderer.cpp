@@ -163,21 +163,10 @@ namespace PXTEngine {
 		renderPassInfo.pClearValues = clearValues.data();
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(extent.width);
-		viewport.height = static_cast<float>(extent.height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		VkRect2D scissor{ {0, 0}, extent };
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     }
 
     void Renderer::endRenderPass(VkCommandBuffer commandBuffer) {
-        assert(m_isFrameStarted && "Can't call endSwapChainRenderPass when frame is not in progress.");
+        assert(m_isFrameStarted && "Can't call endRenderPass when frame is not in progress.");
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from a different frame.");
 
         vkCmdEndRenderPass(commandBuffer);
