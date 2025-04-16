@@ -4,13 +4,14 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
+#include <utility>
 
 namespace PXTEngine {
 
 
-    UUID::UUID(const std::string& uuid) : m_uuid(uuid) {}
+    UUID::UUID(std::string uuid) : m_uuid(std::move(uuid)) {}
     UUID::UUID() : m_uuid(generateUUIDv7()) {}
-    UUID::UUID(UUIDVersion version) {
+    UUID::UUID(const UUIDVersion version) {
         switch (version) {
             case UUIDVersion::V4:
                 m_uuid = generateUUIDv4();

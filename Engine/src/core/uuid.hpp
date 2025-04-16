@@ -21,8 +21,11 @@ namespace PXTEngine {
     class UUID {
     public:
         UUID();
-        UUID(UUIDVersion version);
-        UUID(const std::string& uuid);
+
+        explicit UUID(UUIDVersion version);
+
+        explicit UUID(std::string uuid);
+
         UUID(const UUID&) = default;
 
         /**
@@ -33,7 +36,7 @@ namespace PXTEngine {
          * 
          * @return The hash of the UUID string.
          */
-        operator size_t() const {
+        explicit operator size_t() const {
             return std::hash<std::string>{}(m_uuid);
         }
 
@@ -42,7 +45,7 @@ namespace PXTEngine {
          * 
          * @return A string representing the UUID.
          */
-        std::string toString() const {
+        [[nodiscard]] std::string toString() const {
             return m_uuid;
         }
 
@@ -83,9 +86,8 @@ namespace std {
          * @param uuid The UUID to be hashed.
          * @return The hash value of the UUID as size_t.
          */
-		std::size_t operator()(const PXTEngine::UUID& uuid) const
-		{
-			return (size_t) uuid;
+		std::size_t operator()(const PXTEngine::UUID& uuid) const noexcept {
+			return static_cast<size_t>(uuid);
 		}
 	};
 
