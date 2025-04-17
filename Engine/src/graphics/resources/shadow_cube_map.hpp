@@ -2,6 +2,8 @@
 
 #include "graphics/resources/image.hpp"
 
+#include <array>
+
 namespace PXTEngine {
 	/**
 	 * @class ShadowCubeMap
@@ -14,7 +16,7 @@ namespace PXTEngine {
 	 */
 	class ShadowCubeMap : public Image {
 	public:
-		ShadowCubeMap(Context& context, VkFormat format = VK_FORMAT_R32_SFLOAT, uint32_t size);
+		ShadowCubeMap(Context& context, uint32_t size, VkFormat format = VK_FORMAT_R32_SFLOAT);
 		virtual ~ShadowCubeMap();
 
 		VkImageView getFaceImageView(uint32_t faceIndex) const { return m_cubeFaceViews[faceIndex]; }
@@ -23,6 +25,7 @@ namespace PXTEngine {
 		uint32_t m_size; // Size of the cube map faces
 
 		void createSCMImage();
+		void transitionSCMLayout();
 		void createSCMImageViews();
 		void createSCMSampler();
 

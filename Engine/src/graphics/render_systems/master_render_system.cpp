@@ -39,8 +39,7 @@ namespace PXTEngine {
 		m_shadowMapRenderSystem = createUnique<ShadowMapRenderSystem>(
 			m_context,
 			m_descriptorAllocator,
-			*m_globalSetLayout,
-			VK_FORMAT_D16_UNORM
+			*m_globalSetLayout
 		);
 
 		m_materialRenderSystem = createUnique<MaterialRenderSystem>(

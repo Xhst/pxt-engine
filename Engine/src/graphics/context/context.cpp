@@ -194,7 +194,7 @@ namespace PXTEngine {
 	void Context::transitionImageLayout(
 		VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout,
 		VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage,
-		std::optional<VkImageSubresourceRange&> subresourceRange) {
+		std::optional<VkImageSubresourceRange> subresourceRange) {
 
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 

@@ -30,10 +30,9 @@ namespace PXTEngine {
 		int numLights;
 	};
 
-    ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenDepthFormat)
+    ShadowMapRenderSystem::ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout)
 		: m_context(context),
-		  m_descriptorAllocator(std::move(descriptorAllocator)),
-		  m_offscreenDepthFormat(offscreenDepthFormat) {
+		  m_descriptorAllocator(std::move(descriptorAllocator)) {
 		createUniformBuffers();
 		createDescriptorSets(setLayout);
 		createRenderPass();
@@ -61,6 +60,8 @@ namespace PXTEngine {
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			);
+
+			m_lightUniformBuffers[i]->map();
 		}
 	}
 
@@ -81,7 +82,7 @@ namespace PXTEngine {
 		// offscreen attachments
 		VkAttachmentDescription osAttachments[2] = {};
 
-		// Find a suitable depth format for
+		// Find a suitable depth format for the offscreen render pass
 		bool isDepthFormatValid = m_context.getSupportedDepthFormat(&m_offscreenDepthFormat);
 		assert(isDepthFormatValid && "No depth format available");
 
@@ -135,7 +136,7 @@ namespace PXTEngine {
 		// For shadow mapping here we need 6 framebuffers, one for each face of the cube map
 		// The class will handle this for us. It will create image views for each face, which
 		// we can use to then create the framebuffers for this class
-		m_shadowCubeMap = createUnique<ShadowCubeMap>(m_context, m_offscreenColorFormat, m_shadowMapSize);
+		m_shadowCubeMap = createUnique<ShadowCubeMap>(m_context, m_shadowMapSize, m_offscreenColorFormat);
 
 		// ------------- Create framebuffers for each face of the cube map -------------
 
@@ -154,10 +155,11 @@ namespace PXTEngine {
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		// Image of the framebuffer is blit source
+		imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		Unique<Image> depthStencilImage = createUnique<Image>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_depthStencilImageFb = createUnique<Image>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		VkImageSubresourceRange subresourceRange = {};
 		subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -167,8 +169,8 @@ namespace PXTEngine {
 
 		// TODO: verify source and destination access masks
 		m_context.transitionImageLayout(
-			depthStencilImage->getVkImage(), 
-			depthStencilImage->getImageFormat(),
+			m_depthStencilImageFb->getVkImage(),
+			m_depthStencilImageFb->getImageFormat(),
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -179,6 +181,7 @@ namespace PXTEngine {
 		depthStencilViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		depthStencilViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		depthStencilViewInfo.format = m_offscreenDepthFormat;
+		depthStencilViewInfo.image = m_depthStencilImageFb->getVkImage();
 		depthStencilViewInfo.flags = 0;
 		depthStencilViewInfo.subresourceRange = {};
 		depthStencilViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -190,11 +193,11 @@ namespace PXTEngine {
 		depthStencilViewInfo.subresourceRange.baseArrayLayer = 0;
 		depthStencilViewInfo.subresourceRange.layerCount = 1;
 
-		depthStencilImage->createImageView(depthStencilViewInfo);
+		m_depthStencilImageFb->createImageView(depthStencilViewInfo);
 
 		// Create framebuffers for each face of the cube map
-		VkImageView attachments[2];
-		attachments[1] = depthStencilImage->getImageView();
+		VkImageView attachments[2]{};
+		attachments[1] = m_depthStencilImageFb->getImageView();
 
 		VkFramebufferCreateInfo fbufCreateInfo = {};
 		fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -216,7 +219,7 @@ namespace PXTEngine {
 		// -----------------------------------------------------------------------------
 
 		// Create image descriptor info for shadow map
-		m_shadowMapDescriptor.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		m_shadowMapDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_shadowMapDescriptor.imageView = m_shadowCubeMap->getImageView();
 		m_shadowMapDescriptor.sampler = m_shadowCubeMap->getImageSampler();
 	}
@@ -278,7 +281,7 @@ namespace PXTEngine {
 			uboOffscreen.pointLights[i].color = ubo.pointLights[i].color;
 		}
 
-		m_lightUniformBuffers[frameInfo.frameIndex]->writeToBuffer(&uboOffscreen, sizeof(GlobalUbo), 0);
+		m_lightUniformBuffers[frameInfo.frameIndex]->writeToBuffer(&uboOffscreen, sizeof(ShadowUbo), 0);
 		m_lightUniformBuffers[frameInfo.frameIndex]->flush();
 	}
 
@@ -291,7 +294,7 @@ namespace PXTEngine {
             m_pipelineLayout,
             0,
             1,
-            &frameInfo.globalDescriptorSet,
+            &m_lightDescriptorSets[frameInfo.frameIndex],
             0,
             nullptr
         );

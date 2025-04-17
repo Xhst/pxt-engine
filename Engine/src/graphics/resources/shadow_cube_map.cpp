@@ -2,7 +2,7 @@
 
 
 namespace PXTEngine {
-	ShadowCubeMap::ShadowCubeMap(Context& context, VkFormat format, uint32_t size)
+	ShadowCubeMap::ShadowCubeMap(Context& context, uint32_t size, VkFormat format)
 		: Image(context, format),
 		  m_size(size) {
 		for (int i = 0; i < 6; i++) {

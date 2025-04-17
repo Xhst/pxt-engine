@@ -16,25 +16,26 @@ struct PointLight {
 };
 
 layout(set = 0, binding = 0) uniform ShadowUbo {
-  glm::mat4 projection;
+  mat4 projection;
   // this is a matrix that translates model coordinates to light coordinates
-  glm::mat4 lightOriginModel;
+  mat4 lightOriginModel; // we could consider passing this as push constants in the future? (i think no, because we will have too many lights :(  )
   PointLight pointLights[MAX_LIGHTS];
   int numLights;
 } ubo;
 
 layout(push_constant) uniform Push {
   // it will be modified to translate the object to the light position (i think so?)
-  glm::mat4 modelMatrix;
+  mat4 modelMatrix;
   // it will be modified to render the different faces
-  glm::mat4 cubeFaceView;
+  mat4 cubeFaceView;
 } push;
 
 
 void main() {
-  vec4 positionLightOrigin = ubo.lightOriginModel * push.modelMatrix * vec4(position, 1.0);
-  gl_Position = ubo.projection * push.cubeFaceView * positionLightOrigin;
+  vec4 posWorldFromLight = ubo.lightOriginModel * push.modelMatrix * vec4(position, 1.0);
+  gl_Position = ubo.projection * push.cubeFaceView * posWorldFromLight;
 
-  fragPosWorld = position.xyz;
-  fragLightPos = pointLights[0].position.xyz;
+  // we pass the positions in object space to be consistent among all (future ;_;) lights.
+  fragPos = position;
+  fragLightPos = ubo.pointLights[0].position.xyz;
 }

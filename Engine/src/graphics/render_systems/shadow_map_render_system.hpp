@@ -13,7 +13,7 @@
 namespace PXTEngine {
     class ShadowMapRenderSystem {
     public:
-        ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout, VkFormat offscreenDepthFormat);
+        ShadowMapRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, DescriptorSetLayout& setLayout);
         ~ShadowMapRenderSystem();
 
         ShadowMapRenderSystem(const ShadowMapRenderSystem&) = delete;
@@ -58,7 +58,8 @@ namespace PXTEngine {
 		// The framebuffer used for the offscreen render pass. They are created from the 
 		// shadowCubeMap image views (see createOffscreenFrameBuffers)
         std::array<VkFramebuffer, 6> m_cubeFramebuffers;
-        VkFormat m_offscreenDepthFormat;
+		Unique<Image> m_depthStencilImageFb;
+        VkFormat m_offscreenDepthFormat{ VK_FORMAT_UNDEFINED };
 		VkFormat m_offscreenColorFormat{ VK_FORMAT_R32_SFLOAT };
 
         Unique<Pipeline> m_pipeline;
