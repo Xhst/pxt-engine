@@ -7,7 +7,7 @@ layout(location = 1) in vec3 color;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec2 uv;
 
-layout(location = 0) out vec3 fragPos;
+layout(location = 0) out vec3 fragPosWorld;
 layout(location = 1) out vec3 fragLightPos;
 
 struct PointLight {
@@ -36,6 +36,6 @@ void main() {
   gl_Position = ubo.projection * push.cubeFaceView * posWorldFromLight;
 
   // we pass the positions in object space to be consistent among all (future ;_;) lights.
-  fragPos = position;
-  fragLightPos = ubo.pointLights[0].position.xyz;
+  fragPosWorld = gl_Position.xyz;
+  fragLightPos = ubo.pointLights[1].position.xyz;
 }
