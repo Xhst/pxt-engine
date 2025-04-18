@@ -1,11 +1,10 @@
 #pragma once
 
 #include "core/memory.hpp"
+#include "core/error_handling.hpp"
 #include "graphics/window.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"
-
-#include <cassert>
 
 namespace PXTEngine {
 
@@ -63,7 +62,7 @@ namespace PXTEngine {
          * @throws std::runtime_error if called when no frame is in progress.
          */
         VkCommandBuffer getCurrentCommandBuffer() const {
-            assert(m_isFrameStarted && "Cannot get command buffer when frame not in progress.");
+            PXT_ASSERT(m_isFrameStarted, "Cannot get command buffer when frame not in progress.");
 
             return m_commandBuffers[m_currentFrameIndex];
         }
@@ -75,7 +74,7 @@ namespace PXTEngine {
          * @throws std::runtime_error if called when no frame is in progress.
          */
         int getFrameIndex() const { 
-            assert(m_isFrameStarted && "Cannot get frame index when frame not in progress.");
+            PXT_ASSERT(m_isFrameStarted, "Cannot get frame index when frame not in progress.");
             
             return m_currentFrameIndex; 
         }

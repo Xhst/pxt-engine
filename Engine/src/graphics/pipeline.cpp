@@ -1,9 +1,9 @@
 #include "graphics/pipeline.hpp"
 
+#include "core/error_handling.hpp"
 #include "graphics/resources/model.hpp"
 #include "graphics/frame_info.hpp"
 
-#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -60,9 +60,10 @@ namespace PXTEngine {
 		const PipelineConfigInfo& configInfo
 	) {
 		// Ensure that the pipeline layout and render pass are properly set.
-		assert(configInfo.pipelineLayout != nullptr &&
+		PXT_ASSERT(configInfo.pipelineLayout != nullptr,
 			"Cannot create graphics pipeline: no pipelineLayout provided in config info");
-		assert(configInfo.renderPass != nullptr &&
+
+		PXT_ASSERT(configInfo.renderPass != nullptr,
 			"Cannot create graphics pipeline: no renderPass provided in config info");
 
 		// --- SPECIALIZATION CONSTANT SETUP (if needed for all shaders) ---

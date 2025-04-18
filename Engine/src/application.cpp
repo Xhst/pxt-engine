@@ -3,11 +3,10 @@
 #include "core/memory.hpp"
 #include "core/events/event_dispatcher.hpp"
 #include "core/events/window_event.hpp"
-#include "core/constants.hpp"
+#include "core/error_handling.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
 #include "scene/camera.hpp"
-#include "graphics/resources/image.hpp"
 #include "graphics/render_systems/master_render_system.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -190,7 +189,7 @@ int main() {
 
         delete app;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+		PXT_ERROR("Application crashed: {}", e.what());
         return EXIT_FAILURE;
     }
 

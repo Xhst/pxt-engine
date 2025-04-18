@@ -1,11 +1,11 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 
 #include "core/memory.hpp"
+#include "core/error_handling.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <stdexcept>
-#include <cassert>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -84,7 +84,7 @@ namespace PXTEngine {
 
 		// Find a suitable depth format for the offscreen render pass
 		bool isDepthFormatValid = m_context.getSupportedDepthFormat(&m_offscreenDepthFormat);
-		assert(isDepthFormatValid && "No depth format available");
+		PXT_ASSERT(isDepthFormatValid, "No depth format available");
 
 		// Color attachment
 		osAttachments[0].format = m_offscreenColorFormat;
@@ -245,7 +245,7 @@ namespace PXTEngine {
     }
 
     void ShadowMapRenderSystem::createPipeline() {
-        assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipelineLayout");
+		PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);

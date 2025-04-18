@@ -1,8 +1,9 @@
 #include "graphics/renderer.hpp"
 
+#include "core/error_handling.hpp"
+
 #include <array>
 #include <stdexcept>
-#include <cassert>
 
 namespace PXTEngine {
 
@@ -60,7 +61,7 @@ namespace PXTEngine {
     }
 
     VkCommandBuffer Renderer::beginFrame() {
-        assert(!m_isFrameStarted && "Can't call beginFrame while frame is in progress.");
+        PXT_ASSERT(!m_isFrameStarted, "Can't call beginFrame while frame is in progress.");
 
         auto result = m_swapChain->acquireNextImage(&m_currentImageIndex);
 
@@ -89,7 +90,7 @@ namespace PXTEngine {
     }
 
     void Renderer::endFrame() {
-        assert(m_isFrameStarted && "Can't call endFrame while frame is not in progress.");
+        PXT_ASSERT(m_isFrameStarted, "Can't call endFrame while frame is not in progress.");
 
         auto commandBuffer = getCurrentCommandBuffer();
         
@@ -111,8 +112,8 @@ namespace PXTEngine {
     }
 
     void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer) {
-        assert(m_isFrameStarted && "Can't begin render pass when frame is not in progress.");
-        assert(commandBuffer == getCurrentCommandBuffer() && "Can't begin render pass on command buffer from a different frame.");
+        PXT_ASSERT(m_isFrameStarted, "Can't begin render pass when frame is not in progress.");
+        PXT_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't begin render pass on command buffer from a different frame.");
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -144,8 +145,8 @@ namespace PXTEngine {
     }
 
     void Renderer::beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent) {
-		assert(m_isFrameStarted && "Can't begin render pass when frame is not in progress.");
-		assert(commandBuffer == getCurrentCommandBuffer() && "Can't begin render pass on command buffer from a different frame.");
+        PXT_ASSERT(m_isFrameStarted, "Can't begin render pass when frame is not in progress.");
+        PXT_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't begin render pass on command buffer from a different frame.");
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -166,8 +167,8 @@ namespace PXTEngine {
     }
 
     void Renderer::endRenderPass(VkCommandBuffer commandBuffer) {
-        assert(m_isFrameStarted && "Can't call endRenderPass when frame is not in progress.");
-        assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from a different frame.");
+        PXT_ASSERT(m_isFrameStarted, "Can't call endRenderPass when frame is not in progress.");
+        PXT_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame.");
 
         vkCmdEndRenderPass(commandBuffer);
     }

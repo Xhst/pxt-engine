@@ -1,6 +1,6 @@
 #include "graphics/descriptors/descriptor_set_layout.hpp"
 
-#include <cassert>
+#include "core/error_handling.hpp"
 #include <ranges>
 #include <stdexcept>
 #include <utility>
@@ -12,7 +12,7 @@ namespace PXTEngine {
         const VkShaderStageFlags stageFlags,
         const uint32_t count) {
 
-        assert(!m_bindings.contains(binding) && "Binding already in use");
+        PXT_ASSERT(!m_bindings.contains(binding), "Binding already in use");
 
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;

@@ -1,8 +1,5 @@
 #include "graphics/descriptors/descriptor_writer.hpp"
 
-#include <cassert>
-#include <stdexcept>
-
 namespace PXTEngine {    
     DescriptorWriter::DescriptorWriter(Context& context, DescriptorSetLayout& setLayout)
         : m_context(context), m_setLayout(setLayout) {}

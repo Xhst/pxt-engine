@@ -1,13 +1,12 @@
 #include "graphics/render_systems/point_light_system.hpp"
 #include "core/memory.hpp"
+#include "core/error_handling.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <iostream>
-#include <array>
 #include <ranges>
 #include <stdexcept>
-#include <cassert>
 #include <map>
 
 #define GLM_FORCE_RADIANS
@@ -54,7 +53,7 @@ namespace PXTEngine {
     }
 
     void PointLightSystem::createPipeline(VkRenderPass renderPass) {
-        assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipelineLayout");
+        PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);

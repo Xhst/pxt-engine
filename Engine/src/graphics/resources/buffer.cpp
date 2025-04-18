@@ -1,6 +1,6 @@
 #include "graphics/resources/buffer.hpp"
 
-#include <cassert>
+#include "core/error_handling.hpp"
 #include <cstring>
 #include <stdexcept>
 
@@ -36,7 +36,7 @@ namespace PXTEngine {
     }
 
     VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset) {
-        assert(m_buffer && m_memory && "Called map on buffer before create");
+        PXT_ASSERT(m_buffer && m_memory, "Called map on buffer before create");
 
         return vkMapMemory(m_context.getDevice(), m_memory, offset, size, 0, &m_mapped);
     }

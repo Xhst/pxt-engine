@@ -1,10 +1,10 @@
 #include "graphics/render_systems/material_render_system.hpp"
 #include "core/memory.hpp"
+#include "core/error_handling.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <stdexcept>
-#include <cassert>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -103,7 +103,7 @@ namespace PXTEngine {
     }
 
     void MaterialRenderSystem::createPipeline(VkRenderPass renderPass) {
-        assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipelineLayout");
+        PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
