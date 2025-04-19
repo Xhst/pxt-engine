@@ -27,12 +27,13 @@ namespace PXTEngine {
         /**
          * @struct Vertex
          * 
-         * @brief Represents a single vertex with position, color, normal, and texture coordinates.
+         * @brief Represents a single vertex with position, color, normal, tangent, and texture coordinates.
          */
         struct Vertex {
             glm::vec3 position{};  // Position of the vertex.
             glm::vec3 color{};     // Color of the vertex.
             glm::vec3 normal{};    // Normal vector for lighting calculations.
+            glm::vec4 tangent{};   // Tangent vector for lighting calculations.
             glm::vec2 uv{};        // Texture coordinates.
             
             /**
@@ -50,7 +51,11 @@ namespace PXTEngine {
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
        
             bool operator==(const Vertex& other) const {
-                return position == other.position && color == other.color && normal == other.normal && uv == other.uv;
+                return position == other.position
+            		&& color == other.color
+            		&& normal == other.normal
+					&& tangent == other.tangent
+            		&& uv == other.uv;
             }
         };
 
@@ -133,7 +138,7 @@ struct std::hash<PXTEngine::Model::Vertex> {
 	size_t operator()(PXTEngine::Model::Vertex const &vertex) const noexcept {
 		size_t seed = 0;
 
-		PXTEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+		PXTEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.tangent, vertex.uv);
 		return seed;
 	}
 };
