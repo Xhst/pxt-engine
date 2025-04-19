@@ -1,12 +1,12 @@
 #include "graphics/render_systems/point_light_system.hpp"
 #include "core/memory.hpp"
+#include "core/error_handling.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <iostream>
-#include <array>
+#include <ranges>
 #include <stdexcept>
-#include <cassert>
 #include <map>
 
 #define GLM_FORCE_RADIANS
@@ -53,7 +53,7 @@ namespace PXTEngine {
     }
 
     void PointLightSystem::createPipeline(VkRenderPass renderPass) {
-        assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipelineLayout");
+        PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
@@ -66,12 +66,16 @@ namespace PXTEngine {
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-        m_pipeline = createUnique<Pipeline>(
-            m_context,
-            SPV_SHADERS_PATH + "point_light.vert.spv",
-            SPV_SHADERS_PATH + "point_light.frag.spv",
-            pipelineConfig
-        );
+		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
+			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "point_light.vert.spv"},
+			{VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "point_light.frag.spv"}
+		};
+
+		m_pipeline = createUnique<Pipeline>(
+			m_context,
+            shaderFilePaths,
+			pipelineConfig
+		);
     }
 
     void PointLightSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo) {
@@ -112,8 +116,6 @@ namespace PXTEngine {
 
             sorted[distanceSq] = entity;
         }
-
-
         
         m_pipeline->bind(frameInfo.commandBuffer);
 
@@ -128,9 +130,8 @@ namespace PXTEngine {
             nullptr
         );
 
-        for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
-            auto entity = it->second;
-
+        for (auto& [_, entity] : std::ranges::reverse_view(sorted))
+        {
             const auto&[light, color, transform] = view.get<PointLightComponent, ColorComponent, TransformComponent>(entity);
 
             PointLightPushConstants push{};

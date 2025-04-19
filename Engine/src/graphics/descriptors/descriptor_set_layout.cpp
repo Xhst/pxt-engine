@@ -1,21 +1,26 @@
 #include "graphics/descriptors/descriptor_set_layout.hpp"
 
-#include <cassert>
+#include "core/error_handling.hpp"
+#include <ranges>
 #include <stdexcept>
+#include <utility>
 
 namespace PXTEngine {
     DescriptorSetLayout::Builder& DescriptorSetLayout::Builder::addBinding(
-        uint32_t binding,
-        VkDescriptorType descriptorType,
-        VkShaderStageFlags stageFlags,
-        uint32_t count) {
-        assert(m_bindings.count(binding) == 0 && "Binding already in use");
+        const uint32_t binding,
+        const VkDescriptorType descriptorType,
+        const VkShaderStageFlags stageFlags,
+        const uint32_t count) {
+
+        PXT_ASSERT(!m_bindings.contains(binding), "Binding already in use");
+
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
         layoutBinding.descriptorType = descriptorType;
         layoutBinding.descriptorCount = count;
         layoutBinding.stageFlags = stageFlags;
         m_bindings[binding] = layoutBinding;
+
         return *this;
     }
 
@@ -23,12 +28,14 @@ namespace PXTEngine {
         return createUnique<DescriptorSetLayout>(m_context, m_bindings);
     }
 
-    DescriptorSetLayout::DescriptorSetLayout(
-        Context& context, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
-        : m_context{context}, m_bindings{bindings} {
+    DescriptorSetLayout::DescriptorSetLayout(Context& context,
+        std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings) :
+    m_context{context},
+    m_bindings{std::move(bindings)} {
+
         std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
-        for (auto kv : m_bindings) {
-            setLayoutBindings.push_back(kv.second);
+        for (auto val: m_bindings | std::views::values) {
+            setLayoutBindings.push_back(val);
         }
         
         VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo{};

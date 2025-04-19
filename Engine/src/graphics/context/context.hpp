@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "graphics/context/instance.hpp"
 #include "graphics/context/surface.hpp"
 #include "graphics/context/physical_device.hpp"
@@ -21,6 +23,7 @@ namespace PXTEngine {
 		~Context();		
 	
 		VkInstance getInstance() { return m_instance.getVkInstance(); }
+		Window& getWindow() { return m_window; }
 		VkSurfaceKHR getSurface() { return m_surface.getSurface(); }
 		VkPhysicalDevice getPhysicalDevice() { return m_physicalDevice.getDevice(); }
 		VkDevice getDevice() { return m_device.getDevice(); }
@@ -38,6 +41,8 @@ namespace PXTEngine {
 		QueueFamilyIndices findPhysicalQueueFamilies() {
 			return m_physicalDevice.findQueueFamilies();
 		}
+
+		bool getSupportedDepthFormat(VkFormat* format);
 
 		VkQueue getGraphicsQueue() { return m_device.getGraphicsQueue(); }
 		VkQueue getPresentQueue() { return m_device.getPresentQueue(); }
@@ -130,23 +135,35 @@ namespace PXTEngine {
 		*
 		* This function creates an image view for an image, which is used to access the image data.
 		*
-		* @param image The image handle.
-		* @param format The format of the image.
+		* @param viewInfo The image view create info.
 		* @return The image view handle.
 		*/
-		VkImageView createImageView(VkImage image, VkFormat format);
+		VkImageView createImageView(const VkImageViewCreateInfo& viewInfo);
 
 		/**
-		* @brief Transitions the layout of an image.
-		*
-		* This function transitions the layout of an image, which is required when changing the way the image is accessed.
-		*
-		* @param image The image handle.
-		* @param format The format of the image.
-		* @param oldLayout The old layout of the image.
-		* @param newLayout The new layout of the image.
+		* @brief Creates a sampler for an image.
+		* 
+		* This function creates a sampler for an image, which is used to sample the image data.
+		* 
+		* @param samplerInfo The sampler create info.
+		* @return The sampler handle.
 		*/
-		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+		VkSampler createSampler(const VkSamplerCreateInfo& samplerInfo);
+
+		/**
+		 * @brief Transitions the layout of an image.
+		 *
+		 * This function transitions the layout of an image, which is required when changing the way the image is accessed.
+		 *
+		 * @param image The image handle.
+		 * @param format The format of the image.
+		 * @param oldLayout The old layout of the image.
+		 * @param newLayout The new layout of the image.
+		 * @param subresourceRange The subresource range of the image.
+		 * @param sourceStage The source pipeline stage. If not specified, it will be set to VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, which is less efficient.
+		 * @param destinationStage The destination pipeline stage. If not specified, it will be set to VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, which is less efficient.
+		 */
+		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, std::optional<VkImageSubresourceRange> subresourceRange = std::nullopt);
 
 		/**
 		 * @brief Finds a supported format for an image.

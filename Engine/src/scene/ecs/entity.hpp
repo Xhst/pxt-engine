@@ -34,7 +34,7 @@ namespace PXTEngine {
          */
         template <typename Component>
         Component& get() {
-            assert(has<Component>() && "Entity does not have component");
+            PXT_ASSERT(has<Component>(), "Entity does not have component");
 
             return m_scene->m_registry.get<Component>(m_enttEntity);
         }
@@ -71,8 +71,8 @@ namespace PXTEngine {
          */
         template <typename Component>
         void remove() {
-            static_assert(!std::is_same<Component, IDComponent>::value, "Cannot remove ID component");
-            assert(has<Component>() && "Entity does not have component");
+            PXT_STATIC_ASSERT(!std::is_same_v<Component, IDComponent>, "Cannot remove ID component");
+            PXT_ASSERT(has<Component>() && "Entity does not have component");
 
             m_scene->m_registry.remove<Component>(m_enttEntity);
         }

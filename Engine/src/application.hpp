@@ -9,6 +9,7 @@
 #include "graphics/renderer.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/frame_info.hpp"
+#include "graphics/render_systems/master_render_system.hpp"
 #include "scene/scene.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -51,23 +52,26 @@ namespace PXTEngine {
         Entity createPointLight(const float intensity = 1.0f, const float radius = 0.1f, const glm::vec3 color = glm::vec3(1.f));
     
     private:
+		void createDescriptorPoolAllocator();
+		void createUboBuffers();
+        void createGlobalDescriptorSet();
+
         void run();
         void onEvent(Event& event);
         bool isRunning();
-
-        void initImGui();
-
-        void imGuiRenderUI(FrameInfo& frameInfo);
 
         bool m_running = true;
 
         Window m_window{WindowData()};
         Context m_context{m_window};
         Renderer m_renderer{m_window, m_context};
+        Unique<MasterRenderSystem> m_masterRenderSystem;
 
-        Unique<DescriptorAllocatorGrowable> m_descriptorAllocator{};
-        Unique<DescriptorPool> m_globalPool{};
-        Unique<DescriptorPool> m_imGuiPool{};
+		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator{};
+		Shared<DescriptorSetLayout> m_globalSetLayout{};
+		std::vector<VkDescriptorSet> m_globalDescriptorSets{ SwapChain::MAX_FRAMES_IN_FLIGHT };
+
+		std::vector<Unique<Buffer>> m_uboBuffers{ SwapChain::MAX_FRAMES_IN_FLIGHT };
 
         Scene m_scene{};
         std::unordered_map<UUID, System*> m_systems;

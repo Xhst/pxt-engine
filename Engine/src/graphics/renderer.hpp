@@ -1,11 +1,10 @@
 #pragma once
 
 #include "core/memory.hpp"
+#include "core/error_handling.hpp"
 #include "graphics/window.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"
-
-#include <cassert>
 
 namespace PXTEngine {
 
@@ -63,7 +62,7 @@ namespace PXTEngine {
          * @throws std::runtime_error if called when no frame is in progress.
          */
         VkCommandBuffer getCurrentCommandBuffer() const {
-            assert(m_isFrameStarted && "Cannot get command buffer when frame not in progress.");
+            PXT_ASSERT(m_isFrameStarted, "Cannot get command buffer when frame not in progress.");
 
             return m_commandBuffers[m_currentFrameIndex];
         }
@@ -75,7 +74,7 @@ namespace PXTEngine {
          * @throws std::runtime_error if called when no frame is in progress.
          */
         int getFrameIndex() const { 
-            assert(m_isFrameStarted && "Cannot get frame index when frame not in progress.");
+            PXT_ASSERT(m_isFrameStarted, "Cannot get frame index when frame not in progress.");
             
             return m_currentFrameIndex; 
         }
@@ -109,13 +108,22 @@ namespace PXTEngine {
         void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
         /**
-         * @brief Ends the swap chain render pass.
+        * @brief Begins a render pass.
+        *
+        * @param commandBuffer The command buffer to record the render pass into.
+        *
+        * @throws std::runtime_error if called when frame is not in progress or command buffer is from a different frame.
+        */
+        void beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent);
+
+        /**
+         * @brief Ends the current render pass.
          * 
          * @param commandBuffer The command buffer to record the end of the render pass into.
          * 
          * @throws std::runtime_error if called when frame is not in progress or command buffer is from a different frame.
          */
-        void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+        void endRenderPass(VkCommandBuffer commandBuffer);
 
     private:
         /**

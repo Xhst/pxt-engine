@@ -1,7 +1,8 @@
 #include "graphics/resources/buffer.hpp"
 
-#include <cassert>
+#include "core/error_handling.hpp"
 #include <cstring>
+#include <stdexcept>
 
 namespace PXTEngine {
 
@@ -35,7 +36,7 @@ namespace PXTEngine {
     }
 
     VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset) {
-        assert(m_buffer && m_memory && "Called map on buffer before create");
+        PXT_ASSERT(m_buffer && m_memory, "Called map on buffer before create");
 
         return vkMapMemory(m_context.getDevice(), m_memory, offset, size, 0, &m_mapped);
     }
@@ -47,17 +48,25 @@ namespace PXTEngine {
         }
     }
 
-    void Buffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) {
-        assert(m_mapped && "Cannot copy to unmapped buffer");
+	// TODO: add "if NDEBUG ... we avoid checks"
+	void Buffer::writeToBuffer(void* data, VkDeviceSize size, VkDeviceSize offset) {
+        if (!m_mapped) {
+			throw std::runtime_error("Cannot write to buffer: memory is not mapped.");
+		}
 
-        if (size == VK_WHOLE_SIZE) {
-            memcpy(m_mapped, data, m_bufferSize);
-        } else {
-            char *memOffset = (char *) m_mapped;
-            memOffset += offset;
-            memcpy(memOffset, data, size);
-        }
-    }
+		if (!data) {
+			throw std::runtime_error("Cannot write to buffer: data pointer is null.");
+		}
+
+		VkDeviceSize writeSize = (size == VK_WHOLE_SIZE) ? m_bufferSize : size;
+
+		if (offset + writeSize > m_bufferSize) {
+			throw std::out_of_range("Buffer write exceeds buffer bounds (offset + size > buffer size).");
+		}
+
+		char* memOffset = reinterpret_cast<char*>(m_mapped) + offset;
+		memcpy(memOffset, data, writeSize);
+	}
 
     VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset) {
         VkMappedMemoryRange mappedRange = {};

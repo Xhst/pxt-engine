@@ -2,6 +2,9 @@
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
+#define EPSILON 0.15
+#define SHADOW_OPACITY 0.5
+
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosWorld;
 layout(location = 2) in vec3 fragNormalWorld;
@@ -23,7 +26,9 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
   int numLights;
 } ubo;
 
-layout(set = 0, binding = 1) uniform sampler2D textures[3];
+layout(set = 1, binding = 0) uniform sampler2D textures[3];
+
+layout(set = 2, binding = 0) uniform samplerCube shadowCubeMap;
 
 layout(push_constant) uniform Push {
   mat4 modelMatrix;
@@ -68,4 +73,14 @@ void main() {
      for now we use fragColor for both which is ideal for metallic objects
   */
   outColor = vec4((diffuseLight * fragColor + specularLight * fragColor) * imageColor, 1.0);
+
+  // Shadow
+  vec3 lightVec = fragPosWorld - ubo.pointLights[1].position.xyz;
+  float sampledDist = texture(shadowCubeMap, lightVec).r;
+  float dist = length(lightVec);
+  
+  // Check if fragment is in shadow
+  float shadow = (dist <= sampledDist + EPSILON) ? 1.0 : SHADOW_OPACITY;
+
+  outColor.rgb *= shadow;
 }

@@ -1,10 +1,10 @@
 #include "graphics/resources/model.hpp"
 
+#include "core/error_handling.hpp"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include <cassert>
-#include <cstring>
 #include <unordered_map>
 
 
@@ -28,7 +28,7 @@ namespace PXTEngine {
     void Model::createVertexBuffers(const std::vector<Vertex>& vertices) {
         m_vertexCount = static_cast<uint32_t>(vertices.size());
 
-        assert(m_vertexCount >= 3 && "Vertex count must be at least 3");
+        PXT_ASSERT(m_vertexCount >= 3, "Vertex count must be at least 3");
 
         VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCount;
 
