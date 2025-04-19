@@ -48,10 +48,18 @@ namespace PXTEngine
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
         int textureIndex = 0;
+		int normalMapIndex = 0;
 
         MaterialComponent() = default;
-        MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, int textureIndex)
-            : color(color), specularIntensity(specularIntensity), shininess(shininess), textureIndex(textureIndex) {}
+        MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, 
+						  int textureIndex, int normalMapIndex) :
+    		color(color),
+    		specularIntensity(specularIntensity),
+    		shininess(shininess),
+    		textureIndex(textureIndex),
+			normalMapIndex(normalMapIndex) {}
+        
+
         MaterialComponent(const MaterialComponent&) = default;
         MaterialComponent(MaterialComponent&&) = default; // Explicit move constructor
         MaterialComponent& operator=(MaterialComponent&&) = default; // Explicit move assignment
@@ -61,6 +69,7 @@ namespace PXTEngine
             float specularIntensity = 0.0f;
             float shininess = 1.0f;
             int textureIndex = 0;
+			int normalMapIndex = 0;
 
             Builder& setColor(const glm::vec4& color) {
                 this->color = color;
@@ -89,8 +98,15 @@ namespace PXTEngine
                 return *this;
             }
 
-            MaterialComponent build() {
-                return MaterialComponent{color, specularIntensity, shininess, textureIndex};
+			Builder& setNormalMapIndex(int normalMapIndex) {
+				if (normalMapIndex < 0) normalMapIndex = 0;
+
+				this->normalMapIndex = normalMapIndex;
+				return *this;
+			}
+
+            MaterialComponent build() const {
+                return MaterialComponent{color, specularIntensity, shininess, textureIndex, normalMapIndex};
             }
         };
     };

@@ -20,6 +20,7 @@ namespace PXTEngine {
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
         int textureIndex = -1;
+        int normalMapIndex = -1;
     };
 
     MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) : m_context(context), m_descriptorAllocator(descriptorAllocator) {
@@ -38,6 +39,9 @@ namespace PXTEngine {
 			"white_pixel.png",
 			"shrek_420x420.png",
 			"texture.jpg",
+			"barrel.png",
+			"barrel_normal.png"
+				
 		};
 
 		for (const auto& texture_name : textures_name) {
@@ -150,6 +154,7 @@ namespace PXTEngine {
             push.specularIntensity = material.specularIntensity;
             push.shininess = material.shininess;
             push.textureIndex = material.textureIndex;
+            push.normalMapIndex = material.normalMapIndex;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
