@@ -33,10 +33,10 @@ layout(push_constant) uniform Push {
 
 
 void main() {
-  vec4 posWorldFromLight = ubo.lightOriginModel * push.modelMatrix * vec4(position, 1.0);
+  vec4 posWorld = push.modelMatrix * vec4(position, 1.0);
+  vec4 posWorldFromLight = ubo.lightOriginModel * posWorld;
   gl_Position = ubo.projection * push.cubeFaceView * posWorldFromLight;
 
-  // we pass the positions in object space to be consistent among all (future ;_;) lights.
-  fragPosWorld = gl_Position.xyz;
+  fragPosWorld = posWorld.xyz;
   fragLightPos = ubo.pointLights[0].position.xyz;
 }

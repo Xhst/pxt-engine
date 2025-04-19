@@ -2,7 +2,7 @@
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
-#define EPSILON 0.65
+#define EPSILON 0.1
 #define SHADOW_OPACITY 0.5
 
 layout(location = 0) in vec3 fragColor;
@@ -84,11 +84,14 @@ void main() {
 
   // Shadow
   vec3 lightVec = fragPosWorld - ubo.pointLights[0].position.xyz;
+  vec3 lightDir = normalize(lightVec);
+  float bias = max(EPSILON * (1.0 - dot(fragNormalWorld, lightDir)), 0.005);
+
   float sampledDist = texture(shadowCubeMap, lightVec).r;
   float dist = length(lightVec);
   
   // Check if fragment is in shadow
-  float shadow = (dist <= sampledDist + EPSILON) ? 1.0 : SHADOW_OPACITY;
+  float shadow = (dist <= sampledDist + bias) ? 1.0 : SHADOW_OPACITY;
 
   outColor.rgb *= shadow;
 }
