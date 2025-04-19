@@ -2,13 +2,14 @@
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
-#define EPSILON 0.15
+#define EPSILON 0.65
 #define SHADOW_OPACITY 0.5
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosWorld;
 layout(location = 2) in vec3 fragNormalWorld;
 layout(location = 3) in vec2 fragUV;
+layout(location = 4) in mat3 fragTBN;
 
 layout(location = 0) out vec4 outColor;
 
@@ -37,13 +38,22 @@ layout(push_constant) uniform Push {
   float specularIntensity;
   float shininess;
   int textureIndex;
+  int normalMapIndex;
 } push;
 
 void main() {
+  
+  vec3 surfaceNormal = normalize(fragNormalWorld);
+
+  // normal map value is in [0, 1] range
+  vec3 normalMapValue = 2.0 * texture(textures[push.normalMapIndex], fragUV).rgb - 1.0;
+  if (push.normalMapIndex != 0) {
+    surfaceNormal = normalize(fragTBN * normalMapValue);
+  }
+
   vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
   vec3 specularLight = vec3(0.0);
-  vec3 surfaceNormal = normalize(fragNormalWorld); // fragment normal could not be normalized from previous stage (normals interpolation)
-
+ 
   vec3 cameraPosWorld = ubo.inverseViewMatrix[3].xyz;
   vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld); // it's the direction from fragment to camera
 
@@ -75,7 +85,7 @@ void main() {
   outColor = vec4((diffuseLight * fragColor + specularLight * fragColor) * imageColor, 1.0);
 
   // Shadow
-  vec3 lightVec = fragPosWorld - ubo.pointLights[1].position.xyz;
+  vec3 lightVec = fragPosWorld - ubo.pointLights[0].position.xyz;
   float sampledDist = texture(shadowCubeMap, lightVec).r;
   float dist = length(lightVec);
   
