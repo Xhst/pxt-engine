@@ -40,7 +40,7 @@ public:
         Shared<Model> quad = Model::createModelFromFile(getContext(), MODELS_PATH + "quad.obj");
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(1).build())
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(2).build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("Roof")
@@ -50,12 +50,12 @@ public:
 
         entity = getScene().createEntity("BackWall")
             .add<TransformComponent>(glm::vec3{0.0f, 0.f, 1.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{glm::pi<float>()/2, 0.0f, 0.0f})
-            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(2).build())
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(3).build())
             .add<ModelComponent>(quad);
 
             entity = getScene().createEntity("FrontWall")
             .add<TransformComponent>(glm::vec3{0.0f, 0.f, -1.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{-glm::pi<float>()/2, 0.0f, 0.0f})
-            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(2).build())
+            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).setTextureIndex(3).build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("RightWall")
@@ -78,8 +78,8 @@ public:
             .add<ModelComponent>(barrel)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setColor(colorWhite)
-                .setTextureIndex(3)
-                .setNormalMapIndex(4)
+                .setTextureIndex(4)
+                .setNormalMapIndex(5)
                 .build());
 
         // Vase

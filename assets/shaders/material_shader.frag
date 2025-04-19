@@ -42,20 +42,17 @@ layout(push_constant) uniform Push {
 } push;
 
 void main() {
-  
-  vec3 surfaceNormal = normalize(fragNormalWorld);
-
   // normal map value is in [0, 1] range
   vec3 normalMapValue = 2.0 * texture(textures[push.normalMapIndex], fragUV).rgb - 1.0;
-  if (push.normalMapIndex != 0) {
-    surfaceNormal = normalize(fragTBN * normalMapValue);
-  }
+  vec3 surfaceNormal = normalize(fragTBN * normalMapValue);
 
   vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
   vec3 specularLight = vec3(0.0);
  
   vec3 cameraPosWorld = ubo.inverseViewMatrix[3].xyz;
-  vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld); // it's the direction from fragment to camera
+
+  // it's the direction from fragment to camera
+  vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);
 
   for (int i = 0; i < ubo.numLights; i++) {
     PointLight light = ubo.pointLights[i];
@@ -64,7 +61,9 @@ void main() {
     vec3 directionToLight = normalize(vectorToLight);
 
     float cosAngleIncidence = max(dot(surfaceNormal, directionToLight), 0);
-    vec3 lightColor = light.color.xyz * light.color.w * attenuation; // color * intensity * attenuation
+
+    // color * intensity * attenuation
+    vec3 lightColor = light.color.xyz * light.color.w * attenuation;
     
     diffuseLight += lightColor * cosAngleIncidence;
 
@@ -79,9 +78,8 @@ void main() {
 
   vec3 imageColor = texture(textures[push.textureIndex], fragUV).rgb;
 
-  /* we need to add control coefficients to regulate both terms
-     for now we use fragColor for both which is ideal for metallic objects
-  */
+  // we need to add control coefficients to regulate both terms
+  // for now we use fragColor for both which is ideal for metallic objects
   outColor = vec4((diffuseLight * fragColor + specularLight * fragColor) * imageColor, 1.0);
 
   // Shadow

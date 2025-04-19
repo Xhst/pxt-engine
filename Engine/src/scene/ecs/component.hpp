@@ -48,7 +48,7 @@ namespace PXTEngine
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
         int textureIndex = 0;
-		int normalMapIndex = 0;
+		int normalMapIndex = 1;
 
         MaterialComponent() = default;
         MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, 
@@ -69,7 +69,7 @@ namespace PXTEngine
             float specularIntensity = 0.0f;
             float shininess = 1.0f;
             int textureIndex = 0;
-			int normalMapIndex = 0;
+			int normalMapIndex = 1;
 
             Builder& setColor(const glm::vec4& color) {
                 this->color = color;

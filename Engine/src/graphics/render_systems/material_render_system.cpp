@@ -19,8 +19,8 @@ namespace PXTEngine {
         glm::vec4 color{1.f};
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
-        int textureIndex = -1;
-        int normalMapIndex = -1;
+        int textureIndex = 0;
+        int normalMapIndex = 1;
     };
 
     MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) : m_context(context), m_descriptorAllocator(descriptorAllocator) {
@@ -37,6 +37,7 @@ namespace PXTEngine {
 	void MaterialRenderSystem::loadTextures() {
 		std::vector<std::string> textures_name = {
 			"white_pixel.png",
+			"normal_pixel.png",
 			"shrek_420x420.png",
 			"texture.jpg",
 			"barrel.png",
