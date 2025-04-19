@@ -1,14 +1,16 @@
-#include <algorithm>
-
 #include "graphics/descriptors/descriptor_allocator.hpp"
 
 #include <stdexcept>
+#include <algorithm>
 
 namespace PXTEngine {
 
-	DescriptorAllocatorGrowable::DescriptorAllocatorGrowable(Context& context, uint32_t maxSets, 
-		std::span<PoolSizeRatio> poolRatios, float growthFactor, uint32_t maxPools)
-		: m_context{ context }, m_setsPerPool{ maxSets }, m_growthFactor(growthFactor), m_maxPools(maxPools) {
+	DescriptorAllocatorGrowable::DescriptorAllocatorGrowable(Context& context, const uint32_t maxSets,
+		std::span<PoolSizeRatio> poolRatios, const float growthFactor, const uint32_t maxPools) :
+		m_context(context),
+		m_setsPerPool(maxSets),
+		m_growthFactor(growthFactor),
+		m_maxPools(maxPools) {
 
 		m_ratios.reserve(poolRatios.size());
 
@@ -24,9 +26,16 @@ namespace PXTEngine {
 		Shared<DescriptorPool> newPool = createPool(maxSets, poolRatios);
 
 		// Growth for the next allocation
-		m_setsPerPool = m_setsPerPool * m_growthFactor;
+		growSetCount();
 
 		m_readyPools.push_back(newPool);
+	}
+
+	void DescriptorAllocatorGrowable::growSetCount() {
+		m_setsPerPool = static_cast<uint32_t>(m_setsPerPool * m_growthFactor);
+
+		// Sets per pool is capped to the max pools
+		m_setsPerPool = std::min(m_setsPerPool, m_maxPools);
 	}
 
 	Shared<DescriptorPool> DescriptorAllocatorGrowable::getPool() {
@@ -44,23 +53,19 @@ namespace PXTEngine {
 		Shared<DescriptorPool> newPool = createPool(m_setsPerPool, m_ratios);
 
 		// Growth for the next allocation
-		m_setsPerPool = m_setsPerPool * m_growthFactor;
-
-		// Sets per pool is capped to the max pools
-		m_setsPerPool = std::min(m_setsPerPool, m_maxPools);
-
+		growSetCount();
 
 		return newPool;
 	}
 
-	Unique<DescriptorPool> DescriptorAllocatorGrowable::createPool(uint32_t setCount, std::span<PoolSizeRatio> poolRatios) {
+	Shared<DescriptorPool> DescriptorAllocatorGrowable::createPool(uint32_t setCount, std::span<PoolSizeRatio> poolRatios) const {
 
 		std::vector<VkDescriptorPoolSize> poolSizes;
-		for (PoolSizeRatio ratio : poolRatios) {
-			poolSizes.emplace_back(ratio.type, static_cast<uint32_t>(ratio.ratio * setCount));
+		for (auto [type, ratio] : poolRatios) {
+			poolSizes.emplace_back(type, static_cast<uint32_t>(ratio * setCount));
 		}
 
-		Unique<DescriptorPool> pool = DescriptorPool::Builder(m_context)
+		Shared<DescriptorPool> pool = DescriptorPool::Builder(m_context)
 			.addPoolSizes(poolSizes)
 			.setMaxSets(setCount)
 			.build();
@@ -68,10 +73,10 @@ namespace PXTEngine {
 		return pool;
 	}
 
-	void DescriptorAllocatorGrowable::allocate(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) {
+	void DescriptorAllocatorGrowable::allocate(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptorSet) {
 		Shared<DescriptorPool> pool = getPool();
 
-		bool isAllocationSuccessful = pool->allocateDescriptorSet(descriptorSetLayout, descriptor);
+		bool isAllocationSuccessful = pool->allocateDescriptorSet(descriptorSetLayout, descriptorSet);
 
 		if (!isAllocationSuccessful) {
 			// If the allocation failed, we need to move the pool to the full pools list
@@ -80,7 +85,7 @@ namespace PXTEngine {
 			// Try to allocate again from the next pool
 			pool = getPool();
 
-			isAllocationSuccessful = pool->allocateDescriptorSet(descriptorSetLayout, descriptor);
+			isAllocationSuccessful = pool->allocateDescriptorSet(descriptorSetLayout, descriptorSet);
 
 			if (!isAllocationSuccessful) {
 				throw std::runtime_error("Failed to allocate descriptor set!");
@@ -92,7 +97,7 @@ namespace PXTEngine {
 	}
 
 	void DescriptorAllocatorGrowable::resetPools() {
-		for (auto& pool : m_readyPools) {
+		for (const auto& pool : m_readyPools) {
 			pool->resetPool();
 		}
 		

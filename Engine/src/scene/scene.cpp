@@ -1,5 +1,6 @@
 #include "scene/scene.hpp"
 
+#include "core/error_handling.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
 #include "scene/script/script.hpp"
@@ -18,7 +19,7 @@ namespace PXTEngine {
     }
 
     Entity Scene::getEntity(UUID uuid) {
-        assert(m_entityMap.find(uuid) != m_entityMap.end() && "Entity not found in Scene!");
+        PXT_ASSERT(m_entityMap.find(uuid) != m_entityMap.end(), "Entity not found in Scene!");
 
         return { m_entityMap.at(uuid), this };
     }

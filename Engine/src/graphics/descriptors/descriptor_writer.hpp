@@ -1,10 +1,9 @@
 #pragma once
 
+#include "core/error_handling.hpp"
 #include "graphics/descriptors/descriptor_set_layout.hpp"
 #include "graphics/descriptors/descriptor_pool.hpp"
 
-#include <cassert>
-#include <stdexcept>
 
 namespace PXTEngine {
     class DescriptorWriter {
@@ -83,11 +82,11 @@ namespace PXTEngine {
          */
         template <typename T>
         DescriptorWriter& write(uint32_t binding, T* info, uint32_t count) {
-            assert(m_setLayout.m_bindings.count(binding) == 1 && "Layout does not contain specified binding");
+            PXT_ASSERT(m_setLayout.m_bindings.count(binding) == 1, "Layout does not contain specified binding");
             
             auto& bindingDescription = m_setLayout.m_bindings[binding];
             
-            assert(bindingDescription.descriptorCount == count && "Binding descriptor info count mismatch");
+            PXT_ASSERT(bindingDescription.descriptorCount == count, "Binding descriptor info count mismatch");
             
             VkWriteDescriptorSet write{};
             write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -100,7 +99,7 @@ namespace PXTEngine {
             } else if constexpr (std::is_same_v<T, VkDescriptorImageInfo>) {
                 write.pImageInfo = info;
             } else {
-                static_assert(false, "Unsupported type for descriptor write");
+            	PXT_STATIC_ASSERT(false, "Unsupported type for descriptor write");
             }
             
             m_writes.push_back(write);

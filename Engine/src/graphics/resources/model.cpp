@@ -1,10 +1,10 @@
 #include "graphics/resources/model.hpp"
 
+#include "core/error_handling.hpp"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include <cassert>
-#include <cstring>
 #include <unordered_map>
 
 
@@ -28,7 +28,7 @@ namespace PXTEngine {
     void Model::createVertexBuffers(const std::vector<Vertex>& vertices) {
         m_vertexCount = static_cast<uint32_t>(vertices.size());
 
-        assert(m_vertexCount >= 3 && "Vertex count must be at least 3");
+        PXT_ASSERT(m_vertexCount >= 3, "Vertex count must be at least 3");
 
         VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCount;
 
@@ -119,7 +119,8 @@ namespace PXTEngine {
         attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)});
         attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)});
         attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
-        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
+        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, tangent) });
+        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
 
         return attributeDescriptions;
     }
@@ -166,23 +167,82 @@ namespace PXTEngine {
 
                 if (index.texcoord_index >= 0) {
                     vertex.uv = {
-                        /*
-                        attrib.texcoords[2 * index.texcoord_index + 0],
-                        attrib.texcoords[2 * index.texcoord_index + 1],
-                        if it shows strange change to this:
-                        */
+
 						attrib.texcoords[2 * index.texcoord_index + 0],
 	                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
                     };
                 }
 
-                if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                } 
-                indices.push_back(uniqueVertices[vertex]);
+				if (!uniqueVertices.contains(vertex)) {
+				    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+				    vertices.push_back(vertex);
+				}
+				indices.push_back(uniqueVertices[vertex]);
             }
+        }
+
+        // Iterate through triangles and calculate per-triangle tangents and bitangents
+        for (size_t i = 0; i < indices.size(); i += 3) {
+            Vertex& v0 = vertices[indices[i + 0]];
+            Vertex& v1 = vertices[indices[i + 1]];
+            Vertex& v2 = vertices[indices[i + 2]];
+
+            glm::vec3 edge1 = v1.position - v0.position;
+            glm::vec3 edge2 = v2.position - v0.position;
+
+            glm::vec2 deltaUV1 = v1.uv - v0.uv;
+            glm::vec2 deltaUV2 = v2.uv - v0.uv;
+
+            float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+            glm::vec3 tangent;
+            tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+            tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+            tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+            tangent = glm::normalize(tangent);
+
+            float handedness =
+                (glm::dot(glm::cross(v0.normal, v1.normal), tangent) < 0.0f) ? -1.0f : 1.0f;
+
+            glm::vec4 tangent4 = glm::vec4(tangent, handedness);
+
+            v0.tangent = tangent4;
+            v1.tangent = tangent4;
+            v2.tangent = tangent4;
         }
     }
 
 }
+
+#if 0
+for (size_t i = 0; i < indices.size(); i += 3) {
+    Vertex& v0 = vertices[indices[i + 0]];
+    Vertex& v1 = vertices[indices[i + 1]];
+    Vertex& v2 = vertices[indices[i + 2]];
+
+    glm::vec3 edge1 = v1.position - v0.position;
+    glm::vec3 edge2 = v2.position - v0.position;
+
+    glm::vec2 deltaUV1 = v1.uv - v0.uv;
+    glm::vec2 deltaUV2 = v2.uv - v0.uv;
+
+    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+    glm::vec3 tangent;
+    tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+    tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+    tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+    tangent = glm::normalize(tangent);
+
+    float handedness =
+        (glm::dot(glm::cross(v0.normal, v1.normal), tangent) < 0.0f) ? -1.0f : 1.0f;
+
+    glm::vec4 tangent4 = glm::vec4(tangent, handedness);
+
+    v0.tangent = tangent4;
+    v1.tangent = tangent4;
+    v2.tangent = tangent4;
+}
+#endif

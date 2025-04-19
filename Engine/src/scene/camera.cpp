@@ -1,6 +1,7 @@
 #include "scene/camera.hpp"
 
-#include <cassert>
+#include "core/error_handling.hpp"
+
 #include <limits>
 
 namespace PXTEngine {
@@ -16,7 +17,7 @@ namespace PXTEngine {
     }
 
     void Camera::setPerspective(float fovy, float aspect, float near, float far) {
-        assert(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
+        PXT_ASSERT(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
 
         const float tanHalfFovy = tan(fovy / 2.f);
         m_projectionMatrix = glm::mat4{0.0f};
@@ -28,7 +29,7 @@ namespace PXTEngine {
     }
 
     void Camera::setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up) {
-        assert((glm::dot(direction, direction) > std::numeric_limits<float>::epsilon()) && "Direction cannot be zero");
+        PXT_ASSERT((glm::dot(direction, direction) > std::numeric_limits<float>::epsilon()), "Direction cannot be zero");
 
         const glm::vec3 w{glm::normalize(direction)};
         const glm::vec3 u{glm::normalize(glm::cross(w, up))};
