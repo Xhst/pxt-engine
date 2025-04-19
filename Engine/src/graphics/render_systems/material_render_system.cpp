@@ -40,8 +40,10 @@ namespace PXTEngine {
 			"normal_pixel.png",
 			"shrek_420x420.png",
 			"texture.jpg",
-			"barrel.png",
-			"barrel_normal.png"
+			"barrel/barrel.png",
+			"barrel/barrel_normal.png",
+			"wall_stone/wall_stone_base.png",
+			"wall_stone/wall_stone_normal.png"
 				
 		};
 
