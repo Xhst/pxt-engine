@@ -71,7 +71,19 @@ public:
         glm::vec4 colorWhite = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
         glm::vec4 colorGold = glm::vec4{1.0f, 0.843f, 0.0f, 1.0f};
 
+		Shared<Model> barrel = Model::createModelFromFile(getContext(), MODELS_PATH + "barrel.obj");
+
+        entity = getScene().createEntity("Barrel")
+            .add<TransformComponent>(glm::vec3{ 0.0f, 0.7f, 0.0f }, glm::vec3{ .05f, .05f, .05f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
+            .add<ModelComponent>(barrel)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setColor(colorWhite)
+                .setTextureIndex(3)
+                .setNormalMapIndex(4)
+                .build());
+
         // Vase
+#if 0
         Shared<Model> model_vase = Model::createModelFromFile(getContext(), MODELS_PATH + "smooth_vase.obj");
 		for (int i = 0; i < 5; i++) {
 			glm::vec3 pos = { posDist(gen), posDist(gen), posDist(gen) };
@@ -86,13 +98,13 @@ public:
                     .setTextureIndex(1)
 					.build());
 		}
-
+#endif
         // Light above the bunny
-        entity = createPointLight(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
-        entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
+        //entity = createPointLight(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
+        //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights around the bunny (red, green, blue)
-        entity = createPointLight(0.1f, 0.025f, glm::vec3{1.f, 0.f, 0.f});
+        entity = createPointLight(0.1f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
         entity.get<TransformComponent>().translation = glm::vec3{1.0f / (float) sqrt(3), 0.2f, 0.0f};
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0

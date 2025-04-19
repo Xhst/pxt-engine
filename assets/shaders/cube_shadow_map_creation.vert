@@ -5,7 +5,8 @@ layout(constant_id = 0) const int MAX_LIGHTS = 10;
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 color;
 layout(location = 2) in vec3 normal;
-layout(location = 3) in vec2 uv;
+layout(location = 3) in vec4 tangent;
+layout(location = 4) in vec2 uv;
 
 layout(location = 0) out vec3 fragPosWorld;
 layout(location = 1) out vec3 fragLightPos;
@@ -37,5 +38,5 @@ void main() {
 
   // we pass the positions in object space to be consistent among all (future ;_;) lights.
   fragPosWorld = gl_Position.xyz;
-  fragLightPos = ubo.pointLights[1].position.xyz;
+  fragLightPos = ubo.pointLights[0].position.xyz;
 }
