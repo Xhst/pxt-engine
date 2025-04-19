@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <utility>
 
+#define USE_IMMEDIATE_PRESENT_MODE 0
+
 namespace PXTEngine {
 
     SwapChain::SwapChain(Context& context, VkExtent2D extent) : m_context{ context }, m_windowExtent{extent} {
