@@ -42,7 +42,7 @@ namespace PXTEngine {
     }
 
     void Scene::onStart() {
-        getEntitiesWith<ScriptComponent>().each([=](auto entity, auto& scriptComponent) {
+        getEntitiesWith<ScriptComponent>().each([this](auto entity, auto& scriptComponent) {
             scriptComponent.script = scriptComponent.create();
             scriptComponent.script->m_entity = Entity{ entity, this };
             scriptComponent.script->onCreate();
