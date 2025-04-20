@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/error_handling.hpp"
 #include "scene/scene.hpp"
 #include "scene/ecs/component.hpp"
 
@@ -71,8 +72,8 @@ namespace PXTEngine {
          */
         template <typename Component>
         void remove() {
-            PXT_STATIC_ASSERT(!std::is_same_v<Component, IDComponent>, "Cannot remove ID component");
-            PXT_ASSERT(has<Component>() && "Entity does not have component");
+            PXT_STATIC_ASSERT((!std::is_same_v<Component, IDComponent>), "Cannot remove ID component");
+            PXT_ASSERT(has<Component>(), "Entity does not have component");
 
             m_scene->m_registry.remove<Component>(m_enttEntity);
         }
