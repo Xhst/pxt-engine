@@ -19,10 +19,10 @@
 
 namespace PXTEngine {
 
-    Application* Application::Instance = nullptr;
+    Application* Application::m_instance = nullptr;
 
     Application::Application() {
-        Instance = this;
+        m_instance = this;
 
 		createDescriptorPoolAllocator();
 		createUboBuffers();
@@ -34,14 +34,13 @@ namespace PXTEngine {
 			m_descriptorAllocator,
             m_globalSetLayout
 		);
+
+        m_window.setEventCallback([this]<typename EventType>(EventType && event) {
+            onEvent(std::forward<EventType>(event));
+        });
     }
 
-    Application::~Application() {
-            for (auto& [_, system] : m_systems) {
-                system->onShutdown();
-                delete system;
-            }
-        };
+    Application::~Application() {};
 
 	void Application::createDescriptorPoolAllocator() {
 		std::vector<PoolSizeRatio> ratios = {
@@ -82,11 +81,6 @@ namespace PXTEngine {
     }
 
     void Application::run() {
-
-        m_window.setEventCallback([this](auto&& PH1) {
-	        onEvent(std::forward<decltype(PH1)>(PH1));
-        });
-
         Camera camera;
         
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -97,24 +91,12 @@ namespace PXTEngine {
             glfwPollEvents();
 
             auto newTime = std::chrono::high_resolution_clock::now();
-            float elapsedTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+            float elapsedTime = std::chrono::duration<float>(newTime - currentTime).count();
             currentTime = newTime;
             
             m_scene.onUpdate(elapsedTime);
-            
-            float aspect = m_renderer.getAspectRatio();
 
-            Entity mainCameraEntity = m_scene.getMainCameraEntity();
-
-            if (mainCameraEntity) {
-                const auto& cameraComponent = mainCameraEntity.get<CameraComponent>();
-                const auto& transform = mainCameraEntity.get<TransformComponent>();
-
-                camera = cameraComponent.camera;
-                camera.setViewYXZ(transform.translation, transform.rotation);
-
-                camera.setPerspective(glm::radians(50.f), aspect, 0.1f, 100.f);
-            }
+            updateCamera(camera);
             
             if (auto commandBuffer = m_renderer.beginFrame()) {
                 int frameIndex = m_renderer.getFrameIndex();
@@ -127,11 +109,6 @@ namespace PXTEngine {
                     m_globalDescriptorSets[frameIndex],
                     m_scene
                 };
-
-				// its not used yet
-				for (auto& [_, system] : m_systems) {
-					system->onUpdate(elapsedTime);
-				}
 
                 GlobalUbo ubo{};
 
@@ -159,15 +136,24 @@ namespace PXTEngine {
         dispatcher.dispatch<WindowCloseEvent>([this](auto& event) {
             m_running = false;
         });
-
-        for (auto& [_, system] : m_systems) {
-            if (event.isHandled()) {
-                break;
-            }
-
-            system->onEvent(event);
-        }
     }
+
+    void Application::updateCamera(Camera& camera)
+	{
+        if (Entity mainCameraEntity = m_scene.getMainCameraEntity()) {
+            const auto& cameraComponent = mainCameraEntity.get<CameraComponent>();
+            const auto& transform = mainCameraEntity.get<TransformComponent>();
+
+            camera = cameraComponent.camera;
+            camera.setViewYXZ(transform.translation, transform.rotation);
+
+			//TODO: camera projection
+            camera.setPerspective(
+                glm::radians(50.f), 
+                m_renderer.getAspectRatio(), 
+                0.1f, 100.f);
+        }
+	}
 
     Entity Application::createPointLight(float intensity, float radius, glm::vec3 color) {
         Entity entity = m_scene.createEntity("point_light")

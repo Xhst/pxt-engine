@@ -2,7 +2,6 @@
 
 #include "core/memory.hpp"
 #include "core/uuid.hpp"
-#include "core/system.hpp"
 #include "core/events/event.hpp"
 #include "graphics/window.hpp"
 #include "graphics/context/context.hpp"
@@ -23,19 +22,9 @@ namespace PXTEngine {
     class Application {
     public:
         Application();
-        ~Application();
+        virtual ~Application();
 
-        static Application& get() { return *Instance; }
-
-        void addSystem(System* system) {
-            m_systems[system->getId()] = system;
-            system->onInit();
-        }
-
-        void removeSystem(System* system) {
-            system->onShutdown();
-            m_systems.erase(system->getId());
-        }
+        static Application& get() { return *m_instance; }
 
         Scene& getScene() {
             return m_scene;
@@ -59,6 +48,7 @@ namespace PXTEngine {
         void run();
         void onEvent(Event& event);
         bool isRunning();
+		void updateCamera(Camera& camera);
 
         bool m_running = true;
 
@@ -74,9 +64,8 @@ namespace PXTEngine {
 		std::vector<Unique<Buffer>> m_uboBuffers{ SwapChain::MAX_FRAMES_IN_FLIGHT };
 
         Scene m_scene{};
-        std::unordered_map<UUID, System*> m_systems;
 
-        static Application* Instance;
+        static Application* m_instance;
 
         friend int ::main();
     };

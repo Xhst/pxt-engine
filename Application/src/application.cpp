@@ -14,7 +14,7 @@ public:
         loadScene();
     }
 
-    ~App() {
+    ~App() override {
 
     }
 
