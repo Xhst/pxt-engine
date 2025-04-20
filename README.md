@@ -34,7 +34,7 @@ Before building, ensure you have the following installed:
    MINGW_PATH=C:/mingw64
    VULKAN_SDK_PATH=C:/VulkanSDK/x.x.x.x
    ```
-3. Run the `start.bat` script to build and run the project (from the `script` folder).
+3. Run the `start.bat` script to build and run the project (from the `scripts` folder).
 
 ### Linux/Unix
 1. Clone the repository:
@@ -46,7 +46,7 @@ Before building, ensure you have the following installed:
    ```sh
    sudo apt install build-essential cmake vulkan-sdk
    ```
-3. Run the `start.sh` script to build and run the project (from the `script` folder).
+3. Run the `start.sh` script to build and run the project (from the `scripts` folder).
    
 ## Shader Compilation
 The engine automatically compiles shaders using `glslangValidator`. Ensure the Vulkan SDK is properly installed and accessible. All `.frag` and `.vert` shaders in `assets/shaders/` are compiled into SPIR-V and stored in `out/shaders/`.
