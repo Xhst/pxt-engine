@@ -49,15 +49,17 @@ namespace PXTEngine
         float shininess = 1.0f;
         int textureIndex = 0;
 		int normalMapIndex = 1;
+		float tilingFactor = 1.0f;
 
         MaterialComponent() = default;
         MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, 
-						  int textureIndex, int normalMapIndex) :
+						  int textureIndex, int normalMapIndex, float tilingFactor) :
     		color(color),
     		specularIntensity(specularIntensity),
     		shininess(shininess),
     		textureIndex(textureIndex),
-			normalMapIndex(normalMapIndex) {}
+			normalMapIndex(normalMapIndex),
+    		tilingFactor(tilingFactor){}
         
 
         MaterialComponent(const MaterialComponent&) = default;
@@ -70,6 +72,7 @@ namespace PXTEngine
             float shininess = 1.0f;
             int textureIndex = 0;
 			int normalMapIndex = 1;
+            float tilingFactor = 1.0f;
 
             Builder& setColor(const glm::vec4& color) {
                 this->color = color;
@@ -105,8 +108,20 @@ namespace PXTEngine
 				return *this;
 			}
 
+			Builder& setTilingFactor(float tilingFactor) {
+				this->tilingFactor = tilingFactor;
+				return *this;
+			}
+
             MaterialComponent build() const {
-                return MaterialComponent{color, specularIntensity, shininess, textureIndex, normalMapIndex};
+                return MaterialComponent{
+                	color,
+                	specularIntensity,
+                	shininess,
+                	textureIndex,
+                	normalMapIndex,
+                    tilingFactor
+                };
             }
         };
     };

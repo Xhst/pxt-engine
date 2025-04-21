@@ -13,7 +13,7 @@
 
 namespace PXTEngine {
 
-    struct SimplePushConstantData {
+    struct MaterialPushConstantData {
         glm::mat4 modelMatrix{1.f};
         glm::mat4 normalMatrix{1.f};
         glm::vec4 color{1.f};
@@ -21,6 +21,7 @@ namespace PXTEngine {
         float shininess = 1.0f;
         int textureIndex = 0;
         int normalMapIndex = 1;
+		float tilingFactor = 1.0f;
     };
 
     MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) : m_context(context), m_descriptorAllocator(descriptorAllocator) {
@@ -89,7 +90,7 @@ namespace PXTEngine {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
-        pushConstantRange.size = sizeof(SimplePushConstantData);
+        pushConstantRange.size = sizeof(MaterialPushConstantData);
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
             globalSetLayout.getDescriptorSetLayout(),
@@ -150,7 +151,7 @@ namespace PXTEngine {
 
             const auto&[transform, material, model] = view.get<TransformComponent, MaterialComponent, ModelComponent>(entity);
 
-            SimplePushConstantData push{};
+            MaterialPushConstantData push{};
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
             push.color = material.color;
@@ -158,13 +159,14 @@ namespace PXTEngine {
             push.shininess = material.shininess;
             push.textureIndex = material.textureIndex;
             push.normalMapIndex = material.normalMapIndex;
+            push.tilingFactor = material.tilingFactor;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
                 m_pipelineLayout,
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                 0,
-                sizeof(SimplePushConstantData),
+                sizeof(MaterialPushConstantData),
                 &push);
 
             auto modelPtr = model.model;

@@ -40,11 +40,14 @@ layout(push_constant) uniform Push {
   float shininess;
   int textureIndex;
   int normalMapIndex;
+  float tilingFactor;
 } push;
 
 void main() {
+  vec2 textureCoords = fragUV * push.tilingFactor;
+
   // normal map value is in [0, 1] range
-  vec3 normalMapValue = 2.0 * texture(textures[push.normalMapIndex], fragUV).rgb - 1.0;
+  vec3 normalMapValue = 2.0 * texture(textures[push.normalMapIndex], textureCoords).rgb - 1.0;
   vec3 surfaceNormal = normalize(fragTBN * normalMapValue);
 
   vec3 diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
@@ -77,7 +80,7 @@ void main() {
     specularLight += lightColor * blinnTerm * push.specularIntensity; 
   }
 
-  vec3 imageColor = texture(textures[push.textureIndex], fragUV).rgb;
+  vec3 imageColor = texture(textures[push.textureIndex], textureCoords).rgb;
 
   // we need to add control coefficients to regulate both terms
   // for now we use fragColor for both which is ideal for metallic objects
