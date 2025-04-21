@@ -43,6 +43,7 @@
 # vscode / vs
 .vscode/*
 .vs/*
+enc_temp_folder/*
 
 # jetbrains
 .idea/*
