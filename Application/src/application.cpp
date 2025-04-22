@@ -42,9 +42,9 @@ public:
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setColor(glm::vec3{1.0f, 1.0f, 1.0f})
-                .setTextureIndex(9)
-                .setNormalMapIndex(10)
-                .setAmbientOcclusionMapIndex(11)
+                .setTextureIndex(10)
+                .setNormalMapIndex(11)
+                .setAmbientOcclusionMapIndex(12)
 				.setTilingFactor(4.0f)
                 .build())
             .add<ModelComponent>(quad);
@@ -85,8 +85,8 @@ public:
             .add<ModelComponent>(barrel)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setColor(colorWhite)
-                .setTextureIndex(4)
-                .setNormalMapIndex(5)
+                .setTextureIndex(5)
+                .setNormalMapIndex(6)
                 .build());
 
         // Vase

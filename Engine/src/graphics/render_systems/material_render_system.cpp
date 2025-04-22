@@ -40,6 +40,7 @@ namespace PXTEngine {
 		std::vector<std::string> textures_name = {
 			"white_pixel.png",
 			"normal_pixel.png",
+            "black_pixel.png",
 			"shrek_420x420.png",
 			"texture.jpg",
 			"barrel/barrel.png",
