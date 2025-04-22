@@ -44,10 +44,12 @@ namespace PXTEngine {
 			"texture.jpg",
 			"barrel/barrel.png",
 			"barrel/barrel_normal.png",
-			"wall_stone/wall_stone_base.png",
-			"wall_stone/wall_stone_normal.png",
-			"wall_stone/wall_stone_ambient_occlusion.png",
-            "wall_stone/test.png"
+			"wall_stone/base.png",
+			"wall_stone/normal.png",
+			"wall_stone/ambient_occlusion.png",
+            "stylized_stone/base.png",
+            "stylized_stone/normal.png",
+            "stylized_stone/ambient_occlusion.png",
 				
 		};
 

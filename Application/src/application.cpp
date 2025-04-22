@@ -42,10 +42,10 @@ public:
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setColor(glm::vec3{1.0f, 1.0f, 1.0f})
-                .setTextureIndex(6)
-                .setNormalMapIndex(7)
-				.setAmbientOcclusionMapIndex(8)
-				.setTilingFactor(7.0f)
+                .setTextureIndex(9)
+                .setNormalMapIndex(10)
+                .setAmbientOcclusionMapIndex(11)
+				.setTilingFactor(4.0f)
                 .build())
             .add<ModelComponent>(quad);
 
@@ -90,7 +90,8 @@ public:
                 .build());
 
         // Vase
-        Shared<Model> model_vase = Model::createModelFromFile(getContext(), MODELS_PATH + "smooth_vase.obj");
+#if 0
+    	Shared<Model> model_vase = Model::createModelFromFile(getContext(), MODELS_PATH + "smooth_vase.obj");
 		for (int i = 0; i < 5; i++) {
 			glm::vec3 pos = { posDist(gen), posDist(gen), posDist(gen) };
 			float uniformScale = scaleDist(gen);
@@ -104,14 +105,14 @@ public:
                     .setTextureIndex(1)
 					.build());
 		}
-        
+#endif
         //entity = createPointLight(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights (white, green, blue)
         entity = createPointLight(0.15f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
         entity.get<TransformComponent>().translation = glm::vec3{1.0f / (float) sqrt(3), -0.1f, 0.2f};
-        entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
+        //entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0
 
         entity = createPointLight(0.1f, 0.025f, glm::vec3{0.f, 1.f, 0.f});
