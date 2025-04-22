@@ -21,7 +21,7 @@ Before building, ensure you have the following installed:
    ```sh
    VULKAN_SDK_PATH=C:/VulkanSDK/x.x.x.x
    ```
-3. Open the project in Visual Studio and run a presets.
+3. Open the project in Visual Studio and run a preset.
    
 ### Windows (MinGW)
 1. Clone the repository:
