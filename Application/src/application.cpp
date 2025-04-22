@@ -44,6 +44,7 @@ public:
                 .setColor(glm::vec3{1.0f, 1.0f, 1.0f})
                 .setTextureIndex(6)
                 .setNormalMapIndex(7)
+				.setAmbientOcclusionMapIndex(8)
 				.setTilingFactor(7.0f)
                 .build())
             .add<ModelComponent>(quad);

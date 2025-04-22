@@ -39,6 +39,7 @@ layout(push_constant) uniform Push {
     float shininess;
     int textureIndex;
     int normalMapIndex;
+    int ambientOcclusionMapIndex;
     float tilingFactor;
 } push;
 
@@ -102,6 +103,14 @@ float computeShadowFactor(vec3 surfaceNormal) {
     return (dist <= sampledDist + bias) ? 1.0 : SHADOW_OPACITY;
 }
 
+/*
+ * Applies ambient occlusion to the given color using the ambient occlusion map.
+ */
+void applyAmbientOcclusion(inout vec3 color, vec2 texCoords) {
+    float ao = texture(textures[push.ambientOcclusionMapIndex], texCoords).r;
+    color *= ao;
+}
+
 void main() {
     vec2 texCoords = fragUV * push.tilingFactor;
 
@@ -117,6 +126,8 @@ void main() {
     // we need to add control coefficients to regulate both terms (diffuse/specular)
     // for now we use fragColor for both which is ideal for metallic objects
     vec3 baseColor = (diffuseLight * fragColor + specularLight * fragColor) * imageColor;
+
+    applyAmbientOcclusion(baseColor, texCoords);
 
     float shadow = computeShadowFactor(fragNormalWorld);
     outColor = vec4(baseColor * shadow, 1.0);

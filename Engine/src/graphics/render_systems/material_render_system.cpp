@@ -21,6 +21,7 @@ namespace PXTEngine {
         float shininess = 1.0f;
         int textureIndex = 0;
         int normalMapIndex = 1;
+        int ambientOcclusionMapIndex = 0;
 		float tilingFactor = 1.0f;
     };
 
@@ -44,7 +45,9 @@ namespace PXTEngine {
 			"barrel/barrel.png",
 			"barrel/barrel_normal.png",
 			"wall_stone/wall_stone_base.png",
-			"wall_stone/wall_stone_normal.png"
+			"wall_stone/wall_stone_normal.png",
+			"wall_stone/wall_stone_ambient_occlusion.png",
+            "wall_stone/test.png"
 				
 		};
 
@@ -159,6 +162,7 @@ namespace PXTEngine {
             push.shininess = material.shininess;
             push.textureIndex = material.textureIndex;
             push.normalMapIndex = material.normalMapIndex;
+            push.ambientOcclusionMapIndex = material.ambientOcclusionMapIndex;
             push.tilingFactor = material.tilingFactor;
 
             vkCmdPushConstants(

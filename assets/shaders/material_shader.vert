@@ -15,46 +15,49 @@ layout(location = 3) out vec2 fragUV;
 layout(location = 4) out mat3 fragTBN;
 
 struct PointLight {
-  vec4 position;
-  vec4 color;
+	vec4 position;
+	vec4 color;
 };
 
 layout(set = 0, binding = 0) uniform GlobalUbo {
-  mat4 projectionMatrix;
-  mat4 viewMatrix;
-  mat4 inverseViewMatrix;
-  vec4 ambientLightColor;
-  PointLight pointLights[MAX_LIGHTS];
-  int numLights;
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+	mat4 inverseViewMatrix;
+	vec4 ambientLightColor;
+	PointLight pointLights[MAX_LIGHTS];
+	int numLights;
 } ubo;
 
 layout(push_constant) uniform Push {
-  mat4 modelMatrix;
-  mat4 normalMatrix;
-  vec4 color;
-  float specularIntensity;
-  float shininess;
-  int textureIndex;
+	mat4 modelMatrix;
+	mat4 normalMatrix;
+	vec4 color;
+	float specularIntensity;
+	float shininess;
+	int textureIndex;
+	int normalMapIndex;
+	int ambientOcclusionMapIndex;
+	float tilingFactor;
 } push;
 
 
 void main() {
-  vec4 positionWorld = push.modelMatrix * vec4(position, 1.0);
-  gl_Position = ubo.projectionMatrix * ubo.viewMatrix * positionWorld;
+	vec4 positionWorld = push.modelMatrix * vec4(position, 1.0);
+	gl_Position = ubo.projectionMatrix * ubo.viewMatrix * positionWorld;
 
-  mat3 normalMatrix3 = mat3(push.normalMatrix);
+	mat3 normalMatrix3 = mat3(push.normalMatrix);
 
-  vec3 norm = normalize(normalMatrix3 * normal);
+	vec3 norm = normalize(normalMatrix3 * normal);
 
-  // Gram–Schmidt process
-  vec3 tang = (tangent.xyz - dot(normal, tangent.xyz) * normal);
+	// Gram–Schmidt processA
+	vec3 tang = (tangent.xyz - dot(normal, tangent.xyz) * normal);
 
-  // tangent.w is the handedness
-  vec3 bitang = cross(norm, tang) * tangent.w;
+	// tangent.w is the handedness
+	vec3 bitang = cross(norm, tang) * tangent.w;
  
-  fragColor = vec3(push.color);
-  fragPosWorld = positionWorld.xyz;
-  fragNormalWorld = norm;
-  fragUV = uv;
-  fragTBN = mat3(tang, bitang, norm);
+	fragColor = vec3(push.color);
+	fragPosWorld = positionWorld.xyz;
+	fragNormalWorld = norm;
+	fragUV = uv;
+	fragTBN = mat3(tang, bitang, norm);
 }
