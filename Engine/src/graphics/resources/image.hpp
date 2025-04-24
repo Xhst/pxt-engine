@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/resources/buffer.hpp"
+#include "graphics/resources/vk_buffer.hpp"
 
 namespace PXTEngine {
 

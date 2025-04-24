@@ -5,7 +5,7 @@
 #include "core/memory.hpp"
 #include "utils/hash_func.hpp"
 
-#include "graphics/resources/buffer.hpp"
+#include "graphics/resources/vk_buffer.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -59,24 +59,7 @@ namespace PXTEngine {
             }
         };
 
-        /**
-         * @struct Builder
-         * 
-         * @brief Helps in constructing a Model by loading vertices and indices from a file.
-         */
-        struct Builder {
-            std::vector<Vertex> vertices{};  // List of vertices in the model.
-            std::vector<uint32_t> indices{}; // List of indices for indexed rendering.
-
-            /**
-             * @brief Loads a model from an OBJ file.
-             * 
-             * @param filepath The path to the model file.
-             */
-            void loadModel(const std::string& filepath);
-        };
-
-        Model(Context& context, const Model::Builder& builder);
+        Model(Context& context, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
         ~Model();
 
         Model(const Model&) = delete;
@@ -123,11 +106,11 @@ namespace PXTEngine {
 
         Context& m_context;
 
-        Unique<Buffer> m_vertexBuffer;
+        Unique<VulkanBuffer> m_vertexBuffer;
         uint32_t m_vertexCount;
 
         bool m_hasIndexBuffer = false;
-        Unique<Buffer> m_indexBuffer;
+        Unique<VulkanBuffer> m_indexBuffer;
         uint32_t m_indexCount;
     };
 }

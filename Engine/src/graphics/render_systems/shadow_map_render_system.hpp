@@ -6,9 +6,9 @@
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"
 #include "graphics/frame_info.hpp"
+#include "graphics/resources/vk_buffer.hpp"
 #include "graphics/resources/shadow_cube_map.hpp"
 #include "graphics/descriptors/descriptors.hpp"
-#include "scene/scene.hpp"
 
 namespace PXTEngine {
     class ShadowMapRenderSystem {
@@ -48,7 +48,7 @@ namespace PXTEngine {
 
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
 
-        std::array<Unique<Buffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightUniformBuffers;
+        std::array<Unique<VulkanBuffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightUniformBuffers;
         std::array<VkDescriptorSet, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightDescriptorSets;
 
         Unique<ShadowCubeMap> m_shadowCubeMap;

@@ -42,7 +42,7 @@ namespace PXTEngine {
 
 		Shared<DescriptorSetLayout> m_globalSetLayout{};
 
-		std::array<Unique<Buffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_uboBuffers;
+		std::array<Unique<VulkanBuffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_uboBuffers;
 
 		Unique<MaterialRenderSystem> m_materialRenderSystem{};
 		Unique<PointLightSystem> m_pointLightSystem{};

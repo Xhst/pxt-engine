@@ -12,7 +12,7 @@ namespace PXTEngine {
      * descriptor information. It also supports writing and managing data for individual
      * instances within the buffer.
      */
-    class Buffer {
+    class VulkanBuffer {
         public:
         /**
          * @brief Constructor for the Buffer class.
@@ -24,7 +24,7 @@ namespace PXTEngine {
          * @param memoryPropertyFlags Vulkan memory property flags.
          * @param minOffsetAlignment Minimum offset alignment for the buffer.
          */
-        Buffer(Context& context, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags,
+        VulkanBuffer(Context& context, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags,
                VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment = 1);
 
         /**
@@ -32,17 +32,17 @@ namespace PXTEngine {
          *
          * Releases the Vulkan buffer and memory.
          */
-        ~Buffer();
+        ~VulkanBuffer();
 
         /**
          * @brief Deleted copy constructor.
          */
-        Buffer(const Buffer&) = delete;
+        VulkanBuffer(const VulkanBuffer&) = delete;
 
         /**
          * @brief Deleted copy assignment operator.
          */
-        Buffer& operator=(const Buffer&) = delete;
+        VulkanBuffer& operator=(const VulkanBuffer&) = delete;
 
         /**
          * @brief Map a memory range of this buffer. If successful, mapped points to the specified buffer range.

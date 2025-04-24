@@ -53,7 +53,7 @@ namespace PXTEngine {
 
 	void Application::createUboBuffers() {
 		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-			m_uboBuffers[i] = createUnique<Buffer>(
+			m_uboBuffers[i] = createUnique<VulkanBuffer>(
 				m_context,
 				sizeof(GlobalUbo),
 				1,

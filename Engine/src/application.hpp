@@ -61,7 +61,7 @@ namespace PXTEngine {
 		Shared<DescriptorSetLayout> m_globalSetLayout{};
 		std::vector<VkDescriptorSet> m_globalDescriptorSets{ SwapChain::MAX_FRAMES_IN_FLIGHT };
 
-		std::vector<Unique<Buffer>> m_uboBuffers{ SwapChain::MAX_FRAMES_IN_FLIGHT };
+		std::vector<Unique<VulkanBuffer>> m_uboBuffers{ SwapChain::MAX_FRAMES_IN_FLIGHT };
 
         Scene m_scene{};
 

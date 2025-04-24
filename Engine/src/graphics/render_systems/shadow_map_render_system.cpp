@@ -53,7 +53,7 @@ namespace PXTEngine {
 	void ShadowMapRenderSystem::createUniformBuffers() {
 		// Create uniform buffer for each frame in flight
 		for (size_t i = 0; i < m_lightUniformBuffers.size(); i++) {
-			m_lightUniformBuffers[i] = createUnique<Buffer>(
+			m_lightUniformBuffers[i] = createUnique<VulkanBuffer>(
 				m_context,
 				sizeof(ShadowUbo),
 				1,

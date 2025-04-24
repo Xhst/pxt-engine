@@ -22,7 +22,7 @@ namespace PXTEngine {
 		}
 
 		// create a staging buffer visible to the host and copy the pixels to it
-		Unique<Buffer> stagingBuffer = createUnique<Buffer>(
+		Unique<VulkanBuffer> stagingBuffer = createUnique<VulkanBuffer>(
 			m_context,
 			imageSize,
 			1,
