@@ -1,17 +1,18 @@
-#include "graphics/resources/model.hpp"
+#include "graphics/resources/vk_model.hpp"
 
 #include "core/error_handling.hpp"
 
 namespace PXTEngine {
-    Model::Model(Context& context, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
-        : m_context(context) {
+    VulkanModel::VulkanModel(Context& context, const ResourceId& id,
+                             const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
+        : Model(id, vertices, indices), m_context(context) {
         createVertexBuffers(vertices);
         createIndexBuffers(indices);
     }
 
-    Model::~Model() {}
+    VulkanModel::~VulkanModel() = default;
 
-    void Model::createVertexBuffers(const std::vector<Vertex>& vertices) {
+    void VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices) {
         m_vertexCount = static_cast<uint32_t>(vertices.size());
 
         PXT_ASSERT(m_vertexCount >= 3, "Vertex count must be at least 3");
@@ -42,7 +43,7 @@ namespace PXTEngine {
         m_context.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
     }
 
-    void Model::createIndexBuffers(const std::vector<uint32_t>& indices) {
+    void VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices) {
         m_indexCount = static_cast<uint32_t>(indices.size());
         m_hasIndexBuffer = m_indexCount > 0;
 
@@ -73,7 +74,7 @@ namespace PXTEngine {
         m_context.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);
     }
 
-    void Model::draw(VkCommandBuffer commandBuffer) {
+    void VulkanModel::draw(VkCommandBuffer commandBuffer) {
         if (m_hasIndexBuffer) {
             vkCmdDrawIndexed(commandBuffer, m_indexCount, 1, 0, 0, 0);
         } else {
@@ -81,7 +82,7 @@ namespace PXTEngine {
         }
     }
 
-    void Model::bind(VkCommandBuffer commandBuffer) {
+    void VulkanModel::bind(VkCommandBuffer commandBuffer) {
         VkBuffer buffers[] = {m_vertexBuffer->getBuffer()};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
@@ -91,7 +92,7 @@ namespace PXTEngine {
         }
     }
 
-    std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions() {
+    std::vector<VkVertexInputBindingDescription> VulkanModel::getVertexBindingDescriptions() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
         bindingDescriptions[0].binding = 0;
         bindingDescriptions[0].stride = sizeof(Vertex);
@@ -99,14 +100,14 @@ namespace PXTEngine {
         return bindingDescriptions;
     }
 
-    std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescriptions() {
+    std::vector<VkVertexInputAttributeDescription> VulkanModel::getVertexAttributeDescriptions() {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
         
-        attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)});
-        attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)});
-        attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
-        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, tangent) });
-        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
+        attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Model::Vertex, position)});
+        attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Model::Vertex, color)});
+        attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Model::Vertex, normal)});
+        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Model::Vertex, tangent) });
+        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Model::Vertex, uv)});
 
         return attributeDescriptions;
     }
