@@ -1,4 +1,4 @@
-#include "graphics/resources/gpu_buffer.hpp"
+#include "graphics/resources/vk_buffer.hpp"
 
 #include "core/error_handling.hpp"
 #include <cstring>
