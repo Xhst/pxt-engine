@@ -6,43 +6,86 @@
 
 namespace PXTEngine {
 
-	class Buffer {
-	public:
-		Buffer() = default;
+    struct Buffer {
+        uint8_t* bytes = nullptr;
+        size_t size = 0;
 
-		Buffer(size_t size) : m_size(size) {
-			m_bytes = (uint8_t*) malloc(size);
-		}
+        Buffer() = default;
 
-		Buffer(const void* data, const size_t size) : m_bytes((uint8_t*) data), m_size(size) {}
+        Buffer(size_t size) : size(size) {
+            bytes = (uint8_t*) malloc(size);
+        }
 
-		Buffer(const Buffer&) = default;
+        // Constructor that copies data
+        Buffer(const void* data, const size_t size) : size(size) {
+            bytes = (uint8_t*) malloc(size);
+            if (bytes) {
+                memcpy(bytes, data, size);
+            } else {
+                this->size = 0; // Indicate allocation failure
+            }
+        }
 
-		operator bool() const {
-			return m_bytes != nullptr;
-		}
+        ~Buffer() {
+            release();
+        }
 
-		static Buffer copy(Buffer& other) {
-			Buffer copy(other.m_size);
-			memcpy(copy.m_bytes, other.m_bytes, other.m_size);
+        // Copy Constructor (Deep Copy)
+        Buffer(const Buffer& other) : size(other.size) {
+            if (other.bytes) {
+                bytes = (uint8_t*) malloc(size);
+                if (bytes) {
+                    memcpy(bytes, other.bytes, size);
+                } else {
+                    size = 0; 
+                }
+            } else {
+                bytes = nullptr;
+                size = 0;
+            }
+        }
 
-			return copy;
-		}
+        // Copy Assignment Operator (Rule of Three/Five)
+        Buffer& operator=(const Buffer& other) {
+            if (this != &other) { 
+                release();
 
-		void release() {
-			free(m_bytes);
-			m_bytes = nullptr;
-			m_size = 0;
-		}
+                size = other.size;
+                if (other.bytes) {
+                    bytes = (uint8_t*) malloc(size);
+                    if (bytes) {
+                        memcpy(bytes, other.bytes, size);
+                    } else {
+                        size = 0; 
+                    }
+                } else {
+                    bytes = nullptr;
+                    size = 0;
+                }
+            }
+            return *this;
+        }
 
-		template<typename T>
-		T* get() {
-			return (T*) m_bytes;
-		}
+        operator bool() const {
+            return bytes != nullptr && size > 0;
+        }
 
+        void release() {
+            if (bytes) {
+                free(bytes);
+                bytes = nullptr;
+                size = 0;
+            }
+        }
 
-	private:
-		uint8_t* m_bytes = nullptr;
-		size_t m_size = 0;
-	};
+        template<typename T>
+        T* get() const {
+            return (T*) bytes;
+        }
+
+        size_t getSize() const {
+            return size;
+        }
+    };
+    
 }
