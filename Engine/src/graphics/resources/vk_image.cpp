@@ -1,8 +1,11 @@
-#include "graphics/resources/image.hpp"
+#include "graphics/resources/vk_image.hpp"
 
 
 namespace PXTEngine {
-	Image::Image(Context& context, VkFormat format) : m_context(context), m_imageFormat(format) {
+	VulkanImage::VulkanImage(Context& context, const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format)
+	: Image(id, info, buffer),
+	m_context(context),
+	m_imageFormat(format) {
 		// set other members as VK_NULL_HANDLE
 		m_vkImage = VK_NULL_HANDLE;
 		m_imageMemory = VK_NULL_HANDLE;
@@ -10,12 +13,13 @@ namespace PXTEngine {
 		m_sampler = VK_NULL_HANDLE;
 	}
 
-	Image::Image(Context& context, const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryFlags) : Image(context, imageInfo.format) {
+	VulkanImage::VulkanImage(Context& context, const ResourceId& id, const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryFlags)
+	: VulkanImage(context, id, Image::Info(imageInfo.extent.width, imageInfo.extent.height, 4), Buffer(), imageInfo.format) {
 		// create the image and allocate memory for it
 		m_context.createImageWithInfo(imageInfo, memoryFlags, m_vkImage, m_imageMemory);
 	}
 
-	Image::~Image() {
+	VulkanImage::~VulkanImage() {
 		vkDestroySampler(m_context.getDevice(), m_sampler, nullptr);
 		vkDestroyImageView(m_context.getDevice(), m_imageView, nullptr);
 
@@ -23,7 +27,7 @@ namespace PXTEngine {
 		vkFreeMemory(m_context.getDevice(), m_imageMemory, nullptr);
 	}
 
-	Image& Image::createImageView(const VkImageViewCreateInfo& viewInfo) {
+	VulkanImage& VulkanImage::createImageView(const VkImageViewCreateInfo& viewInfo) {
 		if (m_imageView != VK_NULL_HANDLE) {
 			vkDestroyImageView(m_context.getDevice(), m_imageView, nullptr);
 		}
@@ -33,7 +37,7 @@ namespace PXTEngine {
 		return *this;
 	}
 
-	Image& Image::createSampler(const VkSamplerCreateInfo& samplerInfo) {
+	VulkanImage& VulkanImage::createSampler(const VkSamplerCreateInfo& samplerInfo) {
 		if (m_sampler != VK_NULL_HANDLE) {
 			vkDestroySampler(m_context.getDevice(), m_sampler, nullptr);
 		}

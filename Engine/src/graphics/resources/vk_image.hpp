@@ -1,36 +1,39 @@
 #pragma once
 
 #include "graphics/resources/vk_buffer.hpp"
+#include "resources/types/image.hpp"
+
 
 namespace PXTEngine {
 
 	/**
-	 * @class Image
+	 * @class VulkanImage
 	 * @brief Represents a Vulkan image and its associated resources.
 	 *
 	 * This class encapsulates the creation and management of a Vulkan image, including its view and sampler.
-	 * It is a generic class that can be used for different types of images (e.g., 2D, 3D, cubemaps).
+	 * It is a generic class that can be used for different types of images (e.g., 2D, 3D, cubeMaps).
 	 * 
 	 * It can be extended to create specific types of images (e.g., Texture2D, Texture3D, etc.).
 	 */
-	class Image {
+	class VulkanImage : public Image {
 	public:
-		Image(Context& context, VkFormat format);
-		Image(Context& context, const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		virtual ~Image();
+		VulkanImage(Context& context, const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format);
+		VulkanImage(Context& context, const ResourceId& id, const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		Image(const Image&) = delete;
-		Image& operator=(const Image&) = delete;
-		Image(Image&&) = delete;
-		Image& operator=(Image&&) = delete;
+		~VulkanImage() override;
+
+		VulkanImage(const VulkanImage&) = delete;
+		VulkanImage& operator=(const VulkanImage&) = delete;
+		VulkanImage(VulkanImage&&) = delete;
+		VulkanImage& operator=(VulkanImage&&) = delete;
 
 		VkImage getVkImage() { return m_vkImage; }
 		const VkImageView getImageView() { return m_imageView; }
 		const VkSampler getImageSampler() { return m_sampler; }
 		const VkFormat getImageFormat() { return m_imageFormat; }
 
-		Image& createImageView(const VkImageViewCreateInfo& viewInfo);
-		Image& createSampler(const VkSamplerCreateInfo& samplerInfo);
+		VulkanImage& createImageView(const VkImageViewCreateInfo& viewInfo);
+		VulkanImage& createSampler(const VkSamplerCreateInfo& samplerInfo);
 
 	protected:
 		Context& m_context;
