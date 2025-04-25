@@ -3,7 +3,8 @@
 
 #include "core/uuid.hpp"
 #include "core/memory.hpp"
-#include "graphics/resources/model.hpp"
+#include "resources/resource.hpp"
+#include "resources/types/model.hpp"
 #include "scene/camera.hpp"
 
 #include <glm/glm.hpp>
@@ -47,20 +48,20 @@ namespace PXTEngine
         glm::vec4 color{1.0f};
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
-        int textureIndex = 0;
-		int normalMapIndex = 1;
-        int ambientOcclusionMapIndex = 0;
+        ResourceId texture = "white_pixel";
+		ResourceId normalMap = "normal_pixel";
+        ResourceId ambientOcclusionMap = "white_pixel";
 		float tilingFactor = 1.0f;
 
         MaterialComponent() = default;
         MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, 
-						  int textureIndex, int normalMapIndex, int aoMapIndex, float tilingFactor) :
+						  const ResourceId& texture, const ResourceId& normalMap, const ResourceId& aoMap, float tilingFactor) :
     		color(color),
     		specularIntensity(specularIntensity),
     		shininess(shininess),
-    		textureIndex(textureIndex),
-			normalMapIndex(normalMapIndex),
-			ambientOcclusionMapIndex(aoMapIndex),
+    		texture(texture),
+			normalMap(normalMap),
+			ambientOcclusionMap(aoMap),
     		tilingFactor(tilingFactor){}
         
 
@@ -72,9 +73,9 @@ namespace PXTEngine
             glm::vec4 color{1.0f};
             float specularIntensity = 0.0f;
             float shininess = 1.0f;
-            int textureIndex = 0;
-			int normalMapIndex = 1;
-            int ambientOcclusionMapIndex = 0;
+            ResourceId texture = "white_pixel";
+			ResourceId normalMap = "normal_pixel";
+            ResourceId ambientOcclusionMap = "white_pixel";
             float tilingFactor = 1.0f;
 
             Builder& setColor(const glm::vec4& color) {
@@ -97,24 +98,18 @@ namespace PXTEngine
                 return *this;
             }
 
-            Builder& setTextureIndex(int textureIndex) {
-                if (textureIndex < 0) textureIndex = 0;
-                
-                this->textureIndex = textureIndex;
+            Builder& setTexture(const ResourceId& texture) {
+                this->texture = texture;
                 return *this;
             }
 
-			Builder& setNormalMapIndex(int normalMapIndex) {
-				if (normalMapIndex < 0) normalMapIndex = 0;
-
-				this->normalMapIndex = normalMapIndex;
+			Builder& setNormalMap(const ResourceId& normalMap) {
+				this->normalMap = normalMap;
 				return *this;
 			}
 
-            Builder& setAmbientOcclusionMapIndex(int aoMapIndex) {
-                if (aoMapIndex < 0) aoMapIndex = 0;
-
-                this->ambientOcclusionMapIndex = aoMapIndex;
+            Builder& setAmbientOcclusionMap(const ResourceId& aoMap) {
+                this->ambientOcclusionMap = aoMap;
                 return *this;
             }
 
@@ -129,9 +124,9 @@ namespace PXTEngine
                 	color,
                 	specularIntensity,
                 	shininess,
-                	textureIndex,
-                	normalMapIndex,
-                    ambientOcclusionMapIndex,
+                	texture,
+                	normalMap,
+                    ambientOcclusionMap,
                     tilingFactor
                 };
             }

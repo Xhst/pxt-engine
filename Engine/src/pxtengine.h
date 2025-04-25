@@ -13,6 +13,10 @@
 #include "core/events/event.hpp"
 #include "core/input/input.hpp"
 
+#include "resources/resource.hpp"
+#include "resources/types/image.hpp"
+#include "resources/types/model.hpp"
+
 #include "scene/scene.hpp"
 #include "scene/ecs/entity.hpp"
 #include "scene/script/script.hpp"

@@ -10,15 +10,9 @@ using namespace PXTEngine;
 
 class App : public Application {
 public:
-    App() : Application() {
-        loadScene();
-    }
+    App() : Application() {}
 
-    ~App() override {
-
-    }
-
-    void loadScene() {
+    void loadScene() override {
 		std::random_device rd;
 		std::mt19937 gen(rd());
 
@@ -37,14 +31,30 @@ public:
         
         camera.addAndGet<ScriptComponent>().bind<CameraController>();
 
-        Shared<Model> quad = Model::createModelFromFile(getContext(), MODELS_PATH + "quad.obj");
+        auto& rm = getResourceManager();
+
+        auto quad = rm.get<Model>(MODELS_PATH + "quad.obj");
+        auto barrel = rm.get<Model>(MODELS_PATH + "barrel.obj");
+        auto vase = rm.get<Model>(MODELS_PATH + "smooth_vase.obj");
+
+        auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png");
+        auto texture = rm.get<Image>(TEXTURES_PATH + "texture.jpg");
+        auto barrelBase = rm.get<Image>(TEXTURES_PATH + "barrel/barrel.png");
+        auto barrelNormal = rm.get<Image>(TEXTURES_PATH + "barrel/barrel_normal.png");
+        auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png");
+        auto wallStoneNormal = rm.get<Image>(TEXTURES_PATH + "wall_stone/normal.png");
+        auto wallStoneAO = rm.get<Image>(TEXTURES_PATH + "wall_stone/ambient_occlusion.png");
+        auto stylizedStoneBase = rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png");
+        auto stylizedStoneNormal = rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png");
+        auto stylizedStoneAO = rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png");
+
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setColor(glm::vec3{1.0f, 1.0f, 1.0f})
-                .setTextureIndex(10)
-                .setNormalMapIndex(11)
-                .setAmbientOcclusionMapIndex(12)
+                .setTexture(stylizedStoneBase->getId())
+                .setNormalMap(stylizedStoneNormal->getId())
+                .setAmbientOcclusionMap(stylizedStoneAO->getId())
 				.setTilingFactor(4.0f)
                 .build())
             .add<ModelComponent>(quad);
@@ -77,16 +87,13 @@ public:
 
         glm::vec4 colorWhite = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
         glm::vec4 colorGold = glm::vec4{1.0f, 0.843f, 0.0f, 1.0f};
-
-		Shared<Model> barrel = Model::createModelFromFile(getContext(), MODELS_PATH + "barrel.obj");
-
         entity = getScene().createEntity("Barrel")
             .add<TransformComponent>(glm::vec3{ 0.0f, 0.7f, 0.0f }, glm::vec3{ .05f, .05f, .05f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
             .add<ModelComponent>(barrel)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setColor(colorWhite)
-                .setTextureIndex(5)
-                .setNormalMapIndex(6)
+                .setTexture(barrelBase->getId())
+                .setNormalMap(barrelNormal->getId())
                 .build());
 
         // Vase

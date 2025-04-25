@@ -1,26 +1,18 @@
 #include "graphics/resources/texture2d.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 #include <stdexcept>
 
 
 namespace PXTEngine {
-	Texture2D::Texture2D(const std::string& filename, Context& context, VkFormat format) : Image(context, format) {
-		createTextureImage(filename.c_str());
+	Texture2D::Texture2D(Context& context, const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format)
+	: VulkanImage(context, id, info, buffer, format) {
+		createTextureImage(info, buffer);
 		createTextureImageView();
 		createTextureSampler();
 	}
 
-	void Texture2D::createTextureImage(const char* filename) {
-		int texWidth, texHeight, texChannels;
-		stbi_uc* pixels = stbi_load(filename, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-		if (!pixels) {
-			throw std::runtime_error("failed to load texture image!");
-		}
-
+	void Texture2D::createTextureImage(const Image::Info& info, const Buffer& buffer) {
+		VkDeviceSize imageSize = info.width * info.height * info.channels;
 		// create a staging buffer visible to the host and copy the pixels to it
 		Unique<VulkanBuffer> stagingBuffer = createUnique<VulkanBuffer>(
 			m_context,
@@ -31,13 +23,11 @@ namespace PXTEngine {
 		);
 
 		stagingBuffer->map(imageSize);
-		stagingBuffer->writeToBuffer(pixels, imageSize, 0);
+		stagingBuffer->writeToBuffer(buffer.bytes, imageSize, 0);
 		stagingBuffer->unmap();
 
-		stbi_image_free(pixels);
-
 		// create an empty vkImage
-		createImage(texWidth, texHeight,
+		createImage(info.width, info.height,
 			VK_IMAGE_TILING_OPTIMAL,
 			// we want the image to be a transfer destination and sampled to be used in the shaders
 			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -58,8 +48,8 @@ namespace PXTEngine {
 		m_context.copyBufferToImage(
 			stagingBuffer->getBuffer(),
 			m_vkImage,
-			static_cast<uint32_t>(texWidth),
-			static_cast<uint32_t>(texHeight)
+			info.width,
+			info.height
 		);
 
 		// finally, we change the image layout again to be accessed from the shaders (VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)

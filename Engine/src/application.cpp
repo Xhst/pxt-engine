@@ -8,6 +8,7 @@
 #include "scene/ecs/entity.hpp"
 #include "scene/camera.hpp"
 #include "graphics/render_systems/master_render_system.hpp"
+#include "graphics/resources/texture2d.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -23,24 +24,30 @@ namespace PXTEngine {
 
     Application::Application() {
         m_instance = this;
-
-		createDescriptorPoolAllocator();
-		createUboBuffers();
-		createGlobalDescriptorSet();
-
-		m_masterRenderSystem = createUnique<MasterRenderSystem>(
-			m_context,
-			m_renderer,
-			m_descriptorAllocator,
-            m_globalSetLayout
-		);
-
-        m_window.setEventCallback([this]<typename EventType>(EventType && event) {
-            onEvent(std::forward<EventType>(event));
-        });
     }
 
     Application::~Application() {};
+
+    void Application::start() {
+        createDescriptorPoolAllocator();
+        createUboBuffers();
+        createGlobalDescriptorSet();
+
+        loadScene();
+        registerImages();
+
+        m_masterRenderSystem = createUnique<MasterRenderSystem>(
+            m_context,
+            m_renderer,
+            m_descriptorAllocator,
+            m_textureRegistry,
+            m_globalSetLayout
+        );
+
+        m_window.setEventCallback([this]<typename E>(E && event) {
+            onEvent(std::forward<E>(event));
+        });
+    }
 
 	void Application::createDescriptorPoolAllocator() {
 		std::vector<PoolSizeRatio> ratios = {
@@ -79,6 +86,54 @@ namespace PXTEngine {
 				.updateSet(m_globalDescriptorSets[i]);
         }
     }
+
+    void Application::registerImages() {
+        Image::Info info{};
+        info.width = 1;
+        info.height = 1;
+        info.channels = 4;
+
+        // white pixel
+        uint8_t data[4];
+        data[0] = 255; // R
+        data[1] = 255; // G
+        data[2] = 255; // B
+        data[3] = 255; // A
+        Buffer buffer = Buffer(data, sizeof(data));
+        Shared<Image> white = createShared<Texture2D>(m_context, "white_pixel", info, buffer);
+        m_textureRegistry.add(white);
+
+        // black pixel
+        data[0] = 0;   // R
+        data[1] = 0;   // G
+        data[2] = 0;   // B
+        data[3] = 255; // A
+        buffer = Buffer(data, sizeof(data));
+        Shared<Image> black = createShared<Texture2D>(m_context, "black_pixel", info, buffer);
+	    m_textureRegistry.add(black);
+
+        // normal pixel
+        data[0] = 128; // R
+        data[1] = 128; // G
+        data[2] = 255; // B
+        data[3] = 255; // A
+        buffer = Buffer(data, sizeof(data));
+        Shared<Image> normal = createShared<Texture2D>(m_context, "normal_pixel", info, buffer, VK_FORMAT_R8G8B8A8_UNORM);
+		m_textureRegistry.add(normal);
+
+		// iterate over resource and register images
+		m_resourceManager.foreach([&](const Shared<Resource>& resource) {
+			if (resource->getType() != Resource::Type::Image) return;
+
+			const auto image = std::static_pointer_cast<Image>(resource);
+			m_textureRegistry.add(image);
+		});
+
+		m_resourceManager.add(white);
+		m_resourceManager.add(black);
+		m_resourceManager.add(normal);
+    }
+
 
     void Application::run() {
         Camera camera;
@@ -171,6 +226,7 @@ int main() {
     try {
         auto app = PXTEngine::initApplication();
 
+        app->start();
         app->run();
 
         delete app;

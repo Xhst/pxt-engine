@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/resources/image.hpp"
+#include "graphics/resources/vk_image.hpp"
 
 #include <array>
 
@@ -14,7 +14,7 @@ namespace PXTEngine {
 	 * The format will be VK_FORMAT_R32_SFLOAT for every face by default.
 	 * 
 	 */
-	class ShadowCubeMap : public Image {
+	class ShadowCubeMap : public VulkanImage {
 	public:
 		ShadowCubeMap(Context& context, uint32_t size, VkFormat format = VK_FORMAT_R32_SFLOAT);
 		virtual ~ShadowCubeMap();
