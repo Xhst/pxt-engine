@@ -93,8 +93,6 @@ namespace PXTEngine {
         info.height = 1;
         info.channels = 3;
 
-        uint32_t data;
-
         // color are stored in RGBA format but are reversed (Little-Endian Systems)
 		// 0x0A0B0C0D -> Alpha = 0A, Blue = 0B, Green = 0C, Red = 0D
 		std::unordered_map<std::string, uint32_t> defaultImagesData = {
