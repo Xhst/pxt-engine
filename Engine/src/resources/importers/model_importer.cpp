@@ -10,7 +10,7 @@
 
 namespace PXTEngine {
 
-	Shared<Model> ModelImporter::importObj(Context& context, const std::filesystem::path& filePath) {
+	Shared<Model> ModelImporter::importObj(const std::filesystem::path& filePath) {
 	    std::vector<Model::Vertex> vertices{};  // List of vertices in the model.
 	    std::vector<uint32_t> indices{}; // List of indices for indexed rendering.
 
@@ -100,6 +100,6 @@ namespace PXTEngine {
             v2.tangent = tangent4;
         }
 
-        return createUnique<VulkanModel>(context, filePath.string(), vertices, indices);
+		return VulkanModel::create(filePath.string(), vertices, indices);
 	}
 }

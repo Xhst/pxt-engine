@@ -9,7 +9,7 @@
 
 namespace PXTEngine {
 
-	Shared<Image> TextureImporter::import(Context& context, const std::filesystem::path& filePath) {
+	Shared<Image> TextureImporter::import(const std::filesystem::path& filePath) {
 		int width, height, channels;
 
         // Currently every image is loaded as RGBA
@@ -37,6 +37,6 @@ namespace PXTEngine {
 		imageInfo.height = height;
 		imageInfo.channels = requestedChannels;
 
-        return createUnique<Texture2D>(context, filePath.string(), imageInfo, pixels);
+		return Texture2D::create(filePath.string(), imageInfo, pixels);
 	}
 }

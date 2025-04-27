@@ -2,6 +2,7 @@
 
 #include "graphics/resources/vk_image.hpp"
 
+
 namespace PXTEngine {
 
 	/**
@@ -13,6 +14,8 @@ namespace PXTEngine {
 	 */
 	class Texture2D : public VulkanImage {
 	public:
+		static Unique<Texture2D> create(const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
+
 		Texture2D(Context& context, const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
 	private:

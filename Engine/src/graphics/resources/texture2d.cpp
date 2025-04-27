@@ -1,9 +1,18 @@
 #include "graphics/resources/texture2d.hpp"
 
+#include "application.hpp"
+
 #include <stdexcept>
 
 
 namespace PXTEngine {
+
+	Unique<Texture2D> Texture2D::create(const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format) {
+		Context& context = Application::get().getContext();
+
+		return createUnique<Texture2D>(context, id, info, buffer, format);
+	}
+
 	Texture2D::Texture2D(Context& context, const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format)
 	: VulkanImage(context, id, info, buffer, format) {
 		createTextureImage(info, buffer);

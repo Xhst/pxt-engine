@@ -32,6 +32,9 @@ namespace PXTEngine {
          */
         static std::vector<VkVertexInputAttributeDescription> getVertexAttributeDescriptions();
 
+        static Unique<VulkanModel> create(const ResourceId& id,
+            const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+
         VulkanModel(Context& context, const ResourceId& id,
                     const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 

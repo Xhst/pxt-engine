@@ -3,7 +3,6 @@
 #include "core/memory.hpp"
 #include "resources/resource.hpp"
 #include "resources/importers/resource_importer.hpp"
-#include "graphics/context/context.hpp"
 
 #include <unordered_map>
 #include <filesystem>
@@ -14,7 +13,7 @@ namespace PXTEngine {
 
       class ResourceManager {
       public:
-            ResourceManager(Context& context) : m_context(context) {}
+            ResourceManager() {}
 
             template<typename T>
             Shared<T> get(const ResourceId& id) {
@@ -31,7 +30,7 @@ namespace PXTEngine {
                   auto filePath = std::filesystem::path(id);
 
                   try {
-                        auto importedResource = ResourceImporter::import(m_context, filePath);
+                        auto importedResource = ResourceImporter::import(filePath);
 
                         add(importedResource);
 
@@ -55,8 +54,6 @@ namespace PXTEngine {
             }
           
       private:
-            Context& m_context;
-
             std::unordered_map<ResourceId, Shared<Resource>> m_resources;
       };
 }

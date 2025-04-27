@@ -1,8 +1,17 @@
 #include "graphics/resources/vk_model.hpp"
 
+#include "application.hpp"
 #include "core/error_handling.hpp"
 
 namespace PXTEngine {
+
+    Unique<VulkanModel> VulkanModel::create(const ResourceId& id,
+        const std::vector<Model::Vertex>& vertices, const std::vector<uint32_t>& indices) {
+        Context& context = Application::get().getContext();
+
+        return createUnique<VulkanModel>(context, id, vertices, indices);
+    }
+
     VulkanModel::VulkanModel(Context& context, const ResourceId& id,
                              const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
         : Model(id, vertices, indices), m_context(context) {
