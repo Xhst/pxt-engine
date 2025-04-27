@@ -91,7 +91,7 @@ namespace PXTEngine {
         Image::Info info{};
         info.width = 1;
         info.height = 1;
-        info.channels = 3;
+        info.channels = 4;
 
         // color are stored in RGBA format but bytes are reversed (Little-Endian Systems)
 		// 0x0A0B0C0D -> Alpha = 0A, Blue = 0B, Green = 0C, Red = 0D
