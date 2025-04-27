@@ -61,7 +61,7 @@ namespace PXTEngine {
 		m_descriptorAllocator->allocate(m_textureDescriptorSetLayout->getDescriptorSetLayout(), m_textureDescriptorSet);
 
 		DescriptorWriter(m_context, *m_textureDescriptorSetLayout)
-			.writeImages(0, imageInfos.data(), imageInfos.size())
+			.writeImages(0, imageInfos.data(), static_cast<uint32_t>(imageInfos.size()))
 			.updateSet(m_textureDescriptorSet);
 
         // SHADOW MAP DESCRIPTOR SET

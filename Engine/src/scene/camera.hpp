@@ -14,12 +14,12 @@ namespace PXTEngine {
         /**
          * @brief Sets the camera projection to a perspective projection.
          * 
-         * @param fovy The vertical field of view in radians.
+         * @param fovY The vertical field of view in radians.
          * @param aspect The aspect ratio (width / height).
          * @param near The near clipping plane.
          * @param far The far clipping plane.
          */
-        void setPerspective(float fovy, float aspect, float near, float far);
+        void setPerspective(float fovY, float aspect, float near, float far);
 
         /**
          * @brief Sets the camera projection to an orthographic projection.

@@ -141,8 +141,8 @@ namespace PXTEngine
         glm::mat2 mat2() {
             const float sin = glm::sin(rotation);
             const float cos = glm::cos(rotation);
-            glm::mat2 rotationMatrix{{cos, sin}, {-sin, cos}};
 
+            glm::mat2 rotationMatrix{{cos, sin}, {-sin, cos}};
             glm::mat2 scaleMatrix{{scale.x, 0.f}, {0.f, scale.y}};
             
             return rotationMatrix * scaleMatrix;
@@ -151,12 +151,12 @@ namespace PXTEngine
         Transform2dComponent() = default;
         Transform2dComponent(const Transform2dComponent&) = default;
         Transform2dComponent(const glm::vec2& translation) 
-            : translation(translation) {}
+            : translation(translation), rotation(0.0f) {}
 
         Transform2dComponent(const glm::vec2& translation, const glm::vec2& scale) 
-            : translation(translation), scale(scale) {}
+            : translation(translation), scale(scale), rotation(0.0f) {}
 
-        Transform2dComponent(const glm::vec2& translation, const glm::vec2& scale, float rotation) 
+        Transform2dComponent(const glm::vec2& translation, const glm::vec2& scale, const float rotation) 
             : translation(translation), scale(scale), rotation(rotation) {}
     
         operator glm::mat2() { return mat2(); }

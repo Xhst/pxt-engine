@@ -125,7 +125,7 @@ namespace PXTEngine {
         Question,        // ?
         At,              // @
         LeftBracket,     // [
-        Backslash,       // \
+        Backslash,       // \  .
         RightBracket,    // ]
         Caret,           // ^
         Underscore,      // _

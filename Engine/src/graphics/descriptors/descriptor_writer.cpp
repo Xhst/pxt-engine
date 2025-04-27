@@ -8,7 +8,7 @@ namespace PXTEngine {
         for (auto& write : m_writes) {
             write.dstSet = set;
         }
-        vkUpdateDescriptorSets(m_context.getDevice(), m_writes.size(), m_writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(m_context.getDevice(), static_cast<uint32_t>(m_writes.size()), m_writes.data(), 0, nullptr);
     }
 
 }

@@ -16,10 +16,10 @@ namespace PXTEngine {
         m_projectionMatrix[3][2] = -near / (far - near);
     }
 
-    void Camera::setPerspective(float fovy, float aspect, float near, float far) {
+    void Camera::setPerspective(float fovY, float aspect, float near, float far) {
         PXT_ASSERT(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
 
-        const float tanHalfFovy = tan(fovy / 2.f);
+        const float tanHalfFovy = tan(fovY / 2.f);
         m_projectionMatrix = glm::mat4{0.0f};
         m_projectionMatrix[0][0] = 1.f / (aspect * tanHalfFovy);
         m_projectionMatrix[1][1] = 1.f / (tanHalfFovy);
