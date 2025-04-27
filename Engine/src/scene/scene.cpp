@@ -19,7 +19,7 @@ namespace PXTEngine {
     }
 
     Entity Scene::getEntity(UUID uuid) {
-        PXT_ASSERT(m_entityMap.find(uuid) != m_entityMap.end(), "Entity not found in Scene!");
+        PXT_ASSERT(m_entityMap.contains(uuid), "Entity not found in Scene!");
 
         return { m_entityMap.at(uuid), this };
     }
