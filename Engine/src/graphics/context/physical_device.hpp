@@ -138,6 +138,14 @@ namespace PXTEngine {
         void pickPhysicalDevice();
 
         /**
+         * @brief Calculates the score of a physical device based on its properties.
+         *
+         * @param device The physical device to score.
+         * @return The score of the device.
+         */
+        static uint32_t scoreDevice(VkPhysicalDevice device);
+
+        /**
          * @brief Checks if a physical device is suitable.
          *
          * This function checks if a physical device supports the required features and extensions.
@@ -145,7 +153,7 @@ namespace PXTEngine {
          * @param device The physical device to check.
          * @return true if the device is suitable, false otherwise.
          */
-        bool isDeviceSuitable(VkPhysicalDevice device);
+        bool isDeviceSuitable(VkPhysicalDevice device) const;
 
         /**
          * @brief Finds the queue families for a physical device.
@@ -155,7 +163,7 @@ namespace PXTEngine {
          * @param device The physical device to find the queue families for.
          * @return The queue family indices.
          */
-        QueueFamilyIndices findQueueFamiliesForDevice(VkPhysicalDevice device);
+        QueueFamilyIndices findQueueFamiliesForDevice(VkPhysicalDevice device) const;
 
         /**
          * @brief Queries the swap chain support details for a physical device.
@@ -166,7 +174,7 @@ namespace PXTEngine {
          * @param device The physical device to query the swap chain support details for.
          * @return The swap chain support details.
          */
-        SwapChainSupportDetails querySwapChainSupportForDevice(VkPhysicalDevice device);
+        SwapChainSupportDetails querySwapChainSupportForDevice(VkPhysicalDevice device) const;
 
         /**
          * @brief Checks if the required device extensions are supported.
@@ -176,7 +184,7 @@ namespace PXTEngine {
          * @param device The physical device to check.
          * @return true if all extensions are supported, false otherwise.
          */
-        bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+        bool checkDeviceExtensionSupport(VkPhysicalDevice device) const;
 
         Instance& m_instance;
         Surface& m_surface;
