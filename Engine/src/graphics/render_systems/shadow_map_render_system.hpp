@@ -37,12 +37,12 @@ namespace PXTEngine {
 
         glm::mat4 getFaceViewMatrix(uint32_t faceIndex);
         
-        const uint32_t m_shadowMapSize{ 1024 };
+        const uint32_t m_shadowMapSize{ 2048 };
 
 		// Defines the depth range used for the shadow maps
         // This should be kept as small as possible for precision
 		float zNear{ 0.1f };
-        float zFar{ 1024.0f };
+        float zFar{ 50.0f };
 
         Context& m_context;
 
