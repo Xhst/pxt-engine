@@ -60,7 +60,7 @@ public:
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("Roof")
-            .add<TransformComponent>(glm::vec3{0.f, -1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<TransformComponent>(glm::vec3{0.f, -1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})
             .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).build())
             .add<ModelComponent>(quad);
 
@@ -79,7 +79,7 @@ public:
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("RightWall")
-            .add<TransformComponent>(glm::vec3{ 1.0f, 0.f, 0.0f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>() / 2, -glm::pi<float>() / 2, 0.0f })
+            .add<TransformComponent>(glm::vec3{ 1.0f, 0.f, 0.0f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ -glm::pi<float>() / 2, -glm::pi<float>() / 2, 0.0f })
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setColor(glm::vec3{ 1.0f, 1.0f, 1.0f })
                 .build())
@@ -97,8 +97,6 @@ public:
                 .build());
 
         // Vase
-#if 0
-    	Shared<Model> model_vase = Model::createModelFromFile(getContext(), MODELS_PATH + "smooth_vase.obj");
 		for (int i = 0; i < 5; i++) {
 			glm::vec3 pos = { posDist(gen), posDist(gen), posDist(gen) };
 			float uniformScale = scaleDist(gen);
@@ -107,19 +105,17 @@ public:
 
             entity = getScene().createEntity("vase" + std::to_string(i))
                 .add<TransformComponent>(pos, scale, rotation)
-                .add<ModelComponent>(model_vase)
+                .add<ModelComponent>(vase)
                 .add<MaterialComponent>(MaterialComponent::Builder()
-                    .setTextureIndex(1)
 					.build());
 		}
-#endif
         //entity = createPointLight(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights (white, green, blue)
         entity = createPointLight(0.15f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
         entity.get<TransformComponent>().translation = glm::vec3{1.0f / (float) sqrt(3), -0.1f, 0.2f};
-        //entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
+        entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0
 
         entity = createPointLight(0.1f, 0.025f, glm::vec3{0.f, 1.f, 0.f});
