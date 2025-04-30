@@ -1,10 +1,41 @@
 #pragma once
 
+#include "core/buffer.hpp"
 #include "graphics/resources/vk_buffer.hpp"
 #include "resources/types/image.hpp"
 
 
 namespace PXTEngine {
+
+	static VkFormat pxtToVulkanImageFormat(const ImageFormat format) {
+		switch (format) {
+		case RGB8_LINEAR:
+			return VK_FORMAT_R8G8B8_UNORM;
+		case RGBA8_LINEAR:
+			return VK_FORMAT_R8G8B8A8_UNORM;
+		case RGB8_SRGB:
+			return  VK_FORMAT_R8G8B8_SRGB;
+		case RGBA8_SRGB:
+			return  VK_FORMAT_R8G8B8A8_SRGB;
+		}
+
+		return VK_FORMAT_R8G8B8A8_SRGB;
+	}
+
+	static ImageFormat vulkanToPxtImageFormat(const VkFormat format){
+		switch (format) {
+		case VK_FORMAT_R8G8B8_UNORM:
+			return RGB8_LINEAR;
+		case VK_FORMAT_R8G8B8A8_UNORM:
+			return RGBA8_LINEAR;
+		case VK_FORMAT_R8G8B8_SRGB:
+			return  RGB8_SRGB;
+		case VK_FORMAT_R8G8B8A8_SRGB:
+			return  RGBA8_SRGB;
+		default:
+			return RGBA8_SRGB;
+		}
+	}
 
 	/**
 	 * @class VulkanImage
@@ -17,8 +48,8 @@ namespace PXTEngine {
 	 */
 	class VulkanImage : public Image {
 	public:
-		VulkanImage(Context& context, const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format);
-		VulkanImage(Context& context, const ResourceId& id, const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VulkanImage(Context& context, const ImageInfo& info, const Buffer& buffer);
+		VulkanImage(Context& context, const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		~VulkanImage() override;
 
@@ -26,6 +57,27 @@ namespace PXTEngine {
 		VulkanImage& operator=(const VulkanImage&) = delete;
 		VulkanImage(VulkanImage&&) = delete;
 		VulkanImage& operator=(VulkanImage&&) = delete;
+
+		uint32_t getWidth() override {
+			return m_info.width;
+		}
+
+		uint32_t getHeight() override {
+			return m_info.height;
+		}
+
+		uint16_t getChannels() override {
+			return m_info.channels;
+		}
+
+		ImageFormat getFormat() override {
+			return m_info.format;
+		}
+
+		Type getType() const override {
+			return Type::Image;
+		}
+
 
 		VkImage getVkImage() { return m_vkImage; }
 		const VkImageView getImageView() { return m_imageView; }
@@ -40,6 +92,7 @@ namespace PXTEngine {
 
 		VkFormat m_imageFormat;
 
+		ImageInfo m_info;
 		VkImage m_vkImage; // the raw image pixels
 		VkDeviceMemory m_imageMemory; // the memory occupied by the image
 		VkImageView m_imageView; // an abstraction to view the same raw image in different "ways"

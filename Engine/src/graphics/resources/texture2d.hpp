@@ -14,9 +14,9 @@ namespace PXTEngine {
 	 */
 	class Texture2D : public VulkanImage {
 	public:
-		static Unique<Texture2D> create(const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
+		static Unique<Texture2D> create(const ImageInfo& info, const Buffer& buffer);
 
-		Texture2D(Context& context, const ResourceId& id, const Image::Info& info, const Buffer& buffer, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
+		Texture2D(Context& context, const ImageInfo& info, const Buffer& buffer);
 
 	private:
 
@@ -29,7 +29,7 @@ namespace PXTEngine {
 		 * @param info The texture information, including width, height, channels
 		 * @param buffer The buffer containing the pixel data
 		 */
-		void createTextureImage(const Image::Info& info, const Buffer& buffer);
+		void createTextureImage(const ImageInfo& info, const Buffer& buffer);
 
 		/**
 		 * @brief Creates a Vulkan image.

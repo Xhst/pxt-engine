@@ -23,7 +23,7 @@ namespace PXTEngine {
 			const auto index = static_cast<uint32_t>(m_textures.size());
 			m_textures.push_back(image);
 
-			m_idToIndex[image->getId()] = index;
+			m_idToIndex[image->id] = index;
 
 			return index;
 		}

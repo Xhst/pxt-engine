@@ -17,7 +17,7 @@ namespace PXTEngine {
 	class ShadowCubeMap : public VulkanImage {
 	public:
 		ShadowCubeMap(Context& context, uint32_t size, VkFormat format = VK_FORMAT_R32_SFLOAT);
-		virtual ~ShadowCubeMap();
+		~ShadowCubeMap() override;
 
 		VkImageView getFaceImageView(uint32_t faceIndex) const { return m_cubeFaceViews[faceIndex]; }
 
@@ -28,6 +28,8 @@ namespace PXTEngine {
 		void transitionSCMLayout();
 		void createSCMImageViews();
 		void createSCMSampler();
+
+		VkFormat m_imageFormat;
 
 		std::array<VkImageView, 6> m_cubeFaceViews;
 	};
