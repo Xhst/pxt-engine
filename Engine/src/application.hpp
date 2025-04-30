@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/memory.hpp"
-#include "core/uuid.hpp"
 #include "core/events/event.hpp"
 #include "graphics/window.hpp"
 #include "graphics/context/context.hpp"
@@ -9,6 +8,8 @@
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/frame_info.hpp"
 #include "graphics/render_systems/master_render_system.hpp"
+#include "graphics/resources/texture_registry.hpp"
+#include "resources/resource_manager.hpp"
 #include "scene/scene.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -38,13 +39,22 @@ namespace PXTEngine {
             return m_window;
         }
 
+        ResourceManager& getResourceManager() {
+            return m_resourceManager;
+        }
+
         Entity createPointLight(const float intensity = 1.0f, const float radius = 0.1f, const glm::vec3 color = glm::vec3(1.f));
-    
+
+    protected:
+        virtual void loadScene() {}
     private:
 		void createDescriptorPoolAllocator();
 		void createUboBuffers();
         void createGlobalDescriptorSet();
+        void createDefaultResources();
+        void registerImages();
 
+        void start();
         void run();
         void onEvent(Event& event);
         bool isRunning();
@@ -61,9 +71,12 @@ namespace PXTEngine {
 		Shared<DescriptorSetLayout> m_globalSetLayout{};
 		std::vector<VkDescriptorSet> m_globalDescriptorSets{ SwapChain::MAX_FRAMES_IN_FLIGHT };
 
-		std::vector<Unique<Buffer>> m_uboBuffers{ SwapChain::MAX_FRAMES_IN_FLIGHT };
+		std::vector<Unique<VulkanBuffer>> m_uboBuffers{ SwapChain::MAX_FRAMES_IN_FLIGHT };
 
         Scene m_scene{};
+
+        ResourceManager m_resourceManager{};
+        TextureRegistry m_textureRegistry{};
 
         static Application* m_instance;
 

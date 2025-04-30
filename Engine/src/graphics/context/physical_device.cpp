@@ -6,6 +6,32 @@
 
 namespace PXTEngine {
 
+	/**
+	 * @struct DeviceScore
+	 * @brief Holds a Vulkan physical device and its suitability score.
+	 *
+	 * This structure is used to evaluate and rank physical devices based on their capabilities
+	 * and suitability for the application's requirements. The score is used to select the best
+	 * device for rendering operations.
+	 */
+    struct DeviceScore {
+        static constexpr uint32_t DISCRETE_GPU_SCORING_POINTS = 150;
+        static constexpr uint32_t INTEGRATED_GPU_SCORING_POINTS = 30;
+        static constexpr uint32_t MB_REQUIRED_TO_SCORE_A_POINT = 100;
+
+        VkPhysicalDevice device = VK_NULL_HANDLE;
+        uint32_t score = 0;
+
+        DeviceScore() = default;
+
+        DeviceScore(const VkPhysicalDevice device, const uint32_t score)
+    		: device(device), score(score) {}
+
+        bool operator<(const DeviceScore& other) const {
+            return score < other.score;
+        }
+    };
+
     PhysicalDevice::PhysicalDevice(Instance& instance, Surface& surface) : m_instance(instance), m_surface(surface) {
         pickPhysicalDevice();
     }
@@ -20,20 +46,38 @@ namespace PXTEngine {
             throw std::runtime_error("Failed to find GPUs with Vulkan support!");
         }
 
-        std::cout << "Device count: " << deviceCount << std::endl;
+        std::cout << "Device count: " << deviceCount << '\n';
 
         std::vector<VkPhysicalDevice> devices(deviceCount);
 
         // Populates the devices vector with Vulkan physical device handles
         vkEnumeratePhysicalDevices(m_instance.getVkInstance(), &deviceCount, devices.data());
 
+        DeviceScore bestDeviceScore;
+
         // Iterates through the available devices and checks if they are suitable for our needs.
+        // Then calculate a score to select the best suitable GPU.
         for (const auto& device : devices) {
-            if (isDeviceSuitable(device)) {
-                m_physicalDevice = device;
-                break;
+            VkPhysicalDeviceProperties currentDeviceProperties;
+            vkGetPhysicalDeviceProperties(device, &currentDeviceProperties);
+
+            if (!isDeviceSuitable(device)) {
+				std::cout << currentDeviceProperties.deviceName << " is not suitable.\n";
+				continue;
+            }
+
+			uint32_t currentScore = scoreDevice(device);
+
+            std::cout << currentDeviceProperties.deviceName << ", Score: " << currentScore << '\n';
+
+            if (currentScore > bestDeviceScore.score) {
+                bestDeviceScore.device = device;
+                bestDeviceScore.score = currentScore;
             }
         }
+        std::cout << '\n';
+
+        m_physicalDevice = bestDeviceScore.device;
 
         if (m_physicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("Failed to find a suitable GPU!");
@@ -43,10 +87,44 @@ namespace PXTEngine {
         // including its name, vendor, and supported Vulkan version.
         vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
 
-        std::cout << "Physical device: " << properties.deviceName << std::endl;
+        std::cout << "Selected physical device: " << properties.deviceName << '\n';
     }
 
-    bool PhysicalDevice::isDeviceSuitable(VkPhysicalDevice device) {
+    uint32_t PhysicalDevice::scoreDevice(const VkPhysicalDevice device) {
+        uint32_t score = 0;
+
+        VkPhysicalDeviceProperties deviceProperties;
+        VkPhysicalDeviceFeatures deviceFeatures;
+        VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
+
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+        vkGetPhysicalDeviceMemoryProperties(device, &deviceMemoryProperties);
+
+        // Add points based on the type of device (Discrete, Integrated)
+        if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            score += DeviceScore::DISCRETE_GPU_SCORING_POINTS;
+        } else if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
+            score += DeviceScore::INTEGRATED_GPU_SCORING_POINTS;
+        }
+
+        // Add points based on the amount of device-local memory
+        uint64_t deviceLocalMemory = 0;
+        for (uint32_t i = 0; i < deviceMemoryProperties.memoryHeapCount; ++i) {
+            if (deviceMemoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
+                deviceLocalMemory += deviceMemoryProperties.memoryHeaps[i].size;
+            }
+        }
+
+        uint32_t deviceLocalMemoryMb = static_cast<uint32_t>(deviceLocalMemory / 1048576);
+
+        // Add points based on GPU memory size
+        score += deviceLocalMemoryMb / DeviceScore::MB_REQUIRED_TO_SCORE_A_POINT;
+
+        return score;
+    }
+
+    bool PhysicalDevice::isDeviceSuitable(VkPhysicalDevice device) const {
         QueueFamilyIndices indices = findQueueFamiliesForDevice(device);
 
         bool extensionsSupported = checkDeviceExtensionSupport(device);
@@ -64,7 +142,7 @@ namespace PXTEngine {
         return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
     }
 
-    bool PhysicalDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
+    bool PhysicalDevice::checkDeviceExtensionSupport(const VkPhysicalDevice device) const {
         uint32_t extensionCount;
 
         // Gets the count of available device extensions.
@@ -85,7 +163,7 @@ namespace PXTEngine {
         return requiredExtensions.empty();
     }
 
-    QueueFamilyIndices PhysicalDevice::findQueueFamiliesForDevice(VkPhysicalDevice device) {
+    QueueFamilyIndices PhysicalDevice::findQueueFamiliesForDevice(const VkPhysicalDevice device) const {
         QueueFamilyIndices indices;
 
         uint32_t queueFamilyCount = 0;
@@ -123,7 +201,7 @@ namespace PXTEngine {
         return indices;
     }
 
-    SwapChainSupportDetails PhysicalDevice::querySwapChainSupportForDevice(VkPhysicalDevice device) {
+    SwapChainSupportDetails PhysicalDevice::querySwapChainSupportForDevice(const VkPhysicalDevice device) const {
         SwapChainSupportDetails details;
 
         // Queries the surface capabilities, formats, and present modes for the device.

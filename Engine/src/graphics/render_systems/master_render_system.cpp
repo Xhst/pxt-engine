@@ -2,10 +2,12 @@
 
 namespace PXTEngine {
 	MasterRenderSystem::MasterRenderSystem(Context& context, Renderer& renderer, 
-			Shared<DescriptorAllocatorGrowable> descriptorAllocator, Shared<DescriptorSetLayout> globalSetLayout)
+			Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, 
+			Shared<DescriptorSetLayout> globalSetLayout)
 		:	m_context(context), 
 			m_renderer(renderer),
 			m_descriptorAllocator(std::move(descriptorAllocator)),
+			m_textureRegistry(textureRegistry),
 			m_globalSetLayout(std::move(globalSetLayout)) {
 
 		createRenderSystems();
@@ -29,6 +31,7 @@ namespace PXTEngine {
 		m_materialRenderSystem = createUnique<MaterialRenderSystem>(
 			m_context,
 			m_descriptorAllocator,
+			m_textureRegistry,
 			m_renderer.getSwapChainRenderPass(),
 			*m_globalSetLayout,
 			m_shadowMapRenderSystem->getShadowMapImageInfo()

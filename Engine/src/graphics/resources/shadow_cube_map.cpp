@@ -2,8 +2,8 @@
 
 
 namespace PXTEngine {
-	ShadowCubeMap::ShadowCubeMap(Context& context, uint32_t size, VkFormat format)
-		: Image(context, format),
+	ShadowCubeMap::ShadowCubeMap(Context& context, const uint32_t size, const VkFormat format)
+		: VulkanImage(context, {}, Buffer()), m_imageFormat(format),
 		  m_size(size) {
 		for (int i = 0; i < 6; i++) {
 			m_cubeFaceViews[i] = VK_NULL_HANDLE;

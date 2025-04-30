@@ -3,7 +3,8 @@
 
 #include "core/uuid.hpp"
 #include "core/memory.hpp"
-#include "graphics/resources/model.hpp"
+#include "resources/resource.hpp"
+#include "resources/types/model.hpp"
 #include "scene/camera.hpp"
 
 #include <glm/glm.hpp>
@@ -47,20 +48,20 @@ namespace PXTEngine
         glm::vec4 color{1.0f};
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
-        int textureIndex = 0;
-		int normalMapIndex = 1;
-        int ambientOcclusionMapIndex = 0;
+        ResourceId texture;
+		ResourceId normalMap;
+        ResourceId ambientOcclusionMap;
 		float tilingFactor = 1.0f;
 
         MaterialComponent() = default;
         MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, 
-						  int textureIndex, int normalMapIndex, int aoMapIndex, float tilingFactor) :
+						  const ResourceId& texture, const ResourceId& normalMap, const ResourceId& aoMap, float tilingFactor) :
     		color(color),
     		specularIntensity(specularIntensity),
     		shininess(shininess),
-    		textureIndex(textureIndex),
-			normalMapIndex(normalMapIndex),
-			ambientOcclusionMapIndex(aoMapIndex),
+    		texture(texture),
+			normalMap(normalMap),
+			ambientOcclusionMap(aoMap),
     		tilingFactor(tilingFactor){}
         
 
@@ -72,9 +73,9 @@ namespace PXTEngine
             glm::vec4 color{1.0f};
             float specularIntensity = 0.0f;
             float shininess = 1.0f;
-            int textureIndex = 0;
-			int normalMapIndex = 1;
-            int ambientOcclusionMapIndex = 0;
+            ResourceId texture;
+			ResourceId normalMap;
+            ResourceId ambientOcclusionMap;
             float tilingFactor = 1.0f;
 
             Builder& setColor(const glm::vec4& color) {
@@ -97,24 +98,18 @@ namespace PXTEngine
                 return *this;
             }
 
-            Builder& setTextureIndex(int textureIndex) {
-                if (textureIndex < 0) textureIndex = 0;
-                
-                this->textureIndex = textureIndex;
+            Builder& setTexture(const ResourceId& texture) {
+                this->texture = texture;
                 return *this;
             }
 
-			Builder& setNormalMapIndex(int normalMapIndex) {
-				if (normalMapIndex < 0) normalMapIndex = 0;
-
-				this->normalMapIndex = normalMapIndex;
+			Builder& setNormalMap(const ResourceId& normalMap) {
+				this->normalMap = normalMap;
 				return *this;
 			}
 
-            Builder& setAmbientOcclusionMapIndex(int aoMapIndex) {
-                if (aoMapIndex < 0) aoMapIndex = 0;
-
-                this->ambientOcclusionMapIndex = aoMapIndex;
+            Builder& setAmbientOcclusionMap(const ResourceId& aoMap) {
+                this->ambientOcclusionMap = aoMap;
                 return *this;
             }
 
@@ -129,9 +124,9 @@ namespace PXTEngine
                 	color,
                 	specularIntensity,
                 	shininess,
-                	textureIndex,
-                	normalMapIndex,
-                    ambientOcclusionMapIndex,
+                	texture,
+                	normalMap,
+                    ambientOcclusionMap,
                     tilingFactor
                 };
             }
@@ -146,8 +141,8 @@ namespace PXTEngine
         glm::mat2 mat2() {
             const float sin = glm::sin(rotation);
             const float cos = glm::cos(rotation);
-            glm::mat2 rotationMatrix{{cos, sin}, {-sin, cos}};
 
+            glm::mat2 rotationMatrix{{cos, sin}, {-sin, cos}};
             glm::mat2 scaleMatrix{{scale.x, 0.f}, {0.f, scale.y}};
             
             return rotationMatrix * scaleMatrix;
@@ -156,12 +151,12 @@ namespace PXTEngine
         Transform2dComponent() = default;
         Transform2dComponent(const Transform2dComponent&) = default;
         Transform2dComponent(const glm::vec2& translation) 
-            : translation(translation) {}
+            : translation(translation), rotation(0.0f) {}
 
         Transform2dComponent(const glm::vec2& translation, const glm::vec2& scale) 
-            : translation(translation), scale(scale) {}
+            : translation(translation), scale(scale), rotation(0.0f) {}
 
-        Transform2dComponent(const glm::vec2& translation, const glm::vec2& scale, float rotation) 
+        Transform2dComponent(const glm::vec2& translation, const glm::vec2& scale, const float rotation) 
             : translation(translation), scale(scale), rotation(rotation) {}
     
         operator glm::mat2() { return mat2(); }
@@ -229,8 +224,8 @@ namespace PXTEngine
 
             return glm::mat3{
                 {
+                    inverseScale.x* (c1 * c3 + s1 * s2 * s3),
                     inverseScale.x * (c2 * s3),
-                    inverseScale.x * (c1 * c3 + s1 * s2 * s3),
                     inverseScale.x * (c1 * s2 * s3 - c3 * s1),
                 },
                 {
@@ -261,11 +256,11 @@ namespace PXTEngine
     };
 
     struct ModelComponent {
-        Shared<Model> model;
+        Shared<Mesh> model;
 
         ModelComponent() = default;
         ModelComponent(const ModelComponent&) = default;
-        ModelComponent(const Shared<Model>& model) : model(model) {}
+        ModelComponent(const Shared<Mesh>& model) : model(model) {}
     };
 
     class Script;

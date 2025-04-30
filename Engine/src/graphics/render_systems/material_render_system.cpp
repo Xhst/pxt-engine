@@ -1,7 +1,10 @@
 #include "graphics/render_systems/material_render_system.hpp"
+
 #include "core/memory.hpp"
 #include "core/error_handling.hpp"
 #include "core/constants.hpp"
+#include "graphics/resources/texture2d.hpp"
+#include "graphics/resources/vk_mesh.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <stdexcept>
@@ -25,8 +28,10 @@ namespace PXTEngine {
 		float tilingFactor = 1.0f;
     };
 
-    MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout, VkDescriptorImageInfo shadowMapImageInfo) : m_context(context), m_descriptorAllocator(descriptorAllocator) {
-		loadTextures();
+    MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator,
+    	TextureRegistry& textureRegistry, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout,
+    	VkDescriptorImageInfo shadowMapImageInfo)
+	: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry) {
 		createDescriptorSets(shadowMapImageInfo);
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
@@ -36,37 +41,16 @@ namespace PXTEngine {
         vkDestroyPipelineLayout(m_context.getDevice(), m_pipelineLayout, nullptr);
     }
 
-	void MaterialRenderSystem::loadTextures() {
-		std::vector<std::string> textures_name = {
-			"white_pixel.png",
-			"normal_pixel.png",
-            "black_pixel.png",
-			"shrek_420x420.png",
-			"texture.jpg",
-			"barrel/barrel.png",
-			"barrel/barrel_normal.png",
-			"wall_stone/base.png",
-			"wall_stone/normal.png",
-			"wall_stone/ambient_occlusion.png",
-            "stylized_stone/base.png",
-            "stylized_stone/normal.png",
-            "stylized_stone/ambient_occlusion.png",
-				
-		};
-
-		for (const auto& texture_name : textures_name) {
-			m_textures.push_back(createUnique<Texture2D>(TEXTURES_PATH + texture_name, m_context));
-		}
-	}
-
     void MaterialRenderSystem::createDescriptorSets(VkDescriptorImageInfo shadowMapImageInfo) {
 		// TEXTURE DESCRIPTOR SET
         m_textureDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, m_textures.size())
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, m_textureRegistry.getTextureCount())
 			.build();
 
 		std::vector<VkDescriptorImageInfo> imageInfos;
-		for (const auto& texture : m_textures) {
+		for (const auto& image : m_textureRegistry.getTextures()) {
+            const auto texture = std::static_pointer_cast<Texture2D>(image);
+
 			VkDescriptorImageInfo imageInfo{};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			imageInfo.imageView = texture->getImageView();
@@ -77,7 +61,7 @@ namespace PXTEngine {
 		m_descriptorAllocator->allocate(m_textureDescriptorSetLayout->getDescriptorSetLayout(), m_textureDescriptorSet);
 
 		DescriptorWriter(m_context, *m_textureDescriptorSetLayout)
-			.writeImages(0, imageInfos.data(), imageInfos.size())
+			.writeImages(0, imageInfos.data(), static_cast<uint32_t>(imageInfos.size()))
 			.updateSet(m_textureDescriptorSet);
 
         // SHADOW MAP DESCRIPTOR SET
@@ -152,21 +136,23 @@ namespace PXTEngine {
             nullptr
         );
 
-        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MaterialComponent, ModelComponent>();
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ModelComponent>();
         for (auto entity : view) {
 
-            const auto&[transform, material, model] = view.get<TransformComponent, MaterialComponent, ModelComponent>(entity);
+            const auto&[transform, model] = view.get<TransformComponent, ModelComponent>(entity);
+
+            auto material = model.model->getMaterial();
 
             MaterialPushConstantData push{};
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
-            push.color = material.color;
-            push.specularIntensity = material.specularIntensity;
-            push.shininess = material.shininess;
-            push.textureIndex = material.textureIndex;
-            push.normalMapIndex = material.normalMapIndex;
-            push.ambientOcclusionMapIndex = material.ambientOcclusionMapIndex;
-            push.tilingFactor = material.tilingFactor;
+            push.color = material->getAlbedoColor();
+            push.specularIntensity = 1.0f;
+            push.shininess = 1.0f;
+            push.textureIndex = m_textureRegistry.getIndex(material->getAlbedoMap()->id);
+            push.normalMapIndex = m_textureRegistry.getIndex(material->getNormalMap()->id);
+            push.ambientOcclusionMapIndex = m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id);
+            push.tilingFactor = 1.0f;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
@@ -176,10 +162,10 @@ namespace PXTEngine {
                 sizeof(MaterialPushConstantData),
                 &push);
 
-            auto modelPtr = model.model;
+            auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.model);
             
-            modelPtr->bind(frameInfo.commandBuffer);
-            modelPtr->draw(frameInfo.commandBuffer);
+            vulkanModel->bind(frameInfo.commandBuffer);
+            vulkanModel->draw(frameInfo.commandBuffer);
 
         }
     }

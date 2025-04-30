@@ -1,6 +1,7 @@
 #pragma once
 
-#include "graphics/resources/image.hpp"
+#include "graphics/resources/vk_image.hpp"
+
 
 namespace PXTEngine {
 
@@ -11,22 +12,24 @@ namespace PXTEngine {
 	 * This class encapsulates the creation and management of a Vulkan texture, including its view and sampler.
 	 * It extends the Image class to provide specific functionality for 2D textures.
 	 */
-	class Texture2D : public Image {
+	class Texture2D : public VulkanImage {
 	public:
-		Texture2D(const std::string& filename, Context& context, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
+		static Unique<Texture2D> create(const ImageInfo& info, const Buffer& buffer);
+
+		Texture2D(Context& context, const ImageInfo& info, const Buffer& buffer);
 
 	private:
+
 		/**
-		 * @brief Loads an image from a file and copies it to a Vulkan image.
+		 * @brief Creates a texture image.
 		 *
-		 * This function uses the stb_image library to load an image from a file and copy it to a Vulkan image.
-		 * The image is loaded in RGBA format and the Vulkan image is created with the VK_FORMAT_R8G8B8A8_SRGB format.
+		 * This function creates a Vulkan image and copies the pixel data from the provided buffer to the image.
+		 * It also transitions the image layout to be used as a texture.
 		 *
-		 * @param filename The path to the image file.
-		 *
-		 * @throw std::runtime_error if the image file cannot be loaded.
+		 * @param info The texture information, including width, height, channels
+		 * @param buffer The buffer containing the pixel data
 		 */
-		void createTextureImage(const char* filename);
+		void createTextureImage(const ImageInfo& info, const Buffer& buffer);
 
 		/**
 		 * @brief Creates a Vulkan image.

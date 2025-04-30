@@ -1,6 +1,8 @@
 #include "application.hpp"
 
 #include "core/memory.hpp"
+#include "core/buffer.hpp"
+#include "core/constants.hpp"
 #include "core/events/event_dispatcher.hpp"
 #include "core/events/window_event.hpp"
 #include "core/error_handling.hpp"
@@ -8,6 +10,7 @@
 #include "scene/ecs/entity.hpp"
 #include "scene/camera.hpp"
 #include "graphics/render_systems/master_render_system.hpp"
+#include "graphics/resources/texture2d.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -23,24 +26,31 @@ namespace PXTEngine {
 
     Application::Application() {
         m_instance = this;
-
-		createDescriptorPoolAllocator();
-		createUboBuffers();
-		createGlobalDescriptorSet();
-
-		m_masterRenderSystem = createUnique<MasterRenderSystem>(
-			m_context,
-			m_renderer,
-			m_descriptorAllocator,
-            m_globalSetLayout
-		);
-
-        m_window.setEventCallback([this]<typename EventType>(EventType && event) {
-            onEvent(std::forward<EventType>(event));
-        });
     }
 
     Application::~Application() {};
+
+    void Application::start() {
+        createDescriptorPoolAllocator();
+        createUboBuffers();
+        createGlobalDescriptorSet();
+
+        createDefaultResources();
+        loadScene();
+        registerImages();
+
+        m_masterRenderSystem = createUnique<MasterRenderSystem>(
+            m_context,
+            m_renderer,
+            m_descriptorAllocator,
+            m_textureRegistry,
+            m_globalSetLayout
+        );
+
+        m_window.setEventCallback([this]<typename E>(E && event) {
+            onEvent(std::forward<E>(event));
+        });
+    }
 
 	void Application::createDescriptorPoolAllocator() {
 		std::vector<PoolSizeRatio> ratios = {
@@ -53,7 +63,7 @@ namespace PXTEngine {
 
 	void Application::createUboBuffers() {
 		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-			m_uboBuffers[i] = createUnique<Buffer>(
+			m_uboBuffers[i] = createUnique<VulkanBuffer>(
 				m_context,
 				sizeof(GlobalUbo),
 				1,
@@ -79,6 +89,43 @@ namespace PXTEngine {
 				.updateSet(m_globalDescriptorSets[i]);
         }
     }
+
+    void Application::createDefaultResources() {
+        // color are stored in RGBA format but bytes are reversed (Little-Endian Systems)
+        // 0x0A0B0C0D -> Alpha = 0A, Blue = 0B, Green = 0C, Red = 0D
+        std::unordered_map<std::string, std::pair<uint32_t, ImageFormat>> defaultImagesData = {
+            {WHITE_PIXEL, {0xFFFFFFFF, RGBA8_SRGB} },
+            {WHITE_PIXEL_LINEAR, {0xFFFFFFFF, RGBA8_LINEAR} },
+            {BLACK_PIXEL_LINEAR, {0xFF000000, RGBA8_LINEAR} },
+            {NORMAL_PIXEL_LINEAR, {0xFFFF8080, RGBA8_LINEAR} }
+        };
+
+        for (const auto& [name, data] : defaultImagesData) {
+            // Create a buffer with the pixel data
+            auto color = data.first;
+
+            ImageInfo info;
+            info.width = 1;
+            info.height = 1;
+            info.channels = 4;
+            info.format = data.second;
+
+            Buffer buffer = Buffer(&color, sizeof(color));
+            Shared<Image> image = createShared<Texture2D>(m_context, info, buffer);
+            m_resourceManager.add(image, name);
+        }
+    }
+
+    void Application::registerImages() {
+		// iterate over resource and register images
+		m_resourceManager.foreach([&](const Shared<Resource>& resource) {
+			if (resource->getType() != Resource::Type::Image) return;
+
+			const auto image = std::static_pointer_cast<Image>(resource);
+			m_textureRegistry.add(image);
+		});
+    }
+
 
     void Application::run() {
         Camera camera;
@@ -171,6 +218,7 @@ int main() {
     try {
         auto app = PXTEngine::initApplication();
 
+        app->start();
         app->run();
 
         delete app;

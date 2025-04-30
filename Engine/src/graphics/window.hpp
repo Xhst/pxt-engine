@@ -32,7 +32,7 @@ namespace PXTEngine {
          * @param height The height of the window.
          */
 		WindowData(const std::string& title = "PXT Engine", uint32_t width = 1600, uint32_t height = 900)
-			: title(title), width(width), height(height) { }
+			: title(title), width(width), height(height), frameBufferResized(false) { }
 	};
 
     /**

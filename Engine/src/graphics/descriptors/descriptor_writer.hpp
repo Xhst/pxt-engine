@@ -82,7 +82,9 @@ namespace PXTEngine {
          */
         template <typename T>
         DescriptorWriter& write(uint32_t binding, T* info, uint32_t count) {
-            PXT_ASSERT(m_setLayout.m_bindings.count(binding) == 1, "Layout does not contain specified binding");
+			size_t bindingCount = m_setLayout.m_bindings.count(binding);
+
+            PXT_ASSERT(bindingCount == 1, "Layout does not contain specified binding");
             
             auto& bindingDescription = m_setLayout.m_bindings[binding];
             

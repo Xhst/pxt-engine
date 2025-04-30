@@ -4,6 +4,7 @@
 #include "core/error_handling.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
+#include "graphics/resources/vk_mesh.hpp"
 
 #include <stdexcept>
 
@@ -53,7 +54,7 @@ namespace PXTEngine {
 	void ShadowMapRenderSystem::createUniformBuffers() {
 		// Create uniform buffer for each frame in flight
 		for (size_t i = 0; i < m_lightUniformBuffers.size(); i++) {
-			m_lightUniformBuffers[i] = createUnique<Buffer>(
+			m_lightUniformBuffers[i] = createUnique<VulkanBuffer>(
 				m_context,
 				sizeof(ShadowUbo),
 				1,
@@ -159,7 +160,7 @@ namespace PXTEngine {
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		m_depthStencilImageFb = createUnique<Image>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_depthStencilImageFb = createUnique<VulkanImage>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		VkImageSubresourceRange subresourceRange = {};
 		subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -344,10 +345,10 @@ namespace PXTEngine {
 					sizeof(ShadowMapPushConstantData),
 					&push);
 
-				auto modelPtr = model.model;
+				auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.model);
 
-				modelPtr->bind(frameInfo.commandBuffer);
-				modelPtr->draw(frameInfo.commandBuffer);
+				vulkanModel->bind(frameInfo.commandBuffer);
+				vulkanModel->draw(frameInfo.commandBuffer);
 			}
 
 			renderer.endRenderPass(frameInfo.commandBuffer);

@@ -5,7 +5,7 @@
 #include "graphics/renderer.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/frame_info.hpp"
-#include "scene/scene.hpp"
+#include "graphics/resources/texture_registry.hpp"
 
 #include "graphics/render_systems/material_render_system.hpp"
 #include "graphics/render_systems/shadow_map_render_system.hpp"
@@ -17,7 +17,8 @@ namespace PXTEngine {
 	class MasterRenderSystem {
 	public:
 		MasterRenderSystem(Context& context, Renderer& renderer, 
-						   Shared<DescriptorAllocatorGrowable> descriptorAllocator, 
+						   Shared<DescriptorAllocatorGrowable> descriptorAllocator,
+						   TextureRegistry& textureRegistry,
 						   Shared<DescriptorSetLayout> globalSetLayout);
 
 		~MasterRenderSystem();
@@ -35,12 +36,13 @@ namespace PXTEngine {
 
 		Context& m_context;
 		Renderer& m_renderer;
+		TextureRegistry& m_textureRegistry;
 
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
 
 		Shared<DescriptorSetLayout> m_globalSetLayout{};
 
-		std::array<Unique<Buffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_uboBuffers;
+		std::array<Unique<VulkanBuffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_uboBuffers;
 
 		Unique<MaterialRenderSystem> m_materialRenderSystem{};
 		Unique<PointLightSystem> m_pointLightSystem{};
