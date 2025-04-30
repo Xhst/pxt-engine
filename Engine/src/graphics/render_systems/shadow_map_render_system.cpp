@@ -4,7 +4,7 @@
 #include "core/error_handling.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
-#include "graphics/resources/vk_model.hpp"
+#include "graphics/resources/vk_mesh.hpp"
 
 #include <stdexcept>
 
@@ -160,7 +160,7 @@ namespace PXTEngine {
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		m_depthStencilImageFb = createUnique<VulkanImage>(m_context, "dsi", imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_depthStencilImageFb = createUnique<VulkanImage>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		VkImageSubresourceRange subresourceRange = {};
 		subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -338,7 +338,7 @@ namespace PXTEngine {
 					sizeof(ShadowMapPushConstantData),
 					&push);
 
-				auto vulkanModel = std::static_pointer_cast<VulkanModel>(model.model);
+				auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.model);
 
 				vulkanModel->bind(frameInfo.commandBuffer);
 				vulkanModel->draw(frameInfo.commandBuffer);

@@ -48,9 +48,9 @@ namespace PXTEngine
         glm::vec4 color{1.0f};
         float specularIntensity = 0.0f;
         float shininess = 1.0f;
-        ResourceId texture = "white_pixel";
-		ResourceId normalMap = "normal_pixel";
-        ResourceId ambientOcclusionMap = "white_pixel";
+        ResourceId texture;
+		ResourceId normalMap;
+        ResourceId ambientOcclusionMap;
 		float tilingFactor = 1.0f;
 
         MaterialComponent() = default;
@@ -73,9 +73,9 @@ namespace PXTEngine
             glm::vec4 color{1.0f};
             float specularIntensity = 0.0f;
             float shininess = 1.0f;
-            ResourceId texture = "white_pixel";
-			ResourceId normalMap = "normal_pixel";
-            ResourceId ambientOcclusionMap = "white_pixel";
+            ResourceId texture;
+			ResourceId normalMap;
+            ResourceId ambientOcclusionMap;
             float tilingFactor = 1.0f;
 
             Builder& setColor(const glm::vec4& color) {
@@ -224,8 +224,8 @@ namespace PXTEngine
 
             return glm::mat3{
                 {
+                    inverseScale.x* (c1 * c3 + s1 * s2 * s3),
                     inverseScale.x * (c2 * s3),
-                    inverseScale.x * (c1 * c3 + s1 * s2 * s3),
                     inverseScale.x * (c1 * s2 * s3 - c3 * s1),
                 },
                 {
@@ -256,11 +256,11 @@ namespace PXTEngine
     };
 
     struct ModelComponent {
-        Shared<Model> model;
+        Shared<Mesh> model;
 
         ModelComponent() = default;
         ModelComponent(const ModelComponent&) = default;
-        ModelComponent(const Shared<Model>& model) : model(model) {}
+        ModelComponent(const Shared<Mesh>& model) : model(model) {}
     };
 
     class Script;

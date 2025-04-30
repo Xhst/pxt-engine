@@ -33,9 +33,16 @@ public:
 
         auto& rm = getResourceManager();
 
-        auto quad = rm.get<Model>(MODELS_PATH + "quad.obj");
-        auto barrel = rm.get<Model>(MODELS_PATH + "barrel.obj");
-        auto vase = rm.get<Model>(MODELS_PATH + "smooth_vase.obj");
+        auto bunny = rm.get<Mesh>(MODELS_PATH + "bunny/bunny.obj");
+        auto bunnyMaterial = Material::Builder()
+            .setAlbedoMap(rm.get<Image>(MODELS_PATH + "bunny/terracotta.jpg"))
+            .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
+			.setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
+            .build();
+		bunny->setMaterial(bunnyMaterial);
+
+        auto quad = rm.get<Mesh>(MODELS_PATH + "quad.obj");
+        auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
 
         auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png");
         auto texture = rm.get<Image>(TEXTURES_PATH + "texture.jpg");
@@ -50,52 +57,31 @@ public:
 
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<MaterialComponent>(MaterialComponent::Builder()
-                .setColor(glm::vec3{1.0f, 1.0f, 1.0f})
-                .setTexture(stylizedStoneBase->getId())
-                .setNormalMap(stylizedStoneNormal->getId())
-                .setAmbientOcclusionMap(stylizedStoneAO->getId())
-				.setTilingFactor(4.0f)
-                .build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("Roof")
             .add<TransformComponent>(glm::vec3{0.f, -1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})
-            .add<MaterialComponent>(MaterialComponent::Builder().setColor(glm::vec3{1.0f, 1.0f, 1.0f}).build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("BackWall")
             .add<TransformComponent>(glm::vec3{0.0f, 0.f, 1.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{glm::pi<float>()/2, 0.0f, 0.0f})
-            .add<MaterialComponent>(MaterialComponent::Builder()
-                .setColor(glm::vec3{1.0f, 1.0f, 1.0f})
-                .build())
             .add<ModelComponent>(quad);
         
         entity = getScene().createEntity("LeftWall")
             .add<TransformComponent>(glm::vec3{ -1.0f, 0.f, 0.0f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>() / 2, -glm::pi<float>() / 2, 0.0f })
-            .add<MaterialComponent>(MaterialComponent::Builder()
-                .setColor(glm::vec3{ 1.0f, 1.0f, 1.0f })
-                .build())
             .add<ModelComponent>(quad);
 
         entity = getScene().createEntity("RightWall")
             .add<TransformComponent>(glm::vec3{ 1.0f, 0.f, 0.0f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ -glm::pi<float>() / 2, -glm::pi<float>() / 2, 0.0f })
-            .add<MaterialComponent>(MaterialComponent::Builder()
-                .setColor(glm::vec3{ 1.0f, 1.0f, 1.0f })
-                .build())
             .add<ModelComponent>(quad);
 
         glm::vec4 colorWhite = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
         glm::vec4 colorGold = glm::vec4{1.0f, 0.843f, 0.0f, 1.0f};
-        entity = getScene().createEntity("Barrel")
-            .add<TransformComponent>(glm::vec3{ 0.0f, 0.7f, 0.0f }, glm::vec3{ .05f, .05f, .05f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
-            .add<ModelComponent>(barrel)
-            .add<MaterialComponent>(MaterialComponent::Builder()
-                .setColor(colorWhite)
-                .setTexture(barrelBase->getId())
-                .setNormalMap(barrelNormal->getId())
-                .build());
+        entity = getScene().createEntity("Bunny")
+            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})
+            .add<ModelComponent>(bunny);
 
+#if 0
         // Vase
 		for (int i = 0; i < 5; i++) {
 			glm::vec3 pos = { posDist(gen), posDist(gen), posDist(gen) };
@@ -109,15 +95,15 @@ public:
                 .add<MaterialComponent>(MaterialComponent::Builder()
 					.build());
 		}
+#endif
         //entity = createPointLight(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights (white, green, blue)
-        entity = createPointLight(0.15f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
-        entity.get<TransformComponent>().translation = glm::vec3{1.0f / (float) sqrt(3), -0.1f, 0.2f};
+        entity = createPointLight(0.05f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
+        entity.get<TransformComponent>().translation = glm::vec3{1.0f / (float) sqrt(3), 0.5f, 0.2f};
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0
-
         entity = createPointLight(0.1f, 0.025f, glm::vec3{0.f, 1.f, 0.f});
         entity.get<TransformComponent>().translation = glm::vec3{-1.0f / (float) (2.0f * sqrt(3)), 0.2f, 0.5f};
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();

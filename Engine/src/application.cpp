@@ -1,6 +1,8 @@
 #include "application.hpp"
 
 #include "core/memory.hpp"
+#include "core/buffer.hpp"
+#include "core/constants.hpp"
 #include "core/events/event_dispatcher.hpp"
 #include "core/events/window_event.hpp"
 #include "core/error_handling.hpp"
@@ -33,6 +35,7 @@ namespace PXTEngine {
         createUboBuffers();
         createGlobalDescriptorSet();
 
+        createDefaultResources();
         loadScene();
         registerImages();
 
@@ -87,27 +90,33 @@ namespace PXTEngine {
         }
     }
 
-    void Application::registerImages() {
-        Image::Info info{};
-        info.width = 1;
-        info.height = 1;
-        info.channels = 4;
-
+    void Application::createDefaultResources() {
         // color are stored in RGBA format but bytes are reversed (Little-Endian Systems)
-		// 0x0A0B0C0D -> Alpha = 0A, Blue = 0B, Green = 0C, Red = 0D
-		std::unordered_map<std::string, uint32_t> defaultImagesData = {
-			{"white_pixel", 0xFFFFFFFF}, 
-			{"black_pixel", 0xFF000000}, 
-			{"normal_pixel", 0xFFFF8080} 
-		};
+        // 0x0A0B0C0D -> Alpha = 0A, Blue = 0B, Green = 0C, Red = 0D
+        std::unordered_map<std::string, std::pair<uint32_t, ImageFormat>> defaultImagesData = {
+            {WHITE_PIXEL, {0xFFFFFFFF, RGBA8_SRGB} },
+            {WHITE_PIXEL_LINEAR, {0xFFFFFFFF, RGBA8_LINEAR} },
+            {BLACK_PIXEL_LINEAR, {0xFF000000, RGBA8_LINEAR} },
+            {NORMAL_PIXEL_LINEAR, {0xFFFF8080, RGBA8_LINEAR} }
+        };
 
-		for (const auto& [name, color] : defaultImagesData) {
-			// Create a buffer with the pixel data
-			Buffer buffer = Buffer(&color, sizeof(color));
-			Shared<Image> image = createShared<Texture2D>(m_context, name, info, buffer);
-			m_resourceManager.add(image);
-		}
+        for (const auto& [name, data] : defaultImagesData) {
+            // Create a buffer with the pixel data
+            auto color = data.first;
 
+            ImageInfo info;
+            info.width = 1;
+            info.height = 1;
+            info.channels = 4;
+            info.format = data.second;
+
+            Buffer buffer = Buffer(&color, sizeof(color));
+            Shared<Image> image = createShared<Texture2D>(m_context, info, buffer);
+            m_resourceManager.add(image, name);
+        }
+    }
+
+    void Application::registerImages() {
 		// iterate over resource and register images
 		m_resourceManager.foreach([&](const Shared<Resource>& resource) {
 			if (resource->getType() != Resource::Type::Image) return;

@@ -4,7 +4,7 @@
 #include "core/error_handling.hpp"
 #include "core/constants.hpp"
 #include "graphics/resources/texture2d.hpp"
-#include "graphics/resources/vk_model.hpp"
+#include "graphics/resources/vk_mesh.hpp"
 #include "scene/ecs/entity.hpp"
 
 #include <stdexcept>
@@ -136,21 +136,23 @@ namespace PXTEngine {
             nullptr
         );
 
-        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MaterialComponent, ModelComponent>();
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ModelComponent>();
         for (auto entity : view) {
 
-            const auto&[transform, material, model] = view.get<TransformComponent, MaterialComponent, ModelComponent>(entity);
+            const auto&[transform, model] = view.get<TransformComponent, ModelComponent>(entity);
+
+            auto material = model.model->getMaterial();
 
             MaterialPushConstantData push{};
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
-            push.color = material.color;
-            push.specularIntensity = material.specularIntensity;
-            push.shininess = material.shininess;
-            push.textureIndex = m_textureRegistry.getIndex(material.texture);
-            push.normalMapIndex = m_textureRegistry.getIndex(material.normalMap);
-            push.ambientOcclusionMapIndex = m_textureRegistry.getIndex(material.ambientOcclusionMap);
-            push.tilingFactor = material.tilingFactor;
+            push.color = material->getAlbedoColor();
+            push.specularIntensity = 1.0f;
+            push.shininess = 1.0f;
+            push.textureIndex = m_textureRegistry.getIndex(material->getAlbedoMap()->id);
+            push.normalMapIndex = m_textureRegistry.getIndex(material->getNormalMap()->id);
+            push.ambientOcclusionMapIndex = m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id);
+            push.tilingFactor = 1.0f;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
@@ -160,7 +162,7 @@ namespace PXTEngine {
                 sizeof(MaterialPushConstantData),
                 &push);
 
-            auto vulkanModel = std::static_pointer_cast<VulkanModel>(model.model);
+            auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.model);
             
             vulkanModel->bind(frameInfo.commandBuffer);
             vulkanModel->draw(frameInfo.commandBuffer);

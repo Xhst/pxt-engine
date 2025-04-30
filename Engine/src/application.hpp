@@ -51,6 +51,7 @@ namespace PXTEngine {
 		void createDescriptorPoolAllocator();
 		void createUboBuffers();
         void createGlobalDescriptorSet();
+        void createDefaultResources();
         void registerImages();
 
         void start();

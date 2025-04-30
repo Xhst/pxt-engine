@@ -129,6 +129,6 @@ void main() {
 
     applyAmbientOcclusion(baseColor, texCoords);
 
-    float shadow = computeShadowFactor(fragNormalWorld);
+    float shadow = computeShadowFactor(surfaceNormal);
     outColor = vec4(baseColor * shadow, 1.0);
 }

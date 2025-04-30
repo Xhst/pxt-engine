@@ -3,32 +3,32 @@
 #include "core/uuid.hpp"
 
 #include <string>
-#include <utility>
 
 namespace PXTEngine {
 
-	using ResourceId = std::string;
+	using ResourceId = UUID;
 
+	/**
+	 * @class Resource
+	 *
+	 * @brief Base class for all resources in the engine.
+	 */
 	class Resource {
 	public:
 		enum class Type : uint8_t {
 			Image,
 			Model,
+			Mesh,
+			Material,
 		};
 
-    Resource(const ResourceId& id, const Type type) : m_id(id), m_type(type) {}
+		Resource() = default;
+		virtual ~Resource() = default;
 
-	ResourceId getId() const {
-		return m_id;
-	}
+		virtual Type getType() const = 0;
 
-	Type getType() const {
-		return m_type;
-	}
-
-	private:
-		ResourceId m_id{};
-		Type m_type;
+		// The default constructor is called and the ID is set to a new UUID.
+		ResourceId id;
 	};
 
 }

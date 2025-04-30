@@ -1,7 +1,7 @@
 #include "graphics/pipeline.hpp"
 
 #include "core/error_handling.hpp"
-#include "graphics/resources/vk_model.hpp"
+#include "graphics/resources/vk_mesh.hpp"
 #include "graphics/frame_info.hpp"
 
 #include <fstream>
@@ -227,8 +227,8 @@ namespace PXTEngine {
         configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
         configInfo.dynamicStateInfo.flags = 0;
 
-        configInfo.bindingDescriptions = VulkanModel::getVertexBindingDescriptions();
-        configInfo.attributeDescriptions = VulkanModel::getVertexAttributeDescriptions();
+        configInfo.bindingDescriptions = VulkanMesh::getVertexBindingDescriptions();
+        configInfo.attributeDescriptions = VulkanMesh::getVertexAttributeDescriptions();
     }
 
     void Pipeline::enableAlphaBlending(PipelineConfigInfo& configInfo) {
