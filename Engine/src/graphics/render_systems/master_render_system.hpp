@@ -10,6 +10,7 @@
 #include "graphics/render_systems/material_render_system.hpp"
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 #include "graphics/render_systems/point_light_system.hpp"
+#include "graphics/render_systems/ui_render_system.hpp"
 
 namespace PXTEngine {
 
@@ -30,15 +31,12 @@ namespace PXTEngine {
 		void doRenderPasses(FrameInfo& frameInfo);
 
 	private:
-		void initImGui();
-		void imGuiRenderUI(const FrameInfo& frameInfo);
 		void createRenderSystems();
 
 		Context& m_context;
 		Renderer& m_renderer;
 
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
-		Unique<DescriptorPool> m_imGuiPool{};
 
 		Shared<DescriptorSetLayout> m_globalSetLayout{};
 
@@ -47,5 +45,6 @@ namespace PXTEngine {
 		Unique<MaterialRenderSystem> m_materialRenderSystem{};
 		Unique<PointLightSystem> m_pointLightSystem{};
 		Unique<ShadowMapRenderSystem> m_shadowMapRenderSystem{};
+		Unique<UiRenderSystem> m_uiRenderSystem{};
 	};
 }
