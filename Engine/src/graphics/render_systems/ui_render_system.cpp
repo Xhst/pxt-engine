@@ -142,7 +142,7 @@ namespace PXTEngine {
 		ImTextureID cube_posz = (ImTextureID)m_shadowMapDebugDescriptorSets[4];
 		ImTextureID cube_negz = (ImTextureID)m_shadowMapDebugDescriptorSets[5];
 
-		/* Render the shadow cube map textures flat out in format :
+		/* Render the shadow cube map textures flat out in this format (with y mirrored):
 		//       +----+
 				 | +Y |
 			+----+----+----+----+
@@ -158,7 +158,7 @@ namespace PXTEngine {
 		float spacing = ImGui::GetStyle().ItemSpacing.x;
 		float totalMiddleRowWidth = faceSize.x * 4 + spacing * 3;
 		float offsetToCenter = (ImGui::GetContentRegionAvail().x - totalMiddleRowWidth) * 0.5f;
-
+		
 		// Row 1: Centered +Y
 		ImGui::SetCursorPosX(offsetToCenter + faceSize.x + spacing);  // Center it over 4 middle-row faces
 		ImGui::Image(cube_posy, faceSize, ImVec2(0, 1), ImVec2(1, 0));
