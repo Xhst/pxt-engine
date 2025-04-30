@@ -25,7 +25,8 @@ namespace PXTEngine {
 		VkRenderPass getRenderPass() const { return m_renderPass; }
 		VkFramebuffer getCubeFaceFramebuffer(uint32_t face_index) const { return m_cubeFramebuffers[face_index]; }
 		VkExtent2D getExtent() const { return { m_shadowMapSize, m_shadowMapSize }; }
-		VkDescriptorImageInfo getShadowMapImageInfo() const { return m_shadowMapDescriptor; }
+		VkDescriptorImageInfo getShadowMapImageInfo() const { return m_shadowMapDescriptorInfo; }
+        std::array<VkDescriptorImageInfo, 6> getDebugShadowMapImageInfos() const { return m_debugImageDescriptorInfos; }
 
     private:
         void createUniformBuffers();
@@ -52,7 +53,8 @@ namespace PXTEngine {
         std::array<VkDescriptorSet, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightDescriptorSets;
 
         Unique<ShadowCubeMap> m_shadowCubeMap;
-		VkDescriptorImageInfo m_shadowMapDescriptor{ VK_NULL_HANDLE };
+		VkDescriptorImageInfo m_shadowMapDescriptorInfo{ VK_NULL_HANDLE };
+		std::array<VkDescriptorImageInfo, 6> m_debugImageDescriptorInfos;
 
 		VkRenderPass m_renderPass;
 		// The framebuffer used for the offscreen render pass. They are created from the 

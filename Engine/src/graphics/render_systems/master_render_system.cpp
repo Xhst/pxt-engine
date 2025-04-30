@@ -37,6 +37,7 @@ namespace PXTEngine {
 		m_uiRenderSystem = createUnique<UiRenderSystem>(
 			m_context,
 			m_renderer.getSwapChainRenderPass(),
+			m_shadowMapRenderSystem->getDebugShadowMapImageInfos(),
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 	}
