@@ -17,6 +17,7 @@ namespace PXTEngine {
 		UiRenderSystem(const UiRenderSystem&) = delete;
 		UiRenderSystem& operator=(const UiRenderSystem&) = delete;
 
+		void beginBuildingUi();
 		void render(FrameInfo& frameInfo);
 
 	private:
@@ -25,7 +26,6 @@ namespace PXTEngine {
 		VkDescriptorSet addImGuiTexture(VkSampler sampler, VkImageView imageView, VkImageLayout layout);
 
 		void buildUi();
-		void ShadowCubeMapDebugWindow();
 
 		Context& m_context;
 
@@ -33,6 +33,5 @@ namespace PXTEngine {
 		Unique<DescriptorPool> m_imGuiPool{};
 
 		VkDescriptorSet m_sceneDescriptorSet{};
-		std::array<VkDescriptorSet, 6> m_shadowMapDebugDescriptorSets;
 	};
 }

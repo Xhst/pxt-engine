@@ -21,6 +21,7 @@ namespace PXTEngine {
 
 		void update(FrameInfo& frameInfo, GlobalUbo& ubo);
         void render(FrameInfo& frameInfo, Renderer& renderer);
+        void updateUi();
 
 		VkRenderPass getRenderPass() const { return m_renderPass; }
 		VkFramebuffer getCubeFaceFramebuffer(uint32_t face_index) const { return m_cubeFramebuffers[face_index]; }
@@ -34,7 +35,10 @@ namespace PXTEngine {
         void createRenderPass();
         void createOffscreenFrameBuffers();
         void createPipelineLayout(DescriptorSetLayout& setLayout);
-        void createPipeline();  
+        void createPipeline();
+
+        void createDebugDescriptorSets();
+        void updateShadowCubeMapDebugWindow();
 
         glm::mat4 getFaceViewMatrix(uint32_t faceIndex);
         
@@ -55,6 +59,7 @@ namespace PXTEngine {
         Unique<ShadowCubeMap> m_shadowCubeMap;
 		VkDescriptorImageInfo m_shadowMapDescriptorInfo{ VK_NULL_HANDLE };
 		std::array<VkDescriptorImageInfo, 6> m_debugImageDescriptorInfos;
+		std::array<VkDescriptorSet, 6> m_shadowMapDebugDescriptorSets;
 
 		VkRenderPass m_renderPass;
 		// The framebuffer used for the offscreen render pass. They are created from the 

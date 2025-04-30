@@ -41,6 +41,7 @@ namespace PXTEngine {
 			m_context,
 			m_renderer.getSwapChainRenderPass(),
 			m_shadowMapRenderSystem->getDebugShadowMapImageInfos(),
+			// TODO: replace with scene image info
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 	}
@@ -59,10 +60,14 @@ namespace PXTEngine {
 	}
 
 	void MasterRenderSystem::doRenderPasses(FrameInfo& frameInfo) {
+		// begin new frame imgui
+		m_uiRenderSystem->beginBuildingUi();
+
 		// render shadow cube map
 		// the render function of the shadow map render system will
 		// do how many passes it needs to do (6 in this case - 1 point light)
 		m_shadowMapRenderSystem->render(frameInfo, m_renderer);
+		m_shadowMapRenderSystem->updateUi();
 
 		// render main frame
 		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
@@ -70,6 +75,7 @@ namespace PXTEngine {
 		m_materialRenderSystem->render(frameInfo);
 		m_pointLightSystem->render(frameInfo);
 
+		// render ui and end imgui frame
 		m_uiRenderSystem->render(frameInfo);
 
 		m_renderer.endRenderPass(frameInfo.commandBuffer);

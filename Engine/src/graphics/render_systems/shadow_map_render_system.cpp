@@ -13,7 +13,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-
 namespace PXTEngine {
 
     struct ShadowMapPushConstantData {
@@ -40,6 +39,9 @@ namespace PXTEngine {
         createOffscreenFrameBuffers();
         createPipelineLayout(setLayout);
         createPipeline();
+
+		// for debug purposes
+		createDebugDescriptorSets();
     }
 
     ShadowMapRenderSystem::~ShadowMapRenderSystem() {
@@ -382,5 +384,66 @@ namespace PXTEngine {
 		}
 
 		return viewMatrix;
+	}
+
+	void ShadowMapRenderSystem::createDebugDescriptorSets() {
+		Unique<DescriptorSetLayout> debugSetLayout = DescriptorSetLayout::Builder(m_context)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.build();
+
+		// Create descriptor set for each face of the cube map
+		for (int i = 0; i < m_debugImageDescriptorInfos.size(); i++) {
+			m_descriptorAllocator->allocate(debugSetLayout->getDescriptorSetLayout(), m_shadowMapDebugDescriptorSets[i]);
+			DescriptorWriter(m_context, *debugSetLayout)
+				.writeImage(0, &m_debugImageDescriptorInfos[i])
+				.updateSet(m_shadowMapDebugDescriptorSets[i]);
+		}
+	}
+
+	void ShadowMapRenderSystem::updateUi() {
+		updateShadowCubeMapDebugWindow();
+	}
+
+	void ShadowMapRenderSystem::updateShadowCubeMapDebugWindow() {
+		ImTextureID cube_posx = (ImTextureID)m_shadowMapDebugDescriptorSets[0];
+		ImTextureID cube_negx = (ImTextureID)m_shadowMapDebugDescriptorSets[1];
+		ImTextureID cube_posy = (ImTextureID)m_shadowMapDebugDescriptorSets[3]; // swap negative and positive y because vulkan :)
+		ImTextureID cube_negy = (ImTextureID)m_shadowMapDebugDescriptorSets[2];
+		ImTextureID cube_posz = (ImTextureID)m_shadowMapDebugDescriptorSets[4];
+		ImTextureID cube_negz = (ImTextureID)m_shadowMapDebugDescriptorSets[5];
+
+		/* Render the shadow cube map textures flat out in this format (with y mirrored):
+		//       +----+
+				 | +Y |
+			+----+----+----+----+
+			| -X | +Z | +X | -Z |
+			+----+----+----+----+
+				 | -Y |
+				 +----+
+		*/
+
+		ImGui::Begin("Shadow Cube Map Debug");
+
+		ImVec2 faceSize = ImVec2(128, 128);
+		float spacing = ImGui::GetStyle().ItemSpacing.x;
+		float totalMiddleRowWidth = faceSize.x * 4 + spacing * 3;
+		float offsetToCenter = (ImGui::GetContentRegionAvail().x - totalMiddleRowWidth) * 0.5f;
+
+		// Row 1: Centered +Y
+		ImGui::SetCursorPosX(offsetToCenter + faceSize.x + spacing);  // Center it over 4 middle-row faces
+		ImGui::Image(cube_posy, faceSize, ImVec2(0, 1), ImVec2(1, 0));
+
+		// Row 2: -X +Z +X -Z
+		ImGui::SetCursorPosX(offsetToCenter); // Align middle row
+		ImGui::Image(cube_negx, faceSize, ImVec2(0, 1), ImVec2(1, 0)); ImGui::SameLine();
+		ImGui::Image(cube_posz, faceSize, ImVec2(0, 1), ImVec2(1, 0)); ImGui::SameLine();
+		ImGui::Image(cube_posx, faceSize, ImVec2(0, 1), ImVec2(1, 0)); ImGui::SameLine();
+		ImGui::Image(cube_negz, faceSize, ImVec2(0, 1), ImVec2(1, 0));
+
+		// Row 3: Centered -Y
+		ImGui::SetCursorPosX(offsetToCenter + faceSize.x + spacing);  // Same X as +Y
+		ImGui::Image(cube_negy, faceSize, ImVec2(0, 1), ImVec2(1, 0));
+
+		ImGui::End();
 	}
 }

@@ -3,18 +3,6 @@
 #include "core/error_handling.hpp"
 #include "core/constants.hpp"
 
-// IMGUI
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imconfig.h"
-#include "imgui_tables.cpp"
-#include "imgui_internal.h"
-#include "imgui.h"
-#include "imgui_draw.cpp"
-#include "imgui_widgets.cpp"
-#include "imgui_demo.cpp"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
-
 namespace PXTEngine {
 
 	UiRenderSystem::UiRenderSystem(Context& context, VkRenderPass renderPass, std::array<VkDescriptorImageInfo, 6> shadowMapDebugImageInfos, VkDescriptorImageInfo sceneImageInfo) : m_context(context) {
@@ -109,71 +97,22 @@ namespace PXTEngine {
 			sceneImageInfo.imageView,
 			sceneImageInfo.imageLayout
 		);
-
-		for (size_t i = 0; i < shadowMapDebugImageInfos.size(); i++) {
-			m_shadowMapDebugDescriptorSets[i] = addImGuiTexture(
-				shadowMapDebugImageInfos[i].sampler,
-				shadowMapDebugImageInfos[i].imageView,
-				shadowMapDebugImageInfos[i].imageLayout
-			);
-		}
 	}
 
 	void UiRenderSystem::render(FrameInfo& frameInfo) {
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
 		buildUi();
 
 		ImGui::Render();
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
 	}
 
-	void UiRenderSystem::buildUi() {
-		ShadowCubeMapDebugWindow();
+	void UiRenderSystem::beginBuildingUi() {
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 	}
 
-	void UiRenderSystem::ShadowCubeMapDebugWindow() {
-		ImTextureID cube_posx = (ImTextureID)m_shadowMapDebugDescriptorSets[0];
-		ImTextureID cube_negx = (ImTextureID)m_shadowMapDebugDescriptorSets[1];
-		ImTextureID cube_posy = (ImTextureID)m_shadowMapDebugDescriptorSets[3]; // swap negative and positive y because vulkan :)
-		ImTextureID cube_negy = (ImTextureID)m_shadowMapDebugDescriptorSets[2];
-		ImTextureID cube_posz = (ImTextureID)m_shadowMapDebugDescriptorSets[4];
-		ImTextureID cube_negz = (ImTextureID)m_shadowMapDebugDescriptorSets[5];
-
-		/* Render the shadow cube map textures flat out in this format (with y mirrored):
-		//       +----+
-				 | +Y |
-			+----+----+----+----+
-			| -X | +Z | +X | -Z |
-			+----+----+----+----+
-				 | -Y |
-				 +----+
-		*/
-
-		ImGui::Begin("Shadow Cube Map Debug");
-
-		ImVec2 faceSize = ImVec2(128, 128);
-		float spacing = ImGui::GetStyle().ItemSpacing.x;
-		float totalMiddleRowWidth = faceSize.x * 4 + spacing * 3;
-		float offsetToCenter = (ImGui::GetContentRegionAvail().x - totalMiddleRowWidth) * 0.5f;
-		
-		// Row 1: Centered +Y
-		ImGui::SetCursorPosX(offsetToCenter + faceSize.x + spacing);  // Center it over 4 middle-row faces
-		ImGui::Image(cube_posy, faceSize, ImVec2(0, 1), ImVec2(1, 0));
-
-		// Row 2: -X +Z +X -Z
-		ImGui::SetCursorPosX(offsetToCenter); // Align middle row
-		ImGui::Image(cube_negx, faceSize, ImVec2(0, 1), ImVec2(1, 0)); ImGui::SameLine();
-		ImGui::Image(cube_posz, faceSize, ImVec2(0, 1), ImVec2(1, 0)); ImGui::SameLine();
-		ImGui::Image(cube_posx, faceSize, ImVec2(0, 1), ImVec2(1, 0)); ImGui::SameLine();
-		ImGui::Image(cube_negz, faceSize, ImVec2(0, 1), ImVec2(1, 0));
-
-		// Row 3: Centered -Y
-		ImGui::SetCursorPosX(offsetToCenter + faceSize.x + spacing);  // Same X as +Y
-		ImGui::Image(cube_negy, faceSize, ImVec2(0, 1), ImVec2(1, 0));
-
-		ImGui::End();
+	void UiRenderSystem::buildUi() {
+		// TODO: add ImGui windows
 	}
 }
