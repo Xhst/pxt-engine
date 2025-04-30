@@ -9,15 +9,22 @@
 
 namespace PXTEngine {
 
-    using ResourceImportFunction = std::function<Shared<Resource>(const std::filesystem::path&)>;
-    static std::unordered_map<std::string, ResourceImportFunction> extensionToImportFunction = {
-        {".png", TextureImporter::import},
-        {".jpg", TextureImporter::import},
-        {".jpeg", TextureImporter::import},
-        {".obj", ModelImporter::importObj}
-    };
+    namespace {
+        using ResourceImportFunction = std::function<Shared<Resource>(
+            const std::filesystem::path&,
+            ResourceManager&
+        )>;
 
-    Shared<Resource> ResourceImporter::import(const std::filesystem::path& filePath) {
+        std::unordered_map<std::string, ResourceImportFunction> extensionToImportFunction = {
+            {".png", TextureImporter::import},
+            {".jpg", TextureImporter::import},
+            {".jpeg", TextureImporter::import},
+            {".obj", ModelImporter::importObj}
+        };
+    }
+
+    Shared<Resource> ResourceImporter::import(const std::filesystem::path& filePath,
+        ResourceManager& rm) {
         std::string extension = filePath.extension().string();
 
         auto it = extensionToImportFunction.find(extension);
@@ -26,6 +33,6 @@ namespace PXTEngine {
             throw std::runtime_error("Unsupported file extension: " + extension);
         }
 
-        return it->second(filePath);
+        return it->second(filePath, rm);
     }
 }

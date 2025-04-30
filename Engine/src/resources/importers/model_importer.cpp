@@ -1,6 +1,9 @@
 #include "resources/importers/model_importer.hpp"
 
-#include "graphics/resources/vk_model.hpp"
+#include "core/constants.hpp"
+#include "core/memory.hpp"
+#include "graphics/resources/vk_mesh.hpp"
+#include "resources/types/material.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -10,8 +13,9 @@
 
 namespace PXTEngine {
 
-	Shared<Model> ModelImporter::importObj(const std::filesystem::path& filePath) {
-	    std::vector<Model::Vertex> vertices{};  // List of vertices in the model.
+	Shared<Mesh> ModelImporter::importObj(const std::filesystem::path& filePath,
+        ResourceManager& rm) {
+	    std::vector<Mesh::Vertex> vertices{};  // List of vertices in the model.
 	    std::vector<uint32_t> indices{}; // List of indices for indexed rendering.
 
 		tinyobj::attrib_t attrib;
@@ -26,10 +30,10 @@ namespace PXTEngine {
         vertices.clear();
         indices.clear();
 
-        std::unordered_map<Model::Vertex, uint32_t> uniqueVertices{};
+        std::unordered_map<Mesh::Vertex, uint32_t> uniqueVertices{};
         for (const auto& shape : shapes) {
             for (const auto& index : shape.mesh.indices) {
-                Model::Vertex vertex{};
+                Mesh::Vertex vertex{};
 
                 if (index.vertex_index >= 0) {
                     vertex.position = {
@@ -71,9 +75,9 @@ namespace PXTEngine {
 
         // Iterate through triangles and calculate per-triangle tangents and bitangents
         for (size_t i = 0; i < indices.size(); i += 3) {
-            Model::Vertex& v0 = vertices[indices[i + 0]];
-            Model::Vertex& v1 = vertices[indices[i + 1]];
-            Model::Vertex& v2 = vertices[indices[i + 2]];
+            Mesh::Vertex& v0 = vertices[indices[i + 0]];
+            Mesh::Vertex& v1 = vertices[indices[i + 1]];
+            Mesh::Vertex& v2 = vertices[indices[i + 2]];
 
             glm::vec3 edge1 = v1.position - v0.position;
             glm::vec3 edge2 = v2.position - v0.position;
@@ -100,6 +104,14 @@ namespace PXTEngine {
             v2.tangent = tangent4;
         }
 
-		return VulkanModel::create(filePath.string(), vertices, indices);
+        auto material = Material::Builder()
+            .setAlbedoColor(glm::vec4(1.0f))
+            .setAlbedoMap(rm.get<Image>(WHITE_PIXEL))
+            .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
+            .setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
+            .setMetallicRoughnessMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
+            .build();
+
+		return VulkanMesh::create(vertices, indices, material);
 	}
 }

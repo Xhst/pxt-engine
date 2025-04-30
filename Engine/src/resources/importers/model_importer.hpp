@@ -1,7 +1,8 @@
 #pragma once
 
 #include "core/memory.hpp"
-#include "resources/types/model.hpp"
+#include "resources/types/mesh.hpp"
+#include "resources/resource_manager.hpp"
 
 #include <filesystem>
 
@@ -9,6 +10,7 @@ namespace PXTEngine {
 
 	class ModelImporter {
 	public:
-		static Shared<Model> importObj(const std::filesystem::path& filePath);
+		static Shared<Mesh> importObj(const std::filesystem::path& filePath,
+			ResourceManager& rm);
 	};
 }
