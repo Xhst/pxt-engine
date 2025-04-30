@@ -1,34 +1,34 @@
-#include "graphics/resources/vk_model.hpp"
+#include "graphics/resources/vk_mesh.hpp"
 
 #include "application.hpp"
 #include "core/error_handling.hpp"
 
 namespace PXTEngine {
 
-    Unique<VulkanModel> VulkanModel::create(const ResourceId& id,
-        const std::vector<Model::Vertex>& vertices, const std::vector<uint32_t>& indices) {
+    Unique<VulkanMesh> VulkanMesh::create(std::vector<Mesh::Vertex>& vertices, 
+        std::vector<uint32_t>& indices, Shared<Material> material) {
         Context& context = Application::get().getContext();
 
-        return createUnique<VulkanModel>(context, id, vertices, indices);
+        return createUnique<VulkanMesh>(context, vertices, indices, material);
     }
 
-    VulkanModel::VulkanModel(Context& context, const ResourceId& id,
-                             const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
-        : Model(id, vertices, indices), m_context(context) {
-        createVertexBuffers(vertices);
-        createIndexBuffers(indices);
+    VulkanMesh::VulkanMesh(Context& context, std::vector<Mesh::Vertex>& vertices, 
+        std::vector<uint32_t>& indices, Shared<Material> material)
+        : m_context(context), m_vertices(vertices), m_indices(indices), m_material(material) {
+        createVertexBuffers();
+        createIndexBuffers();
     }
 
-    VulkanModel::~VulkanModel() = default;
+    VulkanMesh::~VulkanMesh() = default;
 
-    void VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices) {
-        m_vertexCount = static_cast<uint32_t>(vertices.size());
+    void VulkanMesh::createVertexBuffers() {
+        m_vertexCount = static_cast<uint32_t>(m_vertices.size());
 
         PXT_ASSERT(m_vertexCount >= 3, "Vertex count must be at least 3");
 
-        VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCount;
+        VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertexCount;
 
-        uint32_t vertexSize = sizeof(vertices[0]);
+        uint32_t vertexSize = sizeof(m_vertices[0]);
 
         VulkanBuffer stagingBuffer{
             m_context,
@@ -39,7 +39,7 @@ namespace PXTEngine {
         };
 
         stagingBuffer.map();
-        stagingBuffer.writeToBuffer((void*) vertices.data());
+        stagingBuffer.writeToBuffer((void*) m_vertices.data());
 
         m_vertexBuffer = createUnique<VulkanBuffer>(
             m_context, 
@@ -52,14 +52,14 @@ namespace PXTEngine {
         m_context.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
     }
 
-    void VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices) {
-        m_indexCount = static_cast<uint32_t>(indices.size());
+    void VulkanMesh::createIndexBuffers() {
+        m_indexCount = static_cast<uint32_t>(m_indices.size());
         m_hasIndexBuffer = m_indexCount > 0;
 
         if (!m_hasIndexBuffer) return;
 
-        VkDeviceSize bufferSize = sizeof(indices[0]) * m_indexCount;
-        uint32_t indexSize = sizeof(indices[0]);
+        VkDeviceSize bufferSize = sizeof(m_indices[0]) * m_indexCount;
+        uint32_t indexSize = sizeof(m_indices[0]);
 
         VulkanBuffer stagingBuffer{
             m_context,
@@ -70,7 +70,7 @@ namespace PXTEngine {
         };
 
         stagingBuffer.map();
-        stagingBuffer.writeToBuffer((void*) indices.data());
+        stagingBuffer.writeToBuffer((void*) m_indices.data());
 
         m_indexBuffer = createUnique<VulkanBuffer>(
             m_context, 
@@ -83,7 +83,7 @@ namespace PXTEngine {
         m_context.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);
     }
 
-    void VulkanModel::draw(VkCommandBuffer commandBuffer) {
+    void VulkanMesh::draw(VkCommandBuffer commandBuffer) {
         if (m_hasIndexBuffer) {
             vkCmdDrawIndexed(commandBuffer, m_indexCount, 1, 0, 0, 0);
         } else {
@@ -91,7 +91,7 @@ namespace PXTEngine {
         }
     }
 
-    void VulkanModel::bind(VkCommandBuffer commandBuffer) {
+    void VulkanMesh::bind(VkCommandBuffer commandBuffer) {
         VkBuffer buffers[] = {m_vertexBuffer->getBuffer()};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
@@ -101,22 +101,22 @@ namespace PXTEngine {
         }
     }
 
-    std::vector<VkVertexInputBindingDescription> VulkanModel::getVertexBindingDescriptions() {
+    std::vector<VkVertexInputBindingDescription> VulkanMesh::getVertexBindingDescriptions() {
         std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
         bindingDescriptions[0].binding = 0;
-        bindingDescriptions[0].stride = sizeof(Vertex);
+        bindingDescriptions[0].stride = sizeof(Mesh::Vertex);
         bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescriptions;
     }
 
-    std::vector<VkVertexInputAttributeDescription> VulkanModel::getVertexAttributeDescriptions() {
+    std::vector<VkVertexInputAttributeDescription> VulkanMesh::getVertexAttributeDescriptions() {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
         
-        attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Model::Vertex, position)});
-        attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Model::Vertex, color)});
-        attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Model::Vertex, normal)});
-        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Model::Vertex, tangent) });
-        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Model::Vertex, uv)});
+        attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Mesh::Vertex, position)});
+        attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Mesh::Vertex, color)});
+        attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Mesh::Vertex, normal)});
+        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Mesh::Vertex, tangent) });
+        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Mesh::Vertex, uv)});
 
         return attributeDescriptions;
     }

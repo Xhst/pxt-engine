@@ -3,7 +3,7 @@
 #include "graphics/context/context.hpp"
 
 #include "core/memory.hpp"
-#include "resources/types/model.hpp"
+#include "resources/types/mesh.hpp"
 
 #include "graphics/resources/vk_buffer.hpp"
 
@@ -15,9 +15,8 @@
 
 namespace PXTEngine {
 
-    class VulkanModel : public Model {
+    class VulkanMesh : public Mesh {
     public:
-
         /**
          * @brief Retrieves the binding descriptions for vertex input.
          *
@@ -32,16 +31,16 @@ namespace PXTEngine {
          */
         static std::vector<VkVertexInputAttributeDescription> getVertexAttributeDescriptions();
 
-        static Unique<VulkanModel> create(const ResourceId& id,
-            const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+        static Unique<VulkanMesh> create(std::vector<Mesh::Vertex>& vertices, 
+            std::vector<uint32_t>& indices, Shared<Material> material);
 
-        VulkanModel(Context& context, const ResourceId& id,
-                    const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+        VulkanMesh(Context& context, std::vector<Mesh::Vertex>& vertices, 
+            std::vector<uint32_t>& indices, Shared<Material> material);
 
-        ~VulkanModel();
+        ~VulkanMesh() override;
 
-        VulkanModel(const VulkanModel&) = delete;
-        VulkanModel& operator=(const VulkanModel&) = delete;
+        VulkanMesh(const VulkanMesh&) = delete;
+        VulkanMesh& operator=(const VulkanMesh&) = delete;
 
         /**
          * @brief Binds the model's vertex and index buffers to a command buffer.
@@ -57,22 +56,46 @@ namespace PXTEngine {
          */
         void draw(VkCommandBuffer commandBuffer);
 
+        const std::vector<Vertex>& getVertices() const override {
+            return m_vertices;
+        }
+
+        const std::vector<uint32_t>& getIndices() const override {
+            return m_indices;
+        }
+
+        Type getType() const override {
+            return Type::Model;
+        }
+
+        Shared<Material> getMaterial() override {
+            return m_material;
+        }
+
+        void setMaterial(Shared<Material> material) override {
+            m_material = material;
+        }
+
+        Type getType() {
+            return Type::Mesh;
+        }
+
     private:
         /**
          * @brief Creates and allocates vertex buffers.
-         * 
-         * @param vertices The list of vertices to store in the buffer.
          */
-        void createVertexBuffers(const std::vector<Model::Vertex>& vertices);
+        void createVertexBuffers();
 
         /**
          * @brief Creates and allocates index buffers.
-         * 
-         * @param indices The list of indices to store in the buffer.
          */
-        void createIndexBuffers(const std::vector<uint32_t>& indices);
+        void createIndexBuffers();
 
         Context& m_context;
+
+        std::vector<Mesh::Vertex>& m_vertices;
+        std::vector<uint32_t>& m_indices;
+		Shared<Material> m_material;
 
         Unique<VulkanBuffer> m_vertexBuffer;
         uint32_t m_vertexCount;
