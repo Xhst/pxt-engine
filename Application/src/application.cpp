@@ -56,9 +56,9 @@ public:
         auto stylizedStoneAO = rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png");
 
         Entity entity = getScene().createEntity("Floor")
-            .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<ModelComponent>(quad);
-
+#if 0
         entity = getScene().createEntity("Roof")
             .add<TransformComponent>(glm::vec3{0.f, -1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})
             .add<ModelComponent>(quad);
@@ -74,6 +74,7 @@ public:
         entity = getScene().createEntity("RightWall")
             .add<TransformComponent>(glm::vec3{ 1.0f, 0.f, 0.0f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ -glm::pi<float>() / 2, -glm::pi<float>() / 2, 0.0f })
             .add<ModelComponent>(quad);
+#endif
 
         glm::vec4 colorWhite = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
         glm::vec4 colorGold = glm::vec4{1.0f, 0.843f, 0.0f, 1.0f};
@@ -81,7 +82,7 @@ public:
             .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})
             .add<ModelComponent>(bunny);
 
-#if 0
+
         // Vase
 		for (int i = 0; i < 5; i++) {
 			glm::vec3 pos = { posDist(gen), posDist(gen), posDist(gen) };
@@ -91,17 +92,15 @@ public:
 
             entity = getScene().createEntity("vase" + std::to_string(i))
                 .add<TransformComponent>(pos, scale, rotation)
-                .add<ModelComponent>(vase)
-                .add<MaterialComponent>(MaterialComponent::Builder()
-					.build());
+                .add<ModelComponent>(vase);
 		}
-#endif
+
         //entity = createPointLight(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights (white, green, blue)
         entity = createPointLight(0.05f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
-        entity.get<TransformComponent>().translation = glm::vec3{1.0f / (float) sqrt(3), 0.5f, 0.2f};
+        entity.get<TransformComponent>().translation = glm::vec3{10.0f / (float) sqrt(3), 0.5f, 0.2f};
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0
         entity = createPointLight(0.1f, 0.025f, glm::vec3{0.f, 1.f, 0.f});

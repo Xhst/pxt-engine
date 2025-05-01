@@ -114,5 +114,6 @@ namespace PXTEngine {
 
 	void UiRenderSystem::buildUi() {
 		// TODO: add ImGui windows
+		ImGui::ShowMetricsWindow();
 	}
 }

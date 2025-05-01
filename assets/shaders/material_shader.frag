@@ -3,8 +3,10 @@
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
-#define EPSILON 0.005
-#define SHADOW_OPACITY 0.5
+#define SHADOW_BIAS 0.005
+#define SHADOW_BIAS_MIN 0.0005
+#define SHADOW_OPACITY 0.4
+#define PCF_RADIUS 0.001
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosWorld;
@@ -85,6 +87,26 @@ void computeLighting(vec3 surfaceNormal, vec3 viewDirection, out vec3 diffuseLig
     }
 }
 
+// Hash-based pseudo-random float generator
+float rand(vec3 co) {
+    return fract(sin(dot(co ,vec3(12.9898,78.233, 37.719))) * 43758.5453);
+}
+
+// Generates a normalized random direction on the sphere
+vec3 randomDirection(int i, vec3 seed) {
+    float xi1 = rand(seed + float(i) * vec3(1.0, 0.0, 0.0));
+    float xi2 = rand(seed + float(i) * vec3(0.0, 1.0, 0.0));
+
+    float theta = 2.0 * 3.14159265 * xi1;
+    float phi = acos(2.0 * xi2 - 1.0);
+
+    float x = sin(phi) * cos(theta);
+    float y = sin(phi) * sin(theta);
+    float z = cos(phi);
+
+    return vec3(x, y, z);
+}
+
 /*
  * Computes the shadow factor for the fragment based on the distance to the light source
  *
@@ -95,12 +117,30 @@ void computeLighting(vec3 surfaceNormal, vec3 viewDirection, out vec3 diffuseLig
 float computeShadowFactor(vec3 surfaceNormal) {
     vec3 lightVec = fragPosWorld - ubo.pointLights[0].position.xyz;
     vec3 lightDir = normalize(lightVec);
-    float bias = max(EPSILON * (1.0 - dot(surfaceNormal, lightDir)), 0.0005);
-
-    float sampledDist = texture(shadowCubeMap, lightVec).r;
+    float bias = max(SHADOW_BIAS * (1.0 - dot(surfaceNormal, lightDir)), SHADOW_BIAS_MIN);
     float dist = length(lightVec);
 
-    return (dist <= sampledDist + bias) ? 1.0 : SHADOW_OPACITY;
+    float shadow = 0.0;
+
+    int totalSamples = 0;
+    float sampledDist = 0.0;
+    
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            for (int z = -1; z <= 1; ++z) {
+                vec3 offset = vec3(x, y, z);
+                vec3 offsetDir = normalize(lightVec + (offset * PCF_RADIUS));
+                sampledDist = texture(shadowCubeMap, offsetDir).r;
+                if (dist > sampledDist + bias) {
+                    shadow += 1.0;
+                }
+                totalSamples++;
+            }
+        }
+    }
+
+    float shadowFactor = 1.0 - (shadow / float(totalSamples));
+    return mix(SHADOW_OPACITY, 1.0, shadowFactor); // soft blend
 }
 
 /*
