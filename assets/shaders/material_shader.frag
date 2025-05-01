@@ -6,7 +6,7 @@ layout(constant_id = 0) const int MAX_LIGHTS = 10;
 #define SHADOW_BIAS 0.005
 #define SHADOW_BIAS_MIN 0.0005
 #define SHADOW_OPACITY 0.4
-#define PCF_RADIUS 0.001
+#define PCF_RADIUS 0.003
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosWorld;
