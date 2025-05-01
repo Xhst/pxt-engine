@@ -347,7 +347,7 @@ namespace PXTEngine {
 					sizeof(ShadowMapPushConstantData),
 					&push);
 
-				auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.model);
+				auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.mesh);
 
 				vulkanModel->bind(frameInfo.commandBuffer);
 				vulkanModel->draw(frameInfo.commandBuffer);

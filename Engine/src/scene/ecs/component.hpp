@@ -256,11 +256,11 @@ namespace PXTEngine
     };
 
     struct ModelComponent {
-        Shared<Mesh> model;
+        Shared<Mesh> mesh;
 
         ModelComponent() = default;
         ModelComponent(const ModelComponent&) = default;
-        ModelComponent(const Shared<Mesh>& model) : model(model) {}
+        ModelComponent(const Shared<Mesh>& mesh) : mesh(mesh) {}
     };
 
     class Script;

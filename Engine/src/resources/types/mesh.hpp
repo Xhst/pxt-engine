@@ -45,6 +45,9 @@ namespace PXTEngine {
 		virtual Shared<Material> getMaterial() = 0;
         virtual void setMaterial(Shared<Material> material) = 0;
 
+		virtual float getTilingFactor() const = 0;
+		virtual void setTilingFactor(float factor) = 0;
+
         static Type getStaticType() { return Type::Mesh; }
     };
 }

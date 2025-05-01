@@ -76,6 +76,14 @@ namespace PXTEngine {
             m_material = material;
         }
 
+		void setTilingFactor(float tilingFactor) override {
+			m_tilingFactor = tilingFactor;
+		}
+
+		float getTilingFactor() const override {
+			return m_tilingFactor;
+		}
+
         Type getType() {
             return Type::Mesh;
         }
@@ -96,6 +104,7 @@ namespace PXTEngine {
         std::vector<Mesh::Vertex>& m_vertices;
         std::vector<uint32_t>& m_indices;
 		Shared<Material> m_material;
+		float m_tilingFactor = 1.0f;
 
         Unique<VulkanBuffer> m_vertexBuffer;
         uint32_t m_vertexCount;

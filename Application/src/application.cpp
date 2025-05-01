@@ -61,6 +61,7 @@ public:
 			.setAmbientOcclusionMap(stylizedStoneAO)
 			.build();
 		ground->setMaterial(stylizedStoneMaterial);
+		ground->setTilingFactor(10.0f);
 
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})

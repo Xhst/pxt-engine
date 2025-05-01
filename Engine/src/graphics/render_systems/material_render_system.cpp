@@ -119,7 +119,8 @@ namespace PXTEngine {
 
             const auto&[transform, model] = view.get<TransformComponent, ModelComponent>(entity);
 
-            auto material = model.model->getMaterial();
+            auto material = model.mesh->getMaterial();
+            auto vulkanMesh = std::static_pointer_cast<VulkanMesh>(model.mesh);
 
             MaterialPushConstantData push{};
             push.modelMatrix = transform.mat4();
@@ -130,7 +131,7 @@ namespace PXTEngine {
             push.textureIndex = m_textureRegistry.getIndex(material->getAlbedoMap()->id);
             push.normalMapIndex = m_textureRegistry.getIndex(material->getNormalMap()->id);
             push.ambientOcclusionMapIndex = m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id);
-            push.tilingFactor = 1.0f;
+            push.tilingFactor = vulkanMesh->getTilingFactor();
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,
@@ -139,11 +140,9 @@ namespace PXTEngine {
                 0,
                 sizeof(MaterialPushConstantData),
                 &push);
-
-            auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.model);
             
-            vulkanModel->bind(frameInfo.commandBuffer);
-            vulkanModel->draw(frameInfo.commandBuffer);
+            vulkanMesh->bind(frameInfo.commandBuffer);
+            vulkanMesh->draw(frameInfo.commandBuffer);
 
         }
     }
