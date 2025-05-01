@@ -55,6 +55,9 @@ namespace PXTEngine {
         // A texture filtering technique that improves the quality of textures when viewed at oblique angles.
         deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
 
+		// Enable fill mode non solid for wireframe support
+		deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
+  
         // Enable the descriptor indexing features
         deviceFeatures2.pNext = &indexingFeatures;
 
@@ -69,6 +72,12 @@ namespace PXTEngine {
 
             throw std::runtime_error("Required descriptor indexing features are not supported!");
         }
+
+		// Check if the required features are supported
+		if (!deviceFeatures2.features.samplerAnisotropy ||
+            !deviceFeatures2.features.fillModeNonSolid) {
+			throw std::runtime_error("Required features are not supported!");
+		}
 
 
         VkDeviceCreateInfo createInfo = {};

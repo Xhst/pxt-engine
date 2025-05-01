@@ -37,6 +37,13 @@ namespace PXTEngine {
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 
+		m_debugRenderSystem = createUnique<DebugRenderSystem>(
+			m_context,
+			m_descriptorAllocator,
+			m_renderer.getSwapChainRenderPass(),
+			*m_globalSetLayout
+		);
+
 		m_uiRenderSystem = createUnique<UiRenderSystem>(
 			m_context,
 			m_renderer.getSwapChainRenderPass(),
@@ -63,6 +70,8 @@ namespace PXTEngine {
 		// begin new frame imgui
 		m_uiRenderSystem->beginBuildingUi();
 
+		this->updateUi();
+
 		// render shadow cube map
 		// the render function of the shadow map render system will
 		// do how many passes it needs to do (6 in this case - 1 point light)
@@ -72,12 +81,35 @@ namespace PXTEngine {
 		// render main frame
 		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
 
-		m_materialRenderSystem->render(frameInfo);
+		// choose if debug or not
+		if (m_isDebugEnabled) {
+			m_debugRenderSystem->render(frameInfo);
+		}
+		else {
+			m_materialRenderSystem->render(frameInfo);
+		}
+		
 		m_pointLightSystem->render(frameInfo);
 
 		// render ui and end imgui frame
 		m_uiRenderSystem->render(frameInfo);
 
 		m_renderer.endRenderPass(frameInfo.commandBuffer);
+	}
+
+	void MasterRenderSystem::updateUi() {
+		ImGui::Begin("Debug Renderer");
+
+		ImGui::Checkbox("Enable Debug", &m_isDebugEnabled);
+		
+		if (m_isDebugEnabled) {
+			ImGui::Text("Debug Renderer is enabled");
+			m_debugRenderSystem->updateUi();
+		}
+		else {
+			ImGui::Text("Debug Renderer is disabled");
+		}
+
+		ImGui::End();
 	}
 }

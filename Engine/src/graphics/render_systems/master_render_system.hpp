@@ -11,6 +11,7 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 #include "graphics/render_systems/point_light_system.hpp"
 #include "graphics/render_systems/ui_render_system.hpp"
+#include "graphics/render_systems/debug_render_system.hpp"
 
 namespace PXTEngine {
 
@@ -34,6 +35,8 @@ namespace PXTEngine {
 	private:
 		void createRenderSystems();
 
+		void updateUi();
+
 		Context& m_context;
 		Renderer& m_renderer;
 		TextureRegistry& m_textureRegistry;
@@ -48,5 +51,8 @@ namespace PXTEngine {
 		Unique<PointLightSystem> m_pointLightSystem{};
 		Unique<ShadowMapRenderSystem> m_shadowMapRenderSystem{};
 		Unique<UiRenderSystem> m_uiRenderSystem{};
+		Unique<DebugRenderSystem> m_debugRenderSystem{};
+
+		bool m_isDebugEnabled = false;
 	};
 }
