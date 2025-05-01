@@ -8,10 +8,11 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in vec4 tangent;
 layout(location = 4) in vec2 uv;
 
-layout(location = 0) out vec3 fragPosWorld;
-layout(location = 1) out vec3 fragNormalWorld;
-layout(location = 2) out vec2 fragUV;
-layout(location = 3) out mat3 fragTBN;
+layout(location = 0) out vec3 fragColor;
+layout(location = 1) out vec3 fragPosWorld;
+layout(location = 2) out vec3 fragNormalWorld;
+layout(location = 3) out vec2 fragUV;
+layout(location = 4) out mat3 fragTBN;
 
 struct PointLight {
 	vec4 position;
@@ -30,9 +31,13 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
 layout(push_constant) uniform Push {
 	mat4 modelMatrix;
 	mat4 normalMatrix;
-    int normalMapIndex;
+	vec4 color;
 	int enableWireframe;
-	int enableNormals;
+	int enableNormalsColor;
+	int textureIndex;
+	int normalMapIndex;
+	int ambientOcclusionMapIndex;
+	float tilingFactor;
 } push;
 
 
@@ -50,6 +55,7 @@ void main() {
 	// tangent.w is the handedness
 	vec3 bitang = cross(norm, tang) * tangent.w;
  
+	fragColor = push.color.xyz;
 	fragPosWorld = positionWorld.xyz;
 	fragNormalWorld = norm;
 	fragUV = uv;

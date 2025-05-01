@@ -40,6 +40,7 @@ namespace PXTEngine {
 		m_debugRenderSystem = createUnique<DebugRenderSystem>(
 			m_context,
 			m_descriptorAllocator,
+			m_textureRegistry,
 			m_renderer.getSwapChainRenderPass(),
 			*m_globalSetLayout
 		);

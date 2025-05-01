@@ -34,9 +34,7 @@ namespace PXTEngine {
 
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
 
-        Unique<DescriptorSetLayout> m_textureDescriptorSetLayout{};
         Unique<DescriptorSetLayout> m_shadowMapDescriptorSetLayout{};
-        VkDescriptorSet m_textureDescriptorSet{};
         VkDescriptorSet m_shadowMapDescriptorSet{};
     };
 }

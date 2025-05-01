@@ -42,28 +42,6 @@ namespace PXTEngine {
     }
 
     void MaterialRenderSystem::createDescriptorSets(VkDescriptorImageInfo shadowMapImageInfo) {
-		// TEXTURE DESCRIPTOR SET
-        m_textureDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, m_textureRegistry.getTextureCount())
-			.build();
-
-		std::vector<VkDescriptorImageInfo> imageInfos;
-		for (const auto& image : m_textureRegistry.getTextures()) {
-            const auto texture = std::static_pointer_cast<Texture2D>(image);
-
-			VkDescriptorImageInfo imageInfo{};
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = texture->getImageView();
-			imageInfo.sampler = texture->getImageSampler();
-			imageInfos.push_back(imageInfo);
-		}
-
-		m_descriptorAllocator->allocate(m_textureDescriptorSetLayout->getDescriptorSetLayout(), m_textureDescriptorSet);
-
-		DescriptorWriter(m_context, *m_textureDescriptorSetLayout)
-			.writeImages(0, imageInfos.data(), static_cast<uint32_t>(imageInfos.size()))
-			.updateSet(m_textureDescriptorSet);
-
         // SHADOW MAP DESCRIPTOR SET
 		m_shadowMapDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -84,7 +62,7 @@ namespace PXTEngine {
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
             globalSetLayout.getDescriptorSetLayout(),
-            m_textureDescriptorSetLayout->getDescriptorSetLayout(),
+            m_textureRegistry.getDescriptorSetLayout(),
             m_shadowMapDescriptorSetLayout->getDescriptorSetLayout()
         };
 
@@ -123,7 +101,7 @@ namespace PXTEngine {
     void MaterialRenderSystem::render(FrameInfo& frameInfo) {
         m_pipeline->bind(frameInfo.commandBuffer);
 
-        std::array<VkDescriptorSet, 3> descriptorSets = { frameInfo.globalDescriptorSet, m_textureDescriptorSet, m_shadowMapDescriptorSet };
+        std::array<VkDescriptorSet, 3> descriptorSets = { frameInfo.globalDescriptorSet, m_textureRegistry.getDescriptorSet(), m_shadowMapDescriptorSet};
 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

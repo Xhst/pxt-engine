@@ -38,6 +38,8 @@ namespace PXTEngine {
         createDefaultResources();
         loadScene();
         registerImages();
+        m_textureRegistry.setDescriptorAllocator(m_descriptorAllocator);
+		m_textureRegistry.createDescriptorSet();
 
         m_masterRenderSystem = createUnique<MasterRenderSystem>(
             m_context,

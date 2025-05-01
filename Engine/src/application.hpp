@@ -76,7 +76,7 @@ namespace PXTEngine {
         Scene m_scene{};
 
         ResourceManager m_resourceManager{};
-        TextureRegistry m_textureRegistry{};
+        TextureRegistry m_textureRegistry{m_context};
 
         static Application* m_instance;
 

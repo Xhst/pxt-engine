@@ -41,7 +41,7 @@ public:
             .build();
 		bunny->setMaterial(bunnyMaterial);
 
-        auto quad = rm.get<Mesh>(MODELS_PATH + "quad.obj");
+        auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
         auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
 
         auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png");
@@ -55,9 +55,16 @@ public:
         auto stylizedStoneNormal = rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png");
         auto stylizedStoneAO = rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png");
 
+		auto stylizedStoneMaterial = Material::Builder()
+			.setAlbedoMap(stylizedStoneBase)
+			.setNormalMap(stylizedStoneNormal)
+			.setAmbientOcclusionMap(stylizedStoneAO)
+			.build();
+		ground->setMaterial(stylizedStoneMaterial);
+
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<ModelComponent>(quad);
+            .add<ModelComponent>(ground);
 #if 0
         entity = getScene().createEntity("Roof")
             .add<TransformComponent>(glm::vec3{0.f, -1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})

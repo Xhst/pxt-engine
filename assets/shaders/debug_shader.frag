@@ -3,10 +3,11 @@
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
-layout(location = 0) in vec3 fragPosWorld;
-layout(location = 1) in vec3 fragNormalWorld;
-layout(location = 2) in vec2 fragUV;
-layout(location = 3) in mat3 fragTBN;
+layout(location = 0) in vec3 fragColor;
+layout(location = 1) in vec3 fragPosWorld;
+layout(location = 2) in vec3 fragNormalWorld;
+layout(location = 3) in vec2 fragUV;
+layout(location = 4) in mat3 fragTBN;
 
 layout(location = 0) out vec4 outColor;
 
@@ -24,12 +25,18 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     int numLights;
 } ubo;
 
+layout(set = 1, binding = 0) uniform sampler2D textures[];
+
 layout(push_constant) uniform Push {
 	mat4 modelMatrix;
 	mat4 normalMatrix;
-    int normalMapIndex;
+    vec4 color;
 	int enableWireframe;
-	int enableNormals;
+	int enableNormalsColor;
+	int textureIndex;
+	int normalMapIndex;
+	int ambientOcclusionMapIndex;
+	float tilingFactor;
 } push;
 
 /*
@@ -39,9 +46,9 @@ layout(push_constant) uniform Push {
  * and transforms it into world space using the TBN matrix.
  */
 vec3 getSurfaceNormal(vec2 texCoords) {
-    //vec3 normalMapValue = texture(textures[push.normalMapIndex], texCoords).rgb;
-    //normalMapValue = normalMapValue * 2.0 - 1.0;
-    //return normalize(fragTBN * normalMapValue);
+    vec3 normalMapValue = texture(textures[push.normalMapIndex], texCoords).rgb;
+    normalMapValue = normalMapValue * 2.0 - 1.0;
+    return normalize(fragTBN * normalMapValue);
 
     return normalize(fragNormalWorld);
 }
@@ -76,19 +83,30 @@ void computeLighting(vec3 surfaceNormal, vec3 viewDirection, out vec3 diffuseLig
     }
 }
 
-void main() {
-    vec3 fragColor = vec3(1.0, 1.0, 1.0); // Default color
 
+/*
+ * Applies ambient occlusion to the given color using the ambient occlusion map.
+ */
+void applyAmbientOcclusion(inout vec3 color, vec2 texCoords) {
+    float ao = texture(textures[push.ambientOcclusionMapIndex], texCoords).r;
+    color *= ao;
+}
+
+
+void main() {
     if (push.enableWireframe == 1) {
         outColor = vec4(0.0, 1.0, 0.0, 1.0);
         return;
     }
 
-    vec2 texCoords = fragUV; //* push.tilingFactor;
+    vec2 texCoords = fragUV * push.tilingFactor;
 
-    vec3 surfaceNormal = getSurfaceNormal(texCoords);
+    vec3 surfaceNormal = normalize(fragNormalWorld);
+    if (push.normalMapIndex != -1) {
+        surfaceNormal = getSurfaceNormal(texCoords);
+    }
 
-    if (push.enableNormals == 1) {
+    if (push.enableNormalsColor == 1) {
         outColor = vec4(surfaceNormal * 0.5 + 0.5, 1.0);
         return;
     }
@@ -99,9 +117,18 @@ void main() {
     vec3 diffuseLight, specularLight;
     computeLighting(surfaceNormal, viewDirection, diffuseLight, specularLight);
 
+    vec3 imageColor = vec3(1.0, 1.0, 1.0); // Default color
+    if (push.textureIndex != -1) {
+        imageColor = texture(textures[push.textureIndex], texCoords).rgb;
+    }
+
     // we need to add control coefficients to regulate both terms (diffuse/specular)
     // for now we use fragColor for both which is ideal for metallic objects
-    vec3 baseColor = (diffuseLight * fragColor + specularLight * fragColor);
+    vec3 baseColor = (diffuseLight * fragColor + specularLight * fragColor) * imageColor;
+
+    if (push.ambientOcclusionMapIndex != -1) {
+        applyAmbientOcclusion(baseColor, texCoords);
+    }
 
     outColor = vec4(baseColor, 1.0);
 }

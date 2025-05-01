@@ -18,13 +18,17 @@ namespace PXTEngine {
     struct DebugPushConstantData {
         glm::mat4 modelMatrix{1.f};
         glm::mat4 normalMatrix{1.f};
-        uint32_t normalMapIndex;
+		glm::vec4 color{ 1.f };
         uint32_t enableWireframe{0};
 		uint32_t enableNormals{0};
+		int textureIndex = 0;
+		int normalMapIndex = 1;
+		int ambientOcclusionMapIndex = 0;
+		float tilingFactor = 1.0f;
     };
 
-    DebugRenderSystem::DebugRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout)
-	: m_context(context), m_descriptorAllocator(descriptorAllocator) {
+    DebugRenderSystem::DebugRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout)
+		: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry) {
         createPipelineLayout(globalSetLayout);
         createPipelines(renderPass);
     }
@@ -40,7 +44,8 @@ namespace PXTEngine {
         pushConstantRange.size = sizeof(DebugPushConstantData);
 
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
-            globalSetLayout.getDescriptorSetLayout()
+            globalSetLayout.getDescriptorSetLayout(),
+			m_textureRegistry.getDescriptorSetLayout()
         };
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -86,14 +91,14 @@ namespace PXTEngine {
     }
 
     void DebugRenderSystem::render(FrameInfo& frameInfo) {
-		if (m_enableWireframe) {
+		if (m_renderMode == Wireframe) {
 			m_pipelineWireframe->bind(frameInfo.commandBuffer);
 		}
 		else {
 			m_pipelineSolid->bind(frameInfo.commandBuffer);
 		}
 
-        std::array<VkDescriptorSet, 1> descriptorSets = { frameInfo.globalDescriptorSet};
+        std::array<VkDescriptorSet, 2> descriptorSets = {frameInfo.globalDescriptorSet, m_textureRegistry.getDescriptorSet()};
 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,
@@ -116,9 +121,14 @@ namespace PXTEngine {
             DebugPushConstantData push{};
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
-            push.enableWireframe = (uint32_t)m_enableWireframe;
-			push.enableNormals = (uint32_t)m_enableNormals;
-            push.normalMapIndex = 1;
+			push.color = material->getAlbedoColor();
+			push.textureIndex = m_isAlbedoMapEnabled ? m_textureRegistry.getIndex(material->getAlbedoMap()->id) : -1;
+			push.normalMapIndex = m_isNormalMapEnabled ? m_textureRegistry.getIndex(material->getNormalMap()->id) : -1;
+			push.ambientOcclusionMapIndex = m_isAOMapEnabled ? m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id) : -1;
+			push.tilingFactor = 1.0f;
+
+            push.enableWireframe = (uint32_t)(m_renderMode == Wireframe);
+			push.enableNormals = (uint32_t)m_isNormalColorEnabled;
             
 
             vkCmdPushConstants(
@@ -138,7 +148,14 @@ namespace PXTEngine {
     }
 
     void DebugRenderSystem::updateUi() {
-		ImGui::Checkbox("Enable Wireframe", &m_enableWireframe);
-		ImGui::Checkbox("Show Normals as Color", &m_enableNormals);
+		ImGui::Text("Render Mode:");
+		ImGui::RadioButton("Wireframe", &m_renderMode, Wireframe);
+        ImGui::RadioButton("Fill", &m_renderMode, Fill);
+        ImGui::BeginDisabled(m_renderMode == Wireframe);
+		ImGui::Checkbox("Show Normals as Color", &m_isNormalColorEnabled);
+		ImGui::Checkbox("Show Albedo Map", &m_isAlbedoMapEnabled);
+		ImGui::Checkbox("Show Normal Map", &m_isNormalMapEnabled);
+		ImGui::Checkbox("Show Ambient Occlusion Map", &m_isAOMapEnabled);
+		ImGui::EndDisabled();
     }
 }
