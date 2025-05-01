@@ -96,7 +96,7 @@ namespace PXTEngine {
 		osAttachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		osAttachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		osAttachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		osAttachments[0].initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		osAttachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		osAttachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		// Depth attachment
