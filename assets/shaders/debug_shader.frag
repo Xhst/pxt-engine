@@ -1,7 +1,9 @@
 #version 450
 #extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_GOOGLE_include_directive : require
 
-layout(constant_id = 0) const int MAX_LIGHTS = 10;
+#include "ubo/global_ubo.glsl"
+#include "material/surface_normal.glsl"
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosWorld;
@@ -10,20 +12,6 @@ layout(location = 3) in vec2 fragUV;
 layout(location = 4) in mat3 fragTBN;
 
 layout(location = 0) out vec4 outColor;
-
-struct PointLight {
-    vec4 position;  // .xyz = world position, .w = unused
-    vec4 color;     // .xyz = RGB color, .w = intensity
-};
-
-layout(set = 0, binding = 0) uniform GlobalUbo {
-    mat4 projectionMatrix;
-    mat4 viewMatrix;
-    mat4 inverseViewMatrix;
-    vec4 ambientLightColor;
-    PointLight pointLights[MAX_LIGHTS];
-    int numLights;
-} ubo;
 
 layout(set = 1, binding = 0) uniform sampler2D textures[];
 
@@ -38,20 +26,6 @@ layout(push_constant) uniform Push {
 	int ambientOcclusionMapIndex;
 	float tilingFactor;
 } push;
-
-/*
- * Extract and transform surface normal from the normal map.
- *
- * Samples the normal from a normal map, converts it from [0,1] to [-1,1],
- * and transforms it into world space using the TBN matrix.
- */
-vec3 getSurfaceNormal(vec2 texCoords) {
-    vec3 normalMapValue = texture(textures[push.normalMapIndex], texCoords).rgb;
-    normalMapValue = normalMapValue * 2.0 - 1.0;
-    return normalize(fragTBN * normalMapValue);
-
-    return normalize(fragNormalWorld);
-}
 
 /*
  * Compute diffuse and specular lighting (Blinn-Phong model).
@@ -102,8 +76,10 @@ void main() {
     vec2 texCoords = fragUV * push.tilingFactor;
 
     vec3 surfaceNormal = normalize(fragNormalWorld);
+
     if (push.normalMapIndex != -1) {
-        surfaceNormal = getSurfaceNormal(texCoords);
+        vec3 normalMapValue = texture(textures[push.normalMapIndex], texCoords).rgb;
+        surfaceNormal = calculateSurfaceNormal(normalMapValue, fragTBN);
     }
 
     if (push.enableNormalsColor == 1) {

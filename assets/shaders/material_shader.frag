@@ -1,7 +1,9 @@
 #version 450
 #extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_GOOGLE_include_directive : require
 
-layout(constant_id = 0) const int MAX_LIGHTS = 10;
+#include "ubo/global_ubo.glsl"
+#include "material/surface_normal.glsl"
 
 #define SHADOW_BIAS 0.005
 #define SHADOW_BIAS_MIN 0.0005
@@ -15,20 +17,6 @@ layout(location = 3) in vec2 fragUV;
 layout(location = 4) in mat3 fragTBN;
 
 layout(location = 0) out vec4 outColor;
-
-struct PointLight {
-    vec4 position;  // .xyz = world position, .w = unused
-    vec4 color;     // .xyz = RGB color, .w = intensity
-};
-
-layout(set = 0, binding = 0) uniform GlobalUbo {
-    mat4 projectionMatrix;
-    mat4 viewMatrix;
-    mat4 inverseViewMatrix;
-    vec4 ambientLightColor;
-    PointLight pointLights[MAX_LIGHTS];
-    int numLights;
-} ubo;
 
 layout(set = 1, binding = 0) uniform sampler2D textures[];
 layout(set = 2, binding = 0) uniform samplerCube shadowCubeMap;
@@ -44,18 +32,6 @@ layout(push_constant) uniform Push {
     int ambientOcclusionMapIndex;
     float tilingFactor;
 } push;
-
-/*
- * Extract and transform surface normal from the normal map.
- *
- * Samples the normal from a normal map, converts it from [0,1] to [-1,1],
- * and transforms it into world space using the TBN matrix.
- */
-vec3 getSurfaceNormal(vec2 texCoords) {
-    vec3 normalMapValue = texture(textures[push.normalMapIndex], texCoords).rgb;
-    normalMapValue = normalMapValue * 2.0 - 1.0;
-    return normalize(fragTBN * normalMapValue);
-}
 
 /*
  * Compute diffuse and specular lighting (Blinn-Phong model).
@@ -85,26 +61,6 @@ void computeLighting(vec3 surfaceNormal, vec3 viewDirection, out vec3 diffuseLig
 
         specularLight += lightColor * blinnTerm * push.specularIntensity;
     }
-}
-
-// Hash-based pseudo-random float generator
-float rand(vec3 co) {
-    return fract(sin(dot(co ,vec3(12.9898,78.233, 37.719))) * 43758.5453);
-}
-
-// Generates a normalized random direction on the sphere
-vec3 randomDirection(int i, vec3 seed) {
-    float xi1 = rand(seed + float(i) * vec3(1.0, 0.0, 0.0));
-    float xi2 = rand(seed + float(i) * vec3(0.0, 1.0, 0.0));
-
-    float theta = 2.0 * 3.14159265 * xi1;
-    float phi = acos(2.0 * xi2 - 1.0);
-
-    float x = sin(phi) * cos(theta);
-    float y = sin(phi) * sin(theta);
-    float z = cos(phi);
-
-    return vec3(x, y, z);
 }
 
 /*
@@ -154,7 +110,9 @@ void applyAmbientOcclusion(inout vec3 color, vec2 texCoords) {
 void main() {
     vec2 texCoords = fragUV * push.tilingFactor;
 
-    vec3 surfaceNormal = getSurfaceNormal(texCoords);
+    vec3 normalMapValue = texture(textures[push.normalMapIndex], texCoords).rgb;
+    vec3 surfaceNormal = calculateSurfaceNormal(normalMapValue, fragTBN);
+
     vec3 cameraPosWorld = ubo.inverseViewMatrix[3].xyz;
     vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);
 

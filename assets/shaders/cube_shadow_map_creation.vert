@@ -1,6 +1,7 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
 
-layout(constant_id = 0) const int MAX_LIGHTS = 10;
+#include "ubo/shadow_ubo.glsl"
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 color;
@@ -10,19 +11,6 @@ layout(location = 4) in vec2 uv;
 
 layout(location = 0) out vec3 fragPosWorld;
 layout(location = 1) out vec3 fragLightPos;
-
-struct PointLight {
-  vec4 position;
-  vec4 color;
-};
-
-layout(set = 0, binding = 0) uniform ShadowUbo {
-  mat4 projection;
-  // this is a matrix that translates model coordinates to light coordinates
-  mat4 lightOriginModel; // we could consider passing this as push constants in the future? (i think no, because we will have too many lights :(  )
-  PointLight pointLights[MAX_LIGHTS];
-  int numLights;
-} ubo;
 
 layout(push_constant) uniform Push {
   // it will be modified to translate the object to the light position (i think so?)
