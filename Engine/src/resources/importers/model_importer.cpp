@@ -109,7 +109,8 @@ namespace PXTEngine {
             .setAlbedoMap(rm.get<Image>(WHITE_PIXEL))
             .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
             .setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
-            .setMetallicRoughnessMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
+            .setMetallicMap(rm.get<Image>(BLACK_PIXEL_LINEAR))
+			.setRoughnessMap(rm.get<Image>(GRAY_PIXEL_LINEAR))
             .build();
 
 		return VulkanMesh::create(vertices, indices, material);

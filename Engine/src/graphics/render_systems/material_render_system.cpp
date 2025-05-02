@@ -25,6 +25,8 @@ namespace PXTEngine {
         int textureIndex = 0;
         int normalMapIndex = 1;
         int ambientOcclusionMapIndex = 0;
+        int metallicMapIndex = 0;
+		int roughnessMapIndex = 0;
 		float tilingFactor = 1.0f;
     };
 

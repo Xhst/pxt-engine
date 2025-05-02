@@ -98,6 +98,7 @@ namespace PXTEngine {
         std::unordered_map<std::string, std::pair<uint32_t, ImageFormat>> defaultImagesData = {
             {WHITE_PIXEL, {0xFFFFFFFF, RGBA8_SRGB} },
             {WHITE_PIXEL_LINEAR, {0xFFFFFFFF, RGBA8_LINEAR} },
+			{GRAY_PIXEL_LINEAR, {0xFF808080, RGBA8_LINEAR} },
             {BLACK_PIXEL_LINEAR, {0xFF000000, RGBA8_LINEAR} },
             {NORMAL_PIXEL_LINEAR, {0xFFFF8080, RGBA8_LINEAR} }
         };

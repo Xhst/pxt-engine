@@ -50,16 +50,20 @@ public:
         auto barrelNormal = rm.get<Image>(TEXTURES_PATH + "barrel/barrel_normal.png");
         auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png");
         auto wallStoneNormal = rm.get<Image>(TEXTURES_PATH + "wall_stone/normal.png");
+        auto wallStoneRoughness = rm.get<Image>(TEXTURES_PATH + "wall_stone/roughness.png");
         auto wallStoneAO = rm.get<Image>(TEXTURES_PATH + "wall_stone/ambient_occlusion.png");
         auto stylizedStoneBase = rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png");
         auto stylizedStoneNormal = rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png");
+		auto stylizedStoneRoughness = rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png");
         auto stylizedStoneAO = rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png");
 
 		auto stylizedStoneMaterial = Material::Builder()
 			.setAlbedoMap(stylizedStoneBase)
 			.setNormalMap(stylizedStoneNormal)
+			.setRoughnessMap(stylizedStoneRoughness)
 			.setAmbientOcclusionMap(stylizedStoneAO)
 			.build();
+
 		ground->setMaterial(stylizedStoneMaterial);
 		ground->setTilingFactor(10.0f);
 

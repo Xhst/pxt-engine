@@ -28,8 +28,13 @@ namespace PXTEngine {
 				return *this;
 			}
 
-			Builder& setMetallicRoughnessMap(Shared<Image> map) {
-				m_metallicRoughnessMap = map;
+			Builder& setMetallicMap(Shared<Image> map) {
+				m_metallicMap = map;
+				return *this;
+			}
+
+			Builder& setRoughnessMap(Shared<Image> map) {
+				m_roughnessMap = map;
 				return *this;
 			}
 
@@ -54,14 +59,17 @@ namespace PXTEngine {
 			}
 
 			Shared<Material> build() {
-				return createShared<Material>(m_albedoColor, m_albedoMap, m_normalMap, m_metallicRoughnessMap,m_ambientOcclusionMap, m_emissiveFactor, m_emissiveMap);
+				return createShared<Material>(m_albedoColor, m_albedoMap, m_normalMap,
+					m_metallicMap, m_roughnessMap, m_ambientOcclusionMap, 
+					m_emissiveFactor, m_emissiveMap);
 			}
 
 		protected:
 			glm::vec4 m_albedoColor{ 1.0f };
 			Shared<Image> m_albedoMap{ nullptr };
 			Shared<Image> m_normalMap{ nullptr };
-			Shared<Image> m_metallicRoughnessMap{ nullptr };
+			Shared<Image> m_metallicMap{ nullptr };
+			Shared<Image> m_roughnessMap{ nullptr };
 			Shared<Image> m_ambientOcclusionMap{ nullptr };
 			glm::vec3 m_emissiveFactor{ 0.0f, 0.0f, 0.0f };
 			Shared<Image> m_emissiveMap{ nullptr };
@@ -71,14 +79,16 @@ namespace PXTEngine {
 			const glm::vec4& albedoColor,
 			const Shared<Image>& albedoMap,
 			const Shared<Image>& normalMap,
-			const Shared<Image>& metallicRoughnessMap,
+			const Shared<Image>& metallicMap,
+			const Shared<Image>& roughnessMap,
 			const Shared<Image>& ambientOcclusionMap,
 			const glm::vec3& emissiveFactor,
 			const Shared<Image>& emissiveMap)
 			: m_albedoColor(albedoColor),
 			m_albedoMap(albedoMap),
 			m_normalMap(normalMap),
-			m_metallicRoughnessMap(metallicRoughnessMap),
+			m_metallicMap(metallicMap),
+			m_roughnessMap(roughnessMap),
 			m_ambientOcclusionMap(ambientOcclusionMap),
 			m_emissiveFactor(emissiveFactor),
 			m_emissiveMap(emissiveMap) {}
@@ -97,8 +107,12 @@ namespace PXTEngine {
 			return m_albedoMap;
 		}
 
-		Shared<Image> getMetallicRoughnessMap() const {
-			return m_metallicRoughnessMap;
+		Shared<Image> getMetallicMap() const {
+			return m_metallicMap;
+		}
+
+		Shared<Image> getRoughnessMap() const {
+			return m_roughnessMap;
 		}
 
 		Shared<Image> getNormalMap() const {
@@ -123,7 +137,9 @@ namespace PXTEngine {
 
 		Shared<Image> m_normalMap{ nullptr };
 
-		Shared<Image> m_metallicRoughnessMap{ nullptr };
+		Shared<Image> m_metallicMap{ nullptr };
+
+		Shared<Image> m_roughnessMap{ nullptr };
 
 		Shared<Image> m_ambientOcclusionMap{ nullptr };
 
