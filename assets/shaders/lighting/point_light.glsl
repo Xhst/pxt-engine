@@ -1,5 +1,5 @@
-#ifndef __POINT_LIGHT__
-#define __POINT_LIGHT__
+#ifndef _POINT_LIGHT_
+#define _POINT_LIGHT_
 
 struct PointLight {
     vec4 position;  // .xyz = world position, .w = unused

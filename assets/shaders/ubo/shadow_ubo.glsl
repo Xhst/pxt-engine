@@ -1,7 +1,7 @@
-#ifndef __SHADOW_UBO__
-#define __SHADOW_UBO__
+#ifndef _SHADOW_UBO_
+#define _SHADOW_UBO_
 
-#include "../common/point_light.glsl"
+#include "../lighting/point_light.glsl"
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 

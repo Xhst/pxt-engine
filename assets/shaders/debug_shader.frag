@@ -4,6 +4,7 @@
 
 #include "ubo/global_ubo.glsl"
 #include "material/surface_normal.glsl"
+#include "lighting/blinn_phong_lighting.glsl"
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec3 fragPosWorld;
@@ -28,37 +29,6 @@ layout(push_constant) uniform Push {
 } push;
 
 /*
- * Compute diffuse and specular lighting (Blinn-Phong model).
- *
- * Calculates the total diffuse and specular contributions from all active point lights.
- * Uses Blinn-Phong reflection for specular highlights.
- */
-void computeLighting(vec3 surfaceNormal, vec3 viewDirection, out vec3 diffuseLight, out vec3 specularLight) {
-    diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
-    specularLight = vec3(0.0);
-
-    for (int i = 0; i < ubo.numLights; i++) {
-        PointLight light = ubo.pointLights[i];
-        vec3 vectorToLight = light.position.xyz - fragPosWorld;
-        float attenuation = 1.0 / dot(vectorToLight, vectorToLight);
-        vec3 directionToLight = normalize(vectorToLight);
-        float cosAngleIncidence = max(dot(surfaceNormal, directionToLight), 0.0);
-        vec3 lightColor = light.color.xyz * light.color.w * attenuation;
-
-        // Diffuse component
-        diffuseLight += lightColor * cosAngleIncidence;
-
-        // Specular component (Blinn-Phong)
-        vec3 halfAngle = normalize(directionToLight + viewDirection);
-        float blinnTerm = clamp(dot(surfaceNormal, halfAngle), 0.0, 1.0);
-        blinnTerm = pow(blinnTerm, 0);
-
-        specularLight += lightColor * blinnTerm * 1;
-    }
-}
-
-
-/*
  * Applies ambient occlusion to the given color using the ambient occlusion map.
  */
 void applyAmbientOcclusion(inout vec3 color, vec2 texCoords) {
@@ -78,8 +48,7 @@ void main() {
     vec3 surfaceNormal = normalize(fragNormalWorld);
 
     if (push.normalMapIndex != -1) {
-        vec3 normalMapValue = texture(textures[push.normalMapIndex], texCoords).rgb;
-        surfaceNormal = calculateSurfaceNormal(normalMapValue, fragTBN);
+        surfaceNormal = calculateSurfaceNormal(textures[push.normalMapIndex], texCoords, fragTBN);
     }
 
     if (push.enableNormalsColor == 1) {
@@ -91,7 +60,10 @@ void main() {
     vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);
 
     vec3 diffuseLight, specularLight;
-    computeLighting(surfaceNormal, viewDirection, diffuseLight, specularLight);
+    float shininess = 1.0;
+    float specularIntensity = 0.0;
+    computeBlinnPhongLighting(surfaceNormal, viewDirection, fragPosWorld, 
+        shininess, specularIntensity, diffuseLight, specularLight);
 
     vec3 imageColor = vec3(1.0, 1.0, 1.0); // Default color
     if (push.textureIndex != -1) {

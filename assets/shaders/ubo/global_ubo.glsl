@@ -1,7 +1,7 @@
-#ifndef __GLOBAL_UBO__
-#define __GLOBAL_UBO__
+#ifndef _GLOBAL_UBO_
+#define _GLOBAL_UBO_
 
-#include "../common/point_light.glsl"
+#include "../lighting/point_light.glsl"
 
 layout(constant_id = 0) const int MAX_LIGHTS = 10;
 
