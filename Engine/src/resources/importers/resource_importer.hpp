@@ -5,12 +5,13 @@
 #include "resources/resource_manager.hpp"
 
 #include <filesystem>
+#include <optional>
 
 namespace PXTEngine {
 
     class ResourceImporter {
     public:
-        static Shared<Resource> import(const std::filesystem::path& filePath,
-            ResourceManager& rm);
+        static Shared<Resource> import(ResourceManager& rm, const std::filesystem::path& filePath,
+            ResourceInfo* resourceInfo = nullptr);
     };
 }

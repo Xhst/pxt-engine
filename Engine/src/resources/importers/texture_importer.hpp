@@ -10,7 +10,7 @@ namespace PXTEngine {
 
 	class TextureImporter {
 	public:
-		static Shared<Image> import(const std::filesystem::path& filePath,
-			ResourceManager& rm);
+		static Shared<Image> import(ResourceManager& rm, const std::filesystem::path& filePath, 
+			ResourceInfo* resourceInfo = nullptr);
 	};
 }

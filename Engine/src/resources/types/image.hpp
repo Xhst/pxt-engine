@@ -4,14 +4,14 @@
 
 namespace PXTEngine {
 
-	enum ImageFormat : uint16_t {
+	enum ImageFormat : uint8_t {
 		RGB8_SRGB = 0,
 		RGBA8_SRGB,
 		RGB8_LINEAR,
 		RGBA8_LINEAR,
 	};
 
-	struct ImageInfo {
+	struct ImageInfo : public ResourceInfo {
 		uint32_t width = 0;
 		uint32_t height = 0;
 		uint16_t channels = 0;
@@ -22,6 +22,7 @@ namespace PXTEngine {
 		ImageInfo(const uint32_t width, const uint32_t height, const uint16_t channels, 
 				  const ImageFormat format = RGBA8_SRGB)
 			: width(width), height(height), channels(channels), format(format) {}
+		ImageInfo(const ImageInfo& other) = default;
 	};
 
     class Image : public Resource {

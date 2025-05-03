@@ -13,8 +13,9 @@
 
 namespace PXTEngine {
 
-	Shared<Mesh> ModelImporter::importObj(const std::filesystem::path& filePath,
-        ResourceManager& rm) {
+	Shared<Mesh> ModelImporter::importObj(ResourceManager& rm, const std::filesystem::path& filePath,
+        ResourceInfo* resourceInfo) {
+
 	    std::vector<Mesh::Vertex> vertices{};  // List of vertices in the model.
 	    std::vector<uint32_t> indices{}; // List of indices for indexed rendering.
 

@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <functional>
+#include <optional>
 #include <string>
 
 namespace PXTEngine {
@@ -15,11 +16,11 @@ namespace PXTEngine {
 
 		
 		template<typename T>
-        Shared<T> get(const std::string& alias) {
-              return std::static_pointer_cast<T>(get(alias));
+        Shared<T> get(const std::string& alias, ResourceInfo* resourceInfo = nullptr) {
+              return std::static_pointer_cast<T>(get(alias, resourceInfo));
         }
 		
-		Shared<Resource> get(const std::string& alias);
+		Shared<Resource> get(const std::string& alias, ResourceInfo* resourceInfo = nullptr);
 
 		/**
 		 * @brief Adds a resource to the manager.

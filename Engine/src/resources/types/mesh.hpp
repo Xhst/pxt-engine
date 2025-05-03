@@ -15,6 +15,9 @@
 
 namespace PXTEngine {
 
+	struct MeshInfo : public ResourceInfo {
+	};
+
     class Mesh : public Resource {
     public:
 

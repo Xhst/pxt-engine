@@ -9,12 +9,13 @@
 
 namespace PXTEngine {
 
-	Shared<Image> TextureImporter::import(const std::filesystem::path& filePath,
-		ResourceManager& rm) {
+	Shared<Image> TextureImporter::import(ResourceManager& rm, const std::filesystem::path& filePath,
+		ResourceInfo* resourceInfo) {
+
 		int width, height, channels;
 
         // Currently every image is loaded as RGBA
-        int requestedChannels = STBI_rgb_alpha;
+		constexpr uint16_t requestedChannels = STBI_rgb_alpha;
 
 		Buffer pixels;
 
@@ -34,9 +35,19 @@ namespace PXTEngine {
 		}
 
 		ImageInfo imageInfo;
-		imageInfo.width = width;
-		imageInfo.height = height;
-		imageInfo.channels = requestedChannels;
+
+        if (resourceInfo != nullptr) {
+            if (const auto* info = dynamic_cast<ImageInfo*>(resourceInfo)) {
+                imageInfo = *info;
+                imageInfo.width = width;
+                imageInfo.height = height;
+                imageInfo.channels = requestedChannels;
+            } else {
+                throw std::runtime_error("TextureImporter - Invalid resourceInfo type: not ImageInfo");
+            }
+        } else {
+            imageInfo = ImageInfo(width, height, requestedChannels, RGBA8_LINEAR);
+        }
 
 		return Texture2D::create(imageInfo, pixels);
 	}

@@ -8,6 +8,11 @@ namespace PXTEngine {
 
 	using ResourceId = UUID;
 
+	struct ResourceInfo
+	{
+		virtual ~ResourceInfo() = default;
+	};
+
 	/**
 	 * @class Resource
 	 *

@@ -9,6 +9,8 @@
 
 namespace PXTEngine {
 
+	struct ModelInfo : public ResourceInfo {};
+
     class Model : public Resource {
     public:
 		virtual const std::vector<Shared<Mesh>>& getMeshes() const = 0;

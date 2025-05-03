@@ -33,9 +33,12 @@ public:
 
         auto& rm = getResourceManager();
 
+        ImageInfo albedoInfo{};
+        albedoInfo.format = RGBA8_SRGB;
+
         auto bunny = rm.get<Mesh>(MODELS_PATH + "bunny/bunny.obj");
         auto bunnyMaterial = Material::Builder()
-            .setAlbedoMap(rm.get<Image>(MODELS_PATH + "bunny/terracotta.jpg"))
+            .setAlbedoMap(rm.get<Image>(MODELS_PATH + "bunny/terracotta.jpg", &albedoInfo))
             .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
 			.setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
             .build();
@@ -44,15 +47,15 @@ public:
         auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
         auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
 
-        auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png");
-        auto texture = rm.get<Image>(TEXTURES_PATH + "texture.jpg");
-        auto barrelBase = rm.get<Image>(TEXTURES_PATH + "barrel/barrel.png");
+        auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png", &albedoInfo);
+        auto texture = rm.get<Image>(TEXTURES_PATH + "texture.jpg", &albedoInfo);
+        auto barrelBase = rm.get<Image>(TEXTURES_PATH + "barrel/barrel.png", &albedoInfo);
         auto barrelNormal = rm.get<Image>(TEXTURES_PATH + "barrel/barrel_normal.png");
-        auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png");
+        auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png", &albedoInfo);
         auto wallStoneNormal = rm.get<Image>(TEXTURES_PATH + "wall_stone/normal.png");
         auto wallStoneRoughness = rm.get<Image>(TEXTURES_PATH + "wall_stone/roughness.png");
         auto wallStoneAO = rm.get<Image>(TEXTURES_PATH + "wall_stone/ambient_occlusion.png");
-        auto stylizedStoneBase = rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png");
+        auto stylizedStoneBase = rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png", &albedoInfo);
         auto stylizedStoneNormal = rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png");
 		auto stylizedStoneRoughness = rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png");
         auto stylizedStoneAO = rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png");

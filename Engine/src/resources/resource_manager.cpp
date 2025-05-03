@@ -8,7 +8,8 @@
 
 namespace PXTEngine {
 
-	Shared<Resource> ResourceManager::get(const std::string& alias) {
+	Shared<Resource> ResourceManager::get(const std::string& alias, ResourceInfo* resourceInfo) {
+
 		auto aliasIt = m_aliases.find(alias);
 
 		const ResourceId id = aliasIt != m_aliases.end()
@@ -22,7 +23,7 @@ namespace PXTEngine {
 		const auto filePath = std::filesystem::path(alias);
 
 		try {
-			auto importedResource = ResourceImporter::import(filePath, *this);
+			auto importedResource = ResourceImporter::import(*this, filePath, resourceInfo);
 
 			add(importedResource, alias);
 
