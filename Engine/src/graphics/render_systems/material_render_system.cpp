@@ -128,10 +128,12 @@ namespace PXTEngine {
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
             push.color = material->getAlbedoColor();
-            push.specularIntensity = 1.0f;
+            push.specularIntensity = 0.0f;
             push.shininess = 1.0f;
             push.textureIndex = m_textureRegistry.getIndex(material->getAlbedoMap()->id);
             push.normalMapIndex = m_textureRegistry.getIndex(material->getNormalMap()->id);
+			//push.metallicMapIndex = m_textureRegistry.getIndex(material->getMetallicMap()->id);
+			//push.roughnessMapIndex = m_textureRegistry.getIndex(material->getRoughnessMap()->id);
             push.ambientOcclusionMapIndex = m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id);
             push.tilingFactor = vulkanMesh->getTilingFactor();
 

@@ -27,6 +27,8 @@ layout(push_constant) uniform Push {
     int textureIndex;
     int normalMapIndex;
     int ambientOcclusionMapIndex;
+    int metallicMapIndex;
+	int roughnessMapIndex;
     float tilingFactor;
 } push;
 
