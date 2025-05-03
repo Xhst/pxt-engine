@@ -117,6 +117,17 @@ namespace PXTEngine {
             Shared<Image> image = createShared<Texture2D>(m_context, info, buffer);
             m_resourceManager.add(image, name);
         }
+
+        auto defaultMaterial = Material::Builder()
+            .setAlbedoColor(glm::vec4(1.0f))
+            .setAlbedoMap(m_resourceManager.get<Image>(WHITE_PIXEL))
+            .setNormalMap(m_resourceManager.get<Image>(NORMAL_PIXEL_LINEAR))
+            .setAmbientOcclusionMap(m_resourceManager.get<Image>(WHITE_PIXEL_LINEAR))
+            .setMetallicMap(m_resourceManager.get<Image>(BLACK_PIXEL_LINEAR))
+            .setRoughnessMap(m_resourceManager.get<Image>(GRAY_PIXEL_LINEAR))
+            .build();
+
+		m_resourceManager.add(defaultMaterial, DEFAULT_MATERIAL);
     }
 
     void Application::registerImages() {

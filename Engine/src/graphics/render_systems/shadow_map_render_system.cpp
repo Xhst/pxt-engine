@@ -322,7 +322,7 @@ namespace PXTEngine {
 		vkCmdSetScissor(frameInfo.commandBuffer, 0, 1, &scissor);
 
 		// get all the entities with a transform and model component (for later)
-        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ModelComponent>();
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MeshComponent>();
 
 		// Loop through each face of the cube map and render the scene from that perspective
 		// we need one render pass per face of the cube map, each time we modify the view matrix
@@ -335,7 +335,7 @@ namespace PXTEngine {
 
 			for (auto entity : view) {
 
-				const auto& [transform, model] = view.get<TransformComponent, ModelComponent>(entity);
+				const auto& [transform, meshComponent] = view.get<TransformComponent, MeshComponent>(entity);
 
 				push.modelMatrix = transform.mat4();
 
@@ -347,7 +347,7 @@ namespace PXTEngine {
 					sizeof(ShadowMapPushConstantData),
 					&push);
 
-				auto vulkanModel = std::static_pointer_cast<VulkanMesh>(model.mesh);
+				auto vulkanModel = std::static_pointer_cast<VulkanMesh>(meshComponent.mesh);
 
 				vulkanModel->bind(frameInfo.commandBuffer);
 				vulkanModel->draw(frameInfo.commandBuffer);

@@ -3,7 +3,6 @@
 #include "core/memory.hpp"
 #include "core/error_handling.hpp"
 #include "core/constants.hpp"
-#include "graphics/resources/texture2d.hpp"
 #include "graphics/resources/vk_mesh.hpp"
 #include "scene/ecs/entity.hpp"
 
@@ -116,18 +115,18 @@ namespace PXTEngine {
             nullptr
         );
 
-        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ModelComponent>();
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MeshComponent, MaterialComponent>();
         for (auto entity : view) {
 
-            const auto&[transform, model] = view.get<TransformComponent, ModelComponent>(entity);
+            const auto&[transform, meshComponent, materialComponent] = view.get<TransformComponent, MeshComponent, MaterialComponent>(entity);
 
-            auto material = model.mesh->getMaterial();
-            auto vulkanMesh = std::static_pointer_cast<VulkanMesh>(model.mesh);
+			auto material = materialComponent.material;
+            auto vulkanMesh = std::static_pointer_cast<VulkanMesh>(meshComponent.mesh);
 
             MaterialPushConstantData push{};
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
-            push.color = material->getAlbedoColor();
+            push.color = material->getAlbedoColor() * glm::vec4(materialComponent.tint, 1.0f);
             push.specularIntensity = 0.0f;
             push.shininess = 1.0f;
             push.textureIndex = m_textureRegistry.getIndex(material->getAlbedoMap()->id);
@@ -135,7 +134,7 @@ namespace PXTEngine {
 			//push.metallicMapIndex = m_textureRegistry.getIndex(material->getMetallicMap()->id);
 			//push.roughnessMapIndex = m_textureRegistry.getIndex(material->getRoughnessMap()->id);
             push.ambientOcclusionMapIndex = m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id);
-            push.tilingFactor = vulkanMesh->getTilingFactor();
+            push.tilingFactor = materialComponent.tilingFactor;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,

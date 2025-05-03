@@ -3,7 +3,6 @@
 #include "camera_controller.hpp"
 #include "rotating_light_controller.hpp"
 
-#include <iostream>
 #include <random>
 
 using namespace PXTEngine;
@@ -42,10 +41,10 @@ public:
             .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
 			.setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
             .build();
-		bunny->setMaterial(bunnyMaterial);
 
         auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
         auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
+		auto defaultMaterial = rm.get<Material>(DEFAULT_MATERIAL);
 
         auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png", &albedoInfo);
         auto texture = rm.get<Image>(TEXTURES_PATH + "texture.jpg", &albedoInfo);
@@ -67,12 +66,13 @@ public:
 			.setAmbientOcclusionMap(stylizedStoneAO)
 			.build();
 
-		ground->setMaterial(stylizedStoneMaterial);
-		ground->setTilingFactor(10.0f);
-
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<ModelComponent>(ground);
+            .add<MeshComponent>(ground)
+			.add<MaterialComponent>(MaterialComponent::Builder()
+				.setMaterial(stylizedStoneMaterial)
+				.setTilingFactor(50.0f)
+				.build());
 #if 0
         entity = getScene().createEntity("Roof")
             .add<TransformComponent>(glm::vec3{0.f, -1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})
@@ -94,8 +94,11 @@ public:
         glm::vec4 colorWhite = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
         glm::vec4 colorGold = glm::vec4{1.0f, 0.843f, 0.0f, 1.0f};
         entity = getScene().createEntity("Bunny")
-            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f})
-            .add<ModelComponent>(bunny);
+            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
+            .add<MeshComponent>(bunny)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(bunnyMaterial)
+                .build());
 
 
         // Vase
@@ -107,7 +110,9 @@ public:
 
             entity = getScene().createEntity("vase" + std::to_string(i))
                 .add<TransformComponent>(pos, scale, rotation)
-                .add<ModelComponent>(vase);
+                .add<MeshComponent>(vase);
+
+			entity.addAndGet<MaterialComponent>().tint = glm::vec3(0.1f, 0.3f, 0.9f);
 		}
 
         //entity = createPointLight(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});

@@ -111,22 +111,22 @@ namespace PXTEngine {
             nullptr
         );
 
-        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, ModelComponent>();
+        auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MeshComponent, MaterialComponent>();
         for (auto entity : view) {
 
-            const auto&[transform, model] = view.get<TransformComponent, ModelComponent>(entity);
+            const auto&[transform, meshComponent, materialComponent] = view.get<TransformComponent, MeshComponent, MaterialComponent>(entity);
 
-            auto material = model.mesh->getMaterial();
-            auto vulkanMesh = std::static_pointer_cast<VulkanMesh>(model.mesh);
+			auto material = materialComponent.material;
+            auto vulkanMesh = std::static_pointer_cast<VulkanMesh>(meshComponent.mesh);
 
             DebugPushConstantData push{};
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
-			push.color = material->getAlbedoColor();
+			push.color = material->getAlbedoColor() * glm::vec4(materialComponent.tint, 1.0f);
 			push.textureIndex = m_isAlbedoMapEnabled ? m_textureRegistry.getIndex(material->getAlbedoMap()->id) : -1;
 			push.normalMapIndex = m_isNormalMapEnabled ? m_textureRegistry.getIndex(material->getNormalMap()->id) : -1;
 			push.ambientOcclusionMapIndex = m_isAOMapEnabled ? m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id) : -1;
-            push.tilingFactor = vulkanMesh->getTilingFactor();
+			push.tilingFactor = materialComponent.tilingFactor;
 
             push.enableWireframe = (uint32_t)(m_renderMode == Wireframe);
 			push.enableNormals = (uint32_t)m_isNormalColorEnabled;

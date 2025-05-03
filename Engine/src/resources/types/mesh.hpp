@@ -2,7 +2,6 @@
 
 #include "core/memory.hpp"
 #include "resources/resource.hpp"
-#include "resources/types/material.hpp"
 #include "utils/hash_func.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -44,12 +43,6 @@ namespace PXTEngine {
 
         virtual const std::vector<Vertex>& getVertices() const = 0;
         virtual const std::vector<uint32_t>& getIndices() const  = 0;
-
-		virtual Shared<Material> getMaterial() = 0;
-        virtual void setMaterial(Shared<Material> material) = 0;
-
-		virtual float getTilingFactor() const = 0;
-		virtual void setTilingFactor(float factor) = 0;
 
         static Type getStaticType() { return Type::Mesh; }
     };

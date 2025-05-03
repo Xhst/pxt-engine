@@ -2,7 +2,7 @@
 
 #include "resources/resource.hpp"
 #include "resources/importers/texture_importer.hpp"
-#include "resources/importers/model_importer.hpp"
+#include "resources/importers/mesh_importer.hpp"
 
 #include <unordered_map>
 #include <stdexcept>
@@ -20,7 +20,7 @@ namespace PXTEngine {
             {".png", TextureImporter::import},
             {".jpg", TextureImporter::import},
             {".jpeg", TextureImporter::import},
-            {".obj", ModelImporter::importObj}
+            {".obj", MeshImporter::importObj}
         };
     }
 

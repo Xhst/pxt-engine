@@ -15,7 +15,8 @@
 
 #include "resources/resource.hpp"
 #include "resources/types/image.hpp"
-#include "resources/types/model.hpp"
+#include "resources/types/material.hpp"
+#include "resources/types/mesh.hpp"
 
 #include "scene/scene.hpp"
 #include "scene/ecs/entity.hpp"

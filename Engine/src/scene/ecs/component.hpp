@@ -1,14 +1,15 @@
 
 #pragma once
 
+#include "application.hpp"
 #include "core/uuid.hpp"
 #include "core/memory.hpp"
-#include "resources/resource.hpp"
-#include "resources/types/model.hpp"
+#include "core/constants.hpp"
+#include "resources/types/mesh.hpp"
+#include "resources/types/material.hpp"
 #include "scene/camera.hpp"
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace PXTEngine
 {
@@ -45,92 +46,43 @@ namespace PXTEngine
     };
 
     struct MaterialComponent {
-        glm::vec4 color{1.0f};
-        float specularIntensity = 0.0f;
-        float shininess = 1.0f;
-        ResourceId texture;
-		ResourceId normalMap;
-        ResourceId ambientOcclusionMap;
+		Shared<Material> material;
 		float tilingFactor = 1.0f;
+        glm::vec3 tint{ 1.0f };
 
-        MaterialComponent() = default;
-        MaterialComponent(glm::vec4 color, float specularIntensity, float shininess, 
-						  const ResourceId& texture, const ResourceId& normalMap, const ResourceId& aoMap, float tilingFactor) :
-    		color(color),
-    		specularIntensity(specularIntensity),
-    		shininess(shininess),
-    		texture(texture),
-			normalMap(normalMap),
-			ambientOcclusionMap(aoMap),
-    		tilingFactor(tilingFactor){}
-        
+		MaterialComponent() {
+            auto &rm = Application::get().getResourceManager();
 
-        MaterialComponent(const MaterialComponent&) = default;
-        MaterialComponent(MaterialComponent&&) = default; // Explicit move constructor
-        MaterialComponent& operator=(MaterialComponent&&) = default; // Explicit move assignment
-        
-        struct Builder {
-            glm::vec4 color{1.0f};
-            float specularIntensity = 0.0f;
-            float shininess = 1.0f;
-            ResourceId texture;
-			ResourceId normalMap;
-            ResourceId ambientOcclusionMap;
-            float tilingFactor = 1.0f;
+			material = rm.get<Material>(DEFAULT_MATERIAL);
+		}
 
-            Builder& setColor(const glm::vec4& color) {
-                this->color = color;
-                return *this;
-            }
+		MaterialComponent(const MaterialComponent&) = default;
+		MaterialComponent(const Shared<Material>& material, float tilingFactor, const glm::vec3& tint) : material(material), tilingFactor(tilingFactor), tint(tint) {}
 
-            Builder& setColor(const glm::vec3& color, float w = 1.f) {
-                this->color = glm::vec4{color, w};
-                return *this;
-            }
+		struct Builder {
+			Shared<Material> material;
+			float tilingFactor = 1.0f;
+			glm::vec3 tint{ 1.0f };
 
-            Builder& setSpecularIntensity(float specularIntensity) {
-                this->specularIntensity = specularIntensity;
-                return *this;
-            }
-
-            Builder& setShininess(float shininess) {
-                this->shininess = shininess;
-                return *this;
-            }
-
-            Builder& setTexture(const ResourceId& texture) {
-                this->texture = texture;
-                return *this;
-            }
-
-			Builder& setNormalMap(const ResourceId& normalMap) {
-				this->normalMap = normalMap;
+			Builder& setMaterial(const Shared<Material>& material) {
+				this->material = material;
 				return *this;
 			}
-
-            Builder& setAmbientOcclusionMap(const ResourceId& aoMap) {
-                this->ambientOcclusionMap = aoMap;
-                return *this;
-            }
 
 			Builder& setTilingFactor(float tilingFactor) {
 				this->tilingFactor = tilingFactor;
 				return *this;
 			}
 
-            [[nodiscard]]
-        	MaterialComponent build() const {
-                return MaterialComponent{
-                	color,
-                	specularIntensity,
-                	shininess,
-                	texture,
-                	normalMap,
-                    ambientOcclusionMap,
-                    tilingFactor
-                };
-            }
-        };
+			Builder& setTint(const glm::vec3& tint) {
+				this->tint = tint;
+				return *this;
+			}
+
+			MaterialComponent build() {
+				return MaterialComponent(material, tilingFactor, tint);
+			}
+		};
     };
 
     struct Transform2dComponent {
@@ -255,12 +207,12 @@ namespace PXTEngine
         operator glm::mat4() { return mat4(); }
     };
 
-    struct ModelComponent {
+    struct MeshComponent {
         Shared<Mesh> mesh;
 
-        ModelComponent() = default;
-        ModelComponent(const ModelComponent&) = default;
-        ModelComponent(const Shared<Mesh>& mesh) : mesh(mesh) {}
+        MeshComponent() = default;
+        MeshComponent(const MeshComponent&) = default;
+        MeshComponent(const Shared<Mesh>& mesh) : mesh(mesh) {}
     };
 
     class Script;

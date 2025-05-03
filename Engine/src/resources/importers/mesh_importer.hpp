@@ -9,7 +9,7 @@
 
 namespace PXTEngine {
 
-	class ModelImporter {
+	class MeshImporter {
 	public:
 		static Shared<Mesh> importObj(ResourceManager& rm, const std::filesystem::path& filePath,
 			ResourceInfo* resourceInfo = nullptr);

@@ -1,4 +1,4 @@
-#include "resources/importers/model_importer.hpp"
+#include "resources/importers/mesh_importer.hpp"
 
 #include "core/constants.hpp"
 #include "core/memory.hpp"
@@ -13,7 +13,7 @@
 
 namespace PXTEngine {
 
-	Shared<Mesh> ModelImporter::importObj(ResourceManager& rm, const std::filesystem::path& filePath,
+	Shared<Mesh> MeshImporter::importObj(ResourceManager& rm, const std::filesystem::path& filePath,
         ResourceInfo* resourceInfo) {
 
 	    std::vector<Mesh::Vertex> vertices{};  // List of vertices in the model.
@@ -105,15 +105,6 @@ namespace PXTEngine {
             v2.tangent = tangent4;
         }
 
-        auto material = Material::Builder()
-            .setAlbedoColor(glm::vec4(1.0f))
-            .setAlbedoMap(rm.get<Image>(WHITE_PIXEL))
-            .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
-            .setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
-            .setMetallicMap(rm.get<Image>(BLACK_PIXEL_LINEAR))
-			.setRoughnessMap(rm.get<Image>(GRAY_PIXEL_LINEAR))
-            .build();
-
-		return VulkanMesh::create(vertices, indices, material);
+		return VulkanMesh::create(vertices, indices);
 	}
 }

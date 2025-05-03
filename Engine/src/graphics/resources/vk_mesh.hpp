@@ -31,11 +31,9 @@ namespace PXTEngine {
          */
         static std::vector<VkVertexInputAttributeDescription> getVertexAttributeDescriptions();
 
-        static Unique<VulkanMesh> create(std::vector<Mesh::Vertex>& vertices, 
-            std::vector<uint32_t>& indices, Shared<Material> material);
+        static Unique<VulkanMesh> create(std::vector<Mesh::Vertex>& vertices, std::vector<uint32_t>& indices);
 
-        VulkanMesh(Context& context, std::vector<Mesh::Vertex>& vertices, 
-            std::vector<uint32_t>& indices, Shared<Material> material);
+        VulkanMesh(Context& context, std::vector<Mesh::Vertex>& vertices, std::vector<uint32_t>& indices);
 
         ~VulkanMesh() override;
 
@@ -57,34 +55,14 @@ namespace PXTEngine {
         void draw(VkCommandBuffer commandBuffer);
 
         const std::vector<Vertex>& getVertices() const override {
-            return m_vertices;
+			return m_vertices;
         }
 
         const std::vector<uint32_t>& getIndices() const override {
-            return m_indices;
+			return m_indices;
         }
 
         Type getType() const override {
-            return Type::Model;
-        }
-
-        Shared<Material> getMaterial() override {
-            return m_material;
-        }
-
-        void setMaterial(Shared<Material> material) override {
-            m_material = material;
-        }
-
-		void setTilingFactor(float tilingFactor) override {
-			m_tilingFactor = tilingFactor;
-		}
-
-		float getTilingFactor() const override {
-			return m_tilingFactor;
-		}
-
-        Type getType() {
             return Type::Mesh;
         }
 
@@ -103,7 +81,6 @@ namespace PXTEngine {
 
         std::vector<Mesh::Vertex>& m_vertices;
         std::vector<uint32_t>& m_indices;
-		Shared<Material> m_material;
 		float m_tilingFactor = 1.0f;
 
         Unique<VulkanBuffer> m_vertexBuffer;

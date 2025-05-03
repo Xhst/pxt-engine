@@ -6,15 +6,15 @@
 namespace PXTEngine {
 
     Unique<VulkanMesh> VulkanMesh::create(std::vector<Mesh::Vertex>& vertices, 
-        std::vector<uint32_t>& indices, Shared<Material> material) {
+        std::vector<uint32_t>& indices) {
         Context& context = Application::get().getContext();
 
-        return createUnique<VulkanMesh>(context, vertices, indices, material);
+        return createUnique<VulkanMesh>(context, vertices, indices);
     }
 
     VulkanMesh::VulkanMesh(Context& context, std::vector<Mesh::Vertex>& vertices, 
-        std::vector<uint32_t>& indices, Shared<Material> material)
-        : m_context(context), m_vertices(vertices), m_indices(indices), m_material(material) {
+        std::vector<uint32_t>& indices)
+        : m_context(context), m_vertices(vertices), m_indices(indices) {
         createVertexBuffers();
         createIndexBuffers();
     }
