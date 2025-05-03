@@ -31,16 +31,21 @@ namespace PXTEngine {
     Application::~Application() {};
 
     void Application::start() {
-        createDescriptorPoolAllocator();
-        createUboBuffers();
-        createGlobalDescriptorSet();
-
+		// load default and scene assets and register them in the resource registry
         createDefaultResources();
         loadScene();
         registerImages();
+
+		// create the pool manager, ubo buffers, and global descriptor sets
+		createDescriptorPoolAllocator();
+		createUboBuffers();
+		createGlobalDescriptorSet();
+
+		// create the descriptor sets for the textures
         m_textureRegistry.setDescriptorAllocator(m_descriptorAllocator);
 		m_textureRegistry.createDescriptorSet();
 
+		// create the render systems
         m_masterRenderSystem = createUnique<MasterRenderSystem>(
             m_context,
             m_renderer,
@@ -55,9 +60,10 @@ namespace PXTEngine {
     }
 
 	void Application::createDescriptorPoolAllocator() {
+		// for now we have one ubo and a lot of textures
 		std::vector<PoolSizeRatio> ratios = {
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f},
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5.0f},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<float>(m_textureRegistry.getTextureCount())},
 		};
 
 		m_descriptorAllocator = createShared<DescriptorAllocatorGrowable>(m_context, SwapChain::MAX_FRAMES_IN_FLIGHT, ratios);
