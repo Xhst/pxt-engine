@@ -10,6 +10,7 @@
 #include "graphics/render_systems/master_render_system.hpp"
 #include "graphics/resources/texture_registry.hpp"
 #include "resources/resource_manager.hpp"
+#include "resources/types/material.hpp"
 #include "scene/scene.hpp"
 
 #define GLM_FORCE_RADIANS

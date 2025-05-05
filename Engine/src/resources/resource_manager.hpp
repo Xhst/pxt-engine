@@ -5,10 +5,12 @@
 
 #include <unordered_map>
 #include <functional>
-#include <optional>
 #include <string>
 
 namespace PXTEngine {
+
+	// forward declaration
+	class Material;
 
 	class ResourceManager {
 	public:
@@ -38,6 +40,8 @@ namespace PXTEngine {
 		 * @param function The function to apply to each resource.
 		 */
 		void foreach(const std::function<void(const Shared<Resource>&)>& function);
+
+		static Shared<Material> defaultMaterial;
 	          
 	private:
 	    std::unordered_map<ResourceId, Shared<Resource>> m_resources;
