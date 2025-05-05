@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/platform.hpp"
+
 #include <filesystem>
 #include <iostream>
 #include <format>
@@ -9,12 +11,26 @@
 
 #define PXT_ERROR(fmt, ...) std::cerr << std::format(fmt, __VA_ARGS__) << "\n"
 
+#if defined(PXT_PLATFORM_WINDOWS)
+	// Use the Windows-specific intrinsic
+	#define PXT_DEBUG_BREAK() __debugbreak()
+#elif defined(PXT_PLATFORM_POSIX_LIKE)
+	// Use the POSIX signal method for Apple, Android, Linux, Unix, and generic POSIX
+	#include <signal.h>
+	#define PXT_DEBUG_BREAK() raise(SIGTRAP)
+#elif defined(__GNUC__) || defined(__clang__)
+	// Use GCC/Clang built-in function
+	#define PXT_DEBUG_BREAK() __builtin_trap()
+#else
+	#error "Unsupported platform for debug break"
+#endif
+
 // Internal assertion implementation
 #define PXT_ASSERT_IMPL(condition, msg, ...) \
     do { \
         if (!(condition)) { \
             PXT_ERROR(msg, __VA_ARGS__); \
-            __debugbreak(); \
+            PXT_DEBUG_BREAK(); \
         } \
     } while (0)
 
