@@ -14,136 +14,60 @@ namespace PXTEngine {
 
     class Material : public Resource {
     public:
-		class Builder {
-		public:
-			Builder() = default;
+        class Builder {
+        public:
+            Builder& setAlbedoColor(const glm::vec4& color);
+            Builder& setAlbedoMap(Shared<Image> map);
+            Builder& setMetallicMap(Shared<Image> map);
+            Builder& setRoughnessMap(Shared<Image> map);
+            Builder& setNormalMap(Shared<Image> map);
+            Builder& setAmbientOcclusionMap(Shared<Image> map);
+            Builder& setEmissiveFactor(const glm::vec3& factor);
+            Builder& setEmissiveMap(Shared<Image> map);
+            Shared<Material> build();
 
-			Builder& setAlbedoColor(const glm::vec4& color) {
-				m_albedoColor = color;
-				return *this;
-			}
+        protected:
+            glm::vec4 m_albedoColor{ 1.0f };
+            Shared<Image> m_albedoMap{ nullptr };
+            Shared<Image> m_normalMap{ nullptr };
+            Shared<Image> m_metallicMap{ nullptr };
+            Shared<Image> m_roughnessMap{ nullptr };
+            Shared<Image> m_ambientOcclusionMap{ nullptr };
+            glm::vec3 m_emissiveFactor{ 0.0f };
+            Shared<Image> m_emissiveMap{ nullptr };
+        };
 
-			Builder& setAlbedoMap(Shared<Image> map) {
-				m_albedoMap = map;
-				return *this;
-			}
+        Material(
+            const glm::vec4& albedoColor,
+            const Shared<Image>& albedoMap,
+            const Shared<Image>& normalMap,
+            const Shared<Image>& metallicMap,
+            const Shared<Image>& roughnessMap,
+            const Shared<Image>& ambientOcclusionMap,
+            const glm::vec3& emissiveFactor,
+            const Shared<Image>& emissiveMap
+        );
 
-			Builder& setMetallicMap(Shared<Image> map) {
-				m_metallicMap = map;
-				return *this;
-			}
+        static Type getStaticType();
+        Type getType() const override;
 
-			Builder& setRoughnessMap(Shared<Image> map) {
-				m_roughnessMap = map;
-				return *this;
-			}
+        const glm::vec4& getAlbedoColor() const;
+        Shared<Image> getAlbedoMap() const;
+        Shared<Image> getMetallicMap() const;
+        Shared<Image> getRoughnessMap() const;
+        Shared<Image> getNormalMap() const;
+        Shared<Image> getAmbientOcclusionMap() const;
+        const glm::vec3& getEmissiveFactor() const;
+        Shared<Image> getEmissiveMap() const;
 
-			Builder& setNormalMap(Shared<Image> map) {
-				m_normalMap = map;
-				return *this;
-			}
-
-			Builder& setAmbientOcclusionMap(Shared<Image> map) {
-				m_ambientOcclusionMap = map;
-				return *this;
-			}
-
-			Builder& setEmissiveFactor(const glm::vec3& factor) {
-				m_emissiveFactor = factor;
-				return *this;
-			}
-
-			Builder& setEmissiveMap(Shared<Image> map) {
-				m_emissiveMap = map;
-				return *this;
-			}
-
-			Shared<Material> build() {
-				return createShared<Material>(m_albedoColor, m_albedoMap, m_normalMap,
-					m_metallicMap, m_roughnessMap, m_ambientOcclusionMap, 
-					m_emissiveFactor, m_emissiveMap);
-			}
-
-		protected:
-			glm::vec4 m_albedoColor{ 1.0f };
-			Shared<Image> m_albedoMap{ nullptr };
-			Shared<Image> m_normalMap{ nullptr };
-			Shared<Image> m_metallicMap{ nullptr };
-			Shared<Image> m_roughnessMap{ nullptr };
-			Shared<Image> m_ambientOcclusionMap{ nullptr };
-			glm::vec3 m_emissiveFactor{ 0.0f, 0.0f, 0.0f };
-			Shared<Image> m_emissiveMap{ nullptr };
-		};
-
-		Material(
-			const glm::vec4& albedoColor,
-			const Shared<Image>& albedoMap,
-			const Shared<Image>& normalMap,
-			const Shared<Image>& metallicMap,
-			const Shared<Image>& roughnessMap,
-			const Shared<Image>& ambientOcclusionMap,
-			const glm::vec3& emissiveFactor,
-			const Shared<Image>& emissiveMap)
-			: m_albedoColor(albedoColor),
-			m_albedoMap(albedoMap),
-			m_normalMap(normalMap),
-			m_metallicMap(metallicMap),
-			m_roughnessMap(roughnessMap),
-			m_ambientOcclusionMap(ambientOcclusionMap),
-			m_emissiveFactor(emissiveFactor),
-			m_emissiveMap(emissiveMap) {}
-
-		static Type getStaticType() { return Type::Material; }
-
-		Type getType() const override {
-			return Type::Material;
-		}
-
-		const glm::vec4& getAlbedoColor() const {
-			return m_albedoColor;
-		}
-
-		Shared<Image> getAlbedoMap() const {
-			return m_albedoMap;
-		}
-
-		Shared<Image> getMetallicMap() const {
-			return m_metallicMap;
-		}
-
-		Shared<Image> getRoughnessMap() const {
-			return m_roughnessMap;
-		}
-
-		Shared<Image> getNormalMap() const {
-			return m_normalMap;
-		}
-
-        Shared<Image> getAmbientOcclusionMap() const {
-			return m_ambientOcclusionMap;
-		}
-
-        const glm::vec3& getEmissiveFactor() const {
-			return m_emissiveFactor;
-		}
-
-        Shared<Image> getEmissiveMap() const {
-			return m_emissiveMap;
-		}
-
-	protected:
-		glm::vec4 m_albedoColor{ 1.0f, 1.0f, 1.0f, 1.0f };
-		Shared<Image> m_albedoMap{ nullptr };
-
-		Shared<Image> m_normalMap{ nullptr };
-
-		Shared<Image> m_metallicMap{ nullptr };
-
-		Shared<Image> m_roughnessMap{ nullptr };
-
-		Shared<Image> m_ambientOcclusionMap{ nullptr };
-
-		glm::vec3 m_emissiveFactor{ 0.0f, 0.0f, 0.0f };
-		Shared<Image> m_emissiveMap{ nullptr };
+    protected:
+        glm::vec4 m_albedoColor{ 1.0f };
+        Shared<Image> m_albedoMap{ nullptr };
+        Shared<Image> m_normalMap{ nullptr };
+        Shared<Image> m_metallicMap{ nullptr };
+        Shared<Image> m_roughnessMap{ nullptr };
+        Shared<Image> m_ambientOcclusionMap{ nullptr };
+        glm::vec3 m_emissiveFactor{ 0.0f };
+        Shared<Image> m_emissiveMap{ nullptr };
     };
 }
