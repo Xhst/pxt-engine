@@ -1,5 +1,7 @@
 #include "resources/types/material.hpp"
 
+#include "resources/resource_manager.hpp"
+
 namespace PXTEngine {
     Material::Material(
         const glm::vec4& albedoColor,
