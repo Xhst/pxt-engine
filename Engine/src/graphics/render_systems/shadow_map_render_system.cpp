@@ -1,7 +1,7 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 
 #include "core/memory.hpp"
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 #include "graphics/resources/vk_mesh.hpp"

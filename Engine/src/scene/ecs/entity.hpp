@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include "scene/scene.hpp"
 #include "scene/ecs/component.hpp"
 

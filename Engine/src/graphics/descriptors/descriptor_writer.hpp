@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include "graphics/descriptors/descriptor_set_layout.hpp"
 #include "graphics/descriptors/descriptor_pool.hpp"
 

@@ -1,6 +1,6 @@
 #include "scene/camera.hpp"
 
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 
 #include <limits>
 

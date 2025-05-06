@@ -1,6 +1,6 @@
 #include "graphics/render_systems/point_light_system.hpp"
 #include "core/memory.hpp"
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 

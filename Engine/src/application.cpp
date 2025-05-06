@@ -5,7 +5,7 @@
 #include "core/constants.hpp"
 #include "core/events/event_dispatcher.hpp"
 #include "core/events/window_event.hpp"
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
 #include "scene/camera.hpp"

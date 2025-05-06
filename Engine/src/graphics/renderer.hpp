@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/memory.hpp"
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include "graphics/window.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"

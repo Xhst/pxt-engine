@@ -1,6 +1,6 @@
 #include "graphics/renderer.hpp"
 
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 
 #include <array>
 #include <stdexcept>
