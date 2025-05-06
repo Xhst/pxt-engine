@@ -31,9 +31,14 @@ namespace PXTEngine {
     Application::~Application() {};
 
     void Application::start() {
+        PXT_PROFILE_FN();
+
 		// load default and scene assets and register them in the resource registry
         createDefaultResources();
-        loadScene();
+        {
+            PXT_PROFILE("PXTEngine::Application::loadScene");
+            loadScene();
+        }
         registerImages();
 
 		// create the pool manager, ubo buffers, and global descriptor sets
@@ -151,6 +156,7 @@ namespace PXTEngine {
 
 
     void Application::run() {
+
         Camera camera;
         
         auto currentTime = std::chrono::high_resolution_clock::now();

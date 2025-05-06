@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/platform.hpp"
+#include "utils/timer.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -48,3 +49,14 @@
 #define PXT_ASSERT(...) PXT_ASSERT_CHOOSER(__VA_ARGS__)(__VA_ARGS__)
 
 #define PXT_STATIC_ASSERT(condition, msg) static_assert(condition, msg)
+
+#define PXT_ENABLE_PROFILING
+
+// Profiling macros
+#if defined(PXT_ENABLE_PROFILING)
+#define PXT_PROFILE(name) ProfilingTimer timer##__LINE__(name)
+#define PXT_PROFILE_FN() PXT_PROFILE(__FUNCTION__)
+#else
+#define PXT_PROFILE(name)
+#define PXT_PROFILE_FN()
+#endif

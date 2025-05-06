@@ -4,48 +4,24 @@
 #include <string>
 #include <chrono>
 
-namespace PXT_Engine {
+namespace PXTEngine {
 
-	class Timer
-	{
+	class ProfilingTimer {
 	public:
-		Timer()
-		{
-			Reset();
+		explicit ProfilingTimer(std::string name) : m_name(std::move(name)) {
+			m_startTime = std::chrono::high_resolution_clock::now();
 		}
 
-		void Reset()
-		{
-			m_Start = std::chrono::high_resolution_clock::now();
-		}
+		~ProfilingTimer() {
+			const auto endTime = std::chrono::high_resolution_clock::now();
+			const auto elapsedTimeMs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+				endTime - m_startTime).count() * 0.001f * 0.001f;
 
-		float Elapsed()
-		{
-			return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - m_Start).count() * 0.001f * 0.001f * 0.001f;
-		}
-
-		float ElapsedMillis()
-		{
-			return Elapsed() * 1000.0f;
+			std::cout << "[Timer@" << m_name << "] - " << elapsedTimeMs << "ms\n";
 		}
 
 	private:
-		std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
-	};
-
-	class ScopedTimer
-	{
-	public:
-		ScopedTimer(const std::string& name)
-			: m_Name(name) {
-		}
-		~ScopedTimer()
-		{
-			float time = m_Timer.ElapsedMillis();
-			std::cout << "[TIMER] " << m_Name << " - " << time << "ms\n";
-		}
-	private:
-		std::string m_Name;
-		Timer m_Timer;
+		std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime;
+		std::string m_name;
 	};
 }
