@@ -1,6 +1,6 @@
 #include "graphics/pipeline.hpp"
 
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include "graphics/resources/vk_mesh.hpp"
 #include "graphics/frame_info.hpp"
 

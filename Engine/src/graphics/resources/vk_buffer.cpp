@@ -1,6 +1,6 @@
 #include "graphics/resources/vk_buffer.hpp"
 
-#include "core/error_handling.hpp"
+#include "core/diagnostics.hpp"
 #include <cstring>
 #include <stdexcept>
 
