@@ -4,6 +4,12 @@
 
 namespace PXTEngine {
 
+	/**
+	 * @enum ImageFormat
+	 *
+	 * @brief Enum representing different image formats.
+	 * This enum is used to specify the format of images in the engine.
+	 */
 	enum ImageFormat : uint8_t {
 		RGB8_SRGB = 0,
 		RGBA8_SRGB,
@@ -11,6 +17,12 @@ namespace PXTEngine {
 		RGBA8_LINEAR,
 	};
 
+	/**
+	 * @struct ImageInfo
+	 *
+	 * @brief Struct representing additional information about an image resource.
+	 * This struct can be used to store metadata or other relevant information about the image.
+	 */
 	struct ImageInfo : public ResourceInfo {
 		uint32_t width = 0;
 		uint32_t height = 0;
@@ -25,7 +37,12 @@ namespace PXTEngine {
 		ImageInfo(const ImageInfo& other) = default;
 	};
 
-    class Image : public Resource {
+	/**
+	 * @class Image
+	 *
+	 * @brief Represents an image resource used for rendering.
+	 */
+	class Image : public Resource {
     public:
         virtual uint32_t getWidth() = 0;
         virtual uint32_t getHeight() = 0;

@@ -12,6 +12,13 @@
 
 namespace PXTEngine {
 
+	/**
+	 * @class Material
+	 *
+	 * @brief Represents a material resource used for rendering.
+	 * This class encapsulates various properties of a material, including color, textures,
+	 * and other parameters.
+	 */
     class Material : public Resource {
     public:
         class Builder {

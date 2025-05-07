@@ -8,6 +8,12 @@ namespace PXTEngine {
 
 	using ResourceId = UUID;
 
+	/**
+	 * @struct ResourceInfo
+	 *
+	 * @brief Base class for resource information.
+	 * It's used to store additional information about resources.
+	 */
 	struct ResourceInfo
 	{
 		virtual ~ResourceInfo() = default;

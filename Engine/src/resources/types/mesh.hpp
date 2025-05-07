@@ -14,9 +14,21 @@
 
 namespace PXTEngine {
 
+	/**
+	 * @struct MeshInfo
+	 *
+	 * @brief Represents additional information about a mesh resource.
+	 * This struct can be used to store metadata or other relevant information about the mesh.
+	 */
 	struct MeshInfo : public ResourceInfo {
 	};
 
+	/**
+	 * @class Mesh
+	 *
+	 * @brief Represents a 3D mesh resource.
+	 * This class is used to store vertex and index data for rendering.
+	 */
     class Mesh : public Resource {
     public:
 
