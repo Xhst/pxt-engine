@@ -15,6 +15,7 @@ namespace PXTEngine {
 	class ResourceManager {
 	public:
 		ResourceManager() = default;
+		~ResourceManager();
 
 		
 		template<typename T>

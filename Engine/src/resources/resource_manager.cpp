@@ -10,6 +10,10 @@ namespace PXTEngine {
 
 	Shared<Material> ResourceManager::defaultMaterial = nullptr;
 
+	ResourceManager::~ResourceManager() {
+		defaultMaterial = nullptr;
+	}
+
 	Shared<Resource> ResourceManager::get(const std::string& alias, ResourceInfo* resourceInfo) {
 
 		auto aliasIt = m_aliases.find(alias);
