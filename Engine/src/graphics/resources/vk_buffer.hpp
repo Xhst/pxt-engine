@@ -210,6 +210,8 @@ namespace PXTEngine {
          */
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
+		VkDeviceAddress getDeviceAddress() const;
+
         Context& m_context;
         void* m_mapped = nullptr;
         VkBuffer m_buffer = VK_NULL_HANDLE;

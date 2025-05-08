@@ -108,4 +108,15 @@ namespace PXTEngine {
         return invalidate(m_alignmentSize, index * m_alignmentSize);
     }
 
+    VkDeviceAddress VulkanBuffer::getDeviceAddress() const {
+        if (!(m_usageFlags & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)) {
+			PXT_ASSERT(false, "Buffer not created with VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage flag");
+        }
+        VkBufferDeviceAddressInfo addressInfo{};
+        addressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+        addressInfo.buffer = m_buffer;
+        
+        return vkGetBufferDeviceAddress(m_context.getDevice(), &addressInfo);
+    }
+
 }
