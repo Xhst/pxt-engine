@@ -62,6 +62,14 @@ namespace PXTEngine {
 			return m_indices;
         }
 
+		VkDeviceAddress getVertexBufferDeviceAddress() const {
+            return m_vertexBuffer->getDeviceAddress();
+		}
+
+        VkDeviceAddress getIndexBufferDeviceAddress() const {
+            return m_indexBuffer->getDeviceAddress();
+        }
+
         Type getType() const override {
             return Type::Mesh;
         }

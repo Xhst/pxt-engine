@@ -62,6 +62,8 @@ namespace PXTEngine {
          */
         void hasGflwRequiredInstanceExtensions();
 
+        void checkAccelerationStructureExtension();
+
         /**
          * @brief Populates the debug messenger create info structure.
          *

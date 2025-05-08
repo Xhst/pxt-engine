@@ -195,6 +195,8 @@ namespace PXTEngine {
          */
         VkDeviceSize getBufferSize() const { return m_bufferSize; }
 
+        VkDeviceAddress getDeviceAddress() const;
+
         private:
         /**
          * @brief Calculates the aligned instance size.
@@ -209,8 +211,6 @@ namespace PXTEngine {
          * @return VkResult of the buffer mapping call
          */
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
-
-		VkDeviceAddress getDeviceAddress() const;
 
         Context& m_context;
         void* m_mapped = nullptr;
