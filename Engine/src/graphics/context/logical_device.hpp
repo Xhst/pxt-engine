@@ -7,6 +7,8 @@
 #include "graphics/context/surface.hpp"
 #include "graphics/context/physical_device.hpp"
 
+#include "graphics/context/ray_tracing_vk_ext_func.hpp"
+
 namespace PXTEngine {
 
     /**

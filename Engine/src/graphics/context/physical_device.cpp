@@ -153,7 +153,7 @@ namespace PXTEngine {
         // Populates the availableExtensions vector with the properties of each extension.
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-        std::set<std::string> requiredExtensions(m_instance.deviceExtensions.begin(), m_instance.deviceExtensions.end());
+        std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
         // Removes any extension from requiredExtensions that is found in the available extensions list.
         for (const auto& extension : availableExtensions) {

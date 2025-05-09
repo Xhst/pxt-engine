@@ -98,11 +98,6 @@ namespace PXTEngine {
         std::vector<const char *> extensions(
             glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-#if ENABLE_RAYTRACING_EXT
-        extensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-        extensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-#endif
-
         if (enableValidationLayers) {
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
@@ -150,7 +145,6 @@ namespace PXTEngine {
         }
 
         hasGflwRequiredInstanceExtensions();
-        checkAccelerationStructureExtension();
     }
 
     void Instance::setupDebugMessenger() {
@@ -161,25 +155,6 @@ namespace PXTEngine {
 
         if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS) {
             throw std::runtime_error("failed to set up debug messenger!");
-        }
-    }
-
-    void Instance::checkAccelerationStructureExtension() {
-        uint32_t extensionCount = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-        std::vector<VkExtensionProperties> extensions(extensionCount);
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
-
-        bool accelerationStructureFound = false;
-        for (const auto& extension : extensions) {
-            if (strcmp(extension.extensionName, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) == 0) {
-                accelerationStructureFound = true;
-                break;
-            }
-        }
-
-        if (!accelerationStructureFound) {
-            throw std::runtime_error("VK_KHR_acceleration_structure extension not found.");
         }
     }
 
