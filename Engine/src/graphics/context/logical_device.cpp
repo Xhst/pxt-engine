@@ -33,7 +33,14 @@ namespace PXTEngine {
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
-        // This structure is an extension structure that holds information about descriptor indexing features.
+        // --- Feature Structures ---
+
+        // Buffer Device Address Features (Required for RT)
+        VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures{};
+        bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+        bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+
+		// Descriptor Indexing Features
         VkPhysicalDeviceDescriptorIndexingFeaturesEXT indexingFeatures{};
         indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 
@@ -55,16 +62,18 @@ namespace PXTEngine {
         accelStructFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
         accelStructFeatures.accelerationStructure = VK_TRUE; // Enable this feature
 
-        // Chain after Buffer Device Address
-        indexingFeatures.pNext = &accelStructFeatures;
-
         // Ray Tracing Pipeline Features
         VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures{};
         rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
         rtPipelineFeatures.rayTracingPipeline = VK_TRUE; // Enable this feature
 
-        // Chain after Acceleration Structure
+        // --- Feature Chaining ---
+        // Chain the features in this order 
+        // BDA -> Descriptor Indexing -> Accel Struct -> RT Pipeline
+        bufferDeviceAddressFeatures.pNext = &indexingFeatures;
+        indexingFeatures.pNext = &accelStructFeatures;
         accelStructFeatures.pNext = &rtPipelineFeatures;
+        rtPipelineFeatures.pNext = nullptr; // Make sure the last one points to nullptr
 
         // This structure holds the physical device features that are required for the logical device.
         VkPhysicalDeviceFeatures2 deviceFeatures2{};
@@ -78,7 +87,7 @@ namespace PXTEngine {
 		deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
   
         // Enable the descriptor indexing features
-        deviceFeatures2.pNext = &indexingFeatures;
+        deviceFeatures2.pNext = &bufferDeviceAddressFeatures;
 
         // Fetch the physical device features
         vkGetPhysicalDeviceFeatures2(m_physicalDevice.getDevice(), &deviceFeatures2);
@@ -103,7 +112,6 @@ namespace PXTEngine {
         if (!rtPipelineFeatures.rayTracingPipeline) {
             throw std::runtime_error("Required rayTracingPipeline feature is not supported!");
         }
-
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

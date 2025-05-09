@@ -14,30 +14,38 @@ namespace PXTEngine {
 		}
 	}
     
-    Shared<BLAS> BLASRegistry::getOrCreateBLAS(VulkanMesh& mesh) {
+    Shared<BLAS> BLASRegistry::getOrCreateBLAS(Shared<Mesh>& mesh) {
+        VulkanMesh* vkMesh_ptr = dynamic_cast<VulkanMesh*>(mesh.get());
+		if (!vkMesh_ptr) {
+			PXT_ERROR("Failed to cast Mesh to VulkanMesh");
+			return nullptr;
+		}
+
+		VulkanMesh& vkMesh = *vkMesh_ptr;
+
 		// Check if the BLAS already exists in the registry
-		auto it = m_blasRegistry.find(mesh.id);
+		auto it = m_blasRegistry.find(vkMesh.id);
 		if (it != m_blasRegistry.end()) {
 			return it->second;
 		}
         
-        Shared<BLAS> newBlas = createBLAS(mesh);
+        Shared<BLAS> newBlas = createBLAS(vkMesh);
 
 		// Store the new BLAS in the registry
-		m_blasRegistry[mesh.id] = newBlas;
+		m_blasRegistry[vkMesh.id] = newBlas;
 		return newBlas;
     }
 
     VkAccelerationStructureGeometryKHR BLASRegistry::getAccelerationStructureGeometry(VulkanMesh& mesh) {
         VkDeviceAddress vertexBufferAddress = mesh.getVertexBufferDeviceAddress();
 
-        bool meshHasIndexBuffer = !mesh.getIndices().empty();
+        bool meshHasIndexBuffer = mesh.getIndexCount() > 0;
         VkAccelerationStructureGeometryTrianglesDataKHR trianglesData{};
         trianglesData.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
         trianglesData.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT; // Matches Mesh::Vertex::position
         trianglesData.vertexData.deviceAddress = vertexBufferAddress;
         trianglesData.vertexStride = sizeof(Mesh::Vertex);
-        trianglesData.maxVertex = mesh.getVertices().size() - 1; // Max index in the vertex buffer
+        trianglesData.maxVertex = mesh.getVertexCount() - 1; // Max index in the vertex buffer
         trianglesData.indexType = meshHasIndexBuffer ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_NONE_KHR;
         trianglesData.indexData.deviceAddress = meshHasIndexBuffer ? mesh.getIndexBufferDeviceAddress() : 0;
         // transformData can be used for pre-transforming geometry within the BLAS, often identity or null here.
@@ -75,12 +83,11 @@ namespace PXTEngine {
 
         // 3. Query Build Sizes (vkGetAccelerationStructureBuildSizesKHR)
         // to know how much space we need to store the BLAS AND how much space to create it (scratch buffer)
-        bool hasIndices = !mesh.getIndices().empty();
+		bool hasIndices = mesh.getIndexCount() > 0;
         uint32_t numTriangles = hasIndices 
-            ? (mesh.getIndices().size() / 3)
-            : (mesh.getVertices().size() / 3);
+            ? (mesh.getIndexCount() / 3)
+            : (mesh.getVertexCount() / 3);
         std::vector<uint32_t> maxPrimitiveCounts = { numTriangles };
-
 
         newBlas->buildSizes = {};
         newBlas->buildSizes.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;

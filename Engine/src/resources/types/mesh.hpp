@@ -53,8 +53,8 @@ namespace PXTEngine {
             }
         };
 
-        virtual const std::vector<Vertex>& getVertices() const = 0;
-        virtual const std::vector<uint32_t>& getIndices() const  = 0;
+        virtual const uint32_t getVertexCount() const = 0;
+        virtual const uint32_t getIndexCount() const  = 0;
 
         static Type getStaticType() { return Type::Mesh; }
     };

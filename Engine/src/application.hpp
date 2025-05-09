@@ -9,6 +9,7 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/render_systems/master_render_system.hpp"
 #include "graphics/resources/texture_registry.hpp"
+#include "graphics/resources/blas_registry.hpp"
 #include "resources/resource_manager.hpp"
 #include "resources/types/material.hpp"
 #include "scene/scene.hpp"
@@ -78,6 +79,7 @@ namespace PXTEngine {
 
         ResourceManager m_resourceManager{};
         TextureRegistry m_textureRegistry{m_context};
+		BLASRegistry m_blasRegistry{m_context};
 
         static Application* m_instance;
 

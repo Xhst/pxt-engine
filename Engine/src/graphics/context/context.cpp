@@ -59,7 +59,7 @@ namespace PXTEngine {
 
         if (vkCreateBuffer(m_device.getDevice(), &bufferInfo, nullptr, &buffer) !=
             VK_SUCCESS) {
-            throw std::runtime_error("failed to create vertex buffer!");
+            throw std::runtime_error("failed to create buffer!");
         }
 
         VkMemoryRequirements memRequirements;
@@ -70,10 +70,18 @@ namespace PXTEngine {
         allocInfo.allocationSize = memRequirements.size;
         allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
+		VkMemoryAllocateFlagsInfo flagsInfo{};
+		if (usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) {
+			flagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+			flagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+			// Chain the flagsInfo structure to the allocation info
+			allocInfo.pNext = &flagsInfo;
+		}
+
         if (vkAllocateMemory(m_device.getDevice(), &allocInfo, nullptr, &bufferMemory) !=
             VK_SUCCESS) {
             throw std::runtime_error(
-                "failed to allocate vertex buffer memory!");
+                "failed to allocate buffer memory!");
         }
 
         vkBindBufferMemory(m_device.getDevice(), buffer, bufferMemory, 0);

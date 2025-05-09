@@ -26,7 +26,7 @@ namespace PXTEngine {
 		BLASRegistry(const BLASRegistry&) = delete;
 		BLASRegistry& operator=(const BLASRegistry&) = delete;
 
-		Shared<BLAS> getOrCreateBLAS(VulkanMesh& mesh);
+		Shared<BLAS> getOrCreateBLAS(Shared<Mesh>& mesh);
 	private:
 		VkAccelerationStructureGeometryKHR getAccelerationStructureGeometry(VulkanMesh& mesh);
 		Shared<BLAS> createBLAS(VulkanMesh& mesh);

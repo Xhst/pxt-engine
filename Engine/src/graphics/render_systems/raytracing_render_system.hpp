@@ -7,6 +7,7 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/resources/texture_registry.hpp"
+#include "graphics/resources/blas_registry.hpp"
 #include "scene/scene.hpp"
 
 namespace PXTEngine {
@@ -30,6 +31,7 @@ namespace PXTEngine {
 
         Context& m_context;
         TextureRegistry& m_textureRegistry;
+		BLASRegistry& m_blasRegistry;
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;

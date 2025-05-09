@@ -147,10 +147,14 @@ namespace PXTEngine {
     void Application::registerImages() {
 		// iterate over resource and register images
 		m_resourceManager.foreach([&](const Shared<Resource>& resource) {
-			if (resource->getType() != Resource::Type::Image) return;
-
-			const auto image = std::static_pointer_cast<Image>(resource);
-			m_textureRegistry.add(image);
+            if (resource->getType() == Resource::Type::Image) {
+                const auto image = std::static_pointer_cast<Image>(resource);
+                m_textureRegistry.add(image);
+            }
+			else if (resource->getType() == Resource::Type::Mesh) {
+				auto mesh = std::static_pointer_cast<Mesh>(resource);
+				m_blasRegistry.getOrCreateBLAS(mesh);
+			}
 		});
     }
 
