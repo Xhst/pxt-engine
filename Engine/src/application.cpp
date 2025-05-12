@@ -39,7 +39,7 @@ namespace PXTEngine {
             PXT_PROFILE("PXTEngine::Application::loadScene");
             loadScene();
         }
-        registerImages();
+        registerResources();
 
 		// create the pool manager, ubo buffers, and global descriptor sets
 		createDescriptorPoolAllocator();
@@ -56,6 +56,7 @@ namespace PXTEngine {
             m_renderer,
             m_descriptorAllocator,
             m_textureRegistry,
+			m_blasRegistry,
             m_globalSetLayout
         );
 
@@ -144,7 +145,7 @@ namespace PXTEngine {
 		m_resourceManager.add(defaultMaterial, DEFAULT_MATERIAL);
     }
 
-    void Application::registerImages() {
+    void Application::registerResources() {
 		// iterate over resource and register images
 		m_resourceManager.foreach([&](const Shared<Resource>& resource) {
             if (resource->getType() == Resource::Type::Image) {

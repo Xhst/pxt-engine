@@ -2,12 +2,14 @@
 
 namespace PXTEngine {
 	MasterRenderSystem::MasterRenderSystem(Context& context, Renderer& renderer, 
-			Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, 
+			Shared<DescriptorAllocatorGrowable> descriptorAllocator, 
+			TextureRegistry& textureRegistry, BLASRegistry& blasRegistry,
 			Shared<DescriptorSetLayout> globalSetLayout)
 		:	m_context(context), 
 			m_renderer(renderer),
 			m_descriptorAllocator(std::move(descriptorAllocator)),
 			m_textureRegistry(textureRegistry),
+			m_blasRegistry(blasRegistry),
 			m_globalSetLayout(std::move(globalSetLayout)) {
 
 		createRenderSystems();
@@ -52,6 +54,15 @@ namespace PXTEngine {
 			// TODO: replace with scene image info
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
+
+		m_rayTracingRenderSystem = createUnique<RayTracingRenderSystem>(
+			m_context,
+			m_descriptorAllocator,
+			m_textureRegistry,
+			m_blasRegistry,
+			m_renderer.getSwapChainRenderPass(),
+			*m_globalSetLayout
+		);
 	}
 
 	void MasterRenderSystem::onUpdate(FrameInfo& frameInfo, GlobalUbo& ubo) {
@@ -65,6 +76,9 @@ namespace PXTEngine {
 
 		// update shadow map
 		m_shadowMapRenderSystem->update(frameInfo, ubo);
+
+		// update raytracing scene
+		m_rayTracingRenderSystem->update(frameInfo);
 	}
 
 	void MasterRenderSystem::doRenderPasses(FrameInfo& frameInfo) {

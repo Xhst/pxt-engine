@@ -54,7 +54,7 @@ namespace PXTEngine {
 		void createUboBuffers();
         void createGlobalDescriptorSet();
         void createDefaultResources();
-        void registerImages();
+        void registerResources();
 
         void start();
         void run();
@@ -66,6 +66,7 @@ namespace PXTEngine {
 
         Window m_window{WindowData()};
         Context m_context{m_window};
+
         Renderer m_renderer{m_window, m_context};
         Unique<MasterRenderSystem> m_masterRenderSystem;
 

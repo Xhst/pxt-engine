@@ -51,7 +51,7 @@ namespace PXTEngine
         glm::vec3 tint{ 1.0f };
 
 		MaterialComponent() {
-            auto &rm = Application::get().getResourceManager();
+			auto& rm = Application::get().getResourceManager();
 
 			material = rm.get<Material>(DEFAULT_MATERIAL);
 		}
