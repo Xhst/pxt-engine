@@ -61,6 +61,17 @@ namespace PXTEngine {
             return write(binding, imagesInfo, count);
         }
 
+		/**
+		 * @brief Writes a single acceleration structure descriptor to the specified binding.
+		 *
+		 * @param binding The binding index.
+		 * @param writeInfo Acceleration structure descriptor info.
+		 *
+		 * @return Reference to the DescriptorWriter instance.
+		 */
+        DescriptorWriter& writeTLAS(uint32_t binding, VkWriteDescriptorSetAccelerationStructureKHR writeInfo) {
+			return write(binding, &writeInfo, 1);
+        }
 
         /**
          * @brief Overwrites an existing descriptor set with the stored writes.
@@ -100,7 +111,9 @@ namespace PXTEngine {
                 write.pBufferInfo = info;
             } else if constexpr (std::is_same_v<T, VkDescriptorImageInfo>) {
                 write.pImageInfo = info;
-            } else {
+			} else if constexpr (std::is_same_v<T, VkWriteDescriptorSetAccelerationStructureKHR>) {
+				write.pNext = info;
+			} else {
             	PXT_STATIC_ASSERT(false, "Unsupported type for descriptor write");
             }
             
