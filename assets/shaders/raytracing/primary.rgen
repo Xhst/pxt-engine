@@ -1,0 +1,87 @@
+#version 460
+
+#extension GL_EXT_ray_tracing : require
+#extension GL_GOOGLE_include_directive : require
+
+// Include the global UBO definition
+#include "../ubo/global_ubo.glsl"
+
+// Define the ray payload structure. This struct is passed between shader stages.
+// The layout(location = 0) specifies the location for the payload.
+layout(location = 0) rayPayloadEXT struct RayPayload {
+    vec4 color; // The color accumulated along the ray
+    float t;    // The hit distance (t-value)
+} payload;
+
+// Declare the top-level acceleration structure (TLAS)
+layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
+
+void main()
+{
+    // Calculate the ray direction based on the launch ID (pixel coordinates)
+    // and the inverse view-projection matrix from the UBO.
+    // gl_LaunchIDEXT is the pixel coordinate (x, y, z) of the current invocation.
+    // gl_LaunchSizeEXT is the total number of ray generation invocations (width, height, depth).
+    vec2 fragCoord = vec2(gl_LaunchIDEXT.xy);
+    vec2 screenPos = fragCoord / vec2(gl_LaunchSizeEXT.xy);
+    vec2 ndcPos = screenPos * 2.0 - 1.0; // Convert to NDC space [-1, 1]
+
+    // Construct the ray in world space
+    // The ray origin is the camera position (inverse of view matrix translation)
+    vec4 origin = ubo.inverseViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+
+    // The ray target is the point in world space corresponding to the pixel
+    vec4 target = ubo.inverseViewMatrix * inverse(ubo.projectionMatrix) * vec4(ndcPos.x, ndcPos.y, 0.0, 1.0);
+
+    // The ray direction is from origin to target
+    vec3 direction = normalize(target.xyz - origin.xyz);
+
+    // --- Launch the ray ---
+    // traceRayEXT(
+    //     accelerationStructureEXT topLevelAS, // The TLAS to trace against
+    //     uint rayFlags,                       // Flags controlling ray traversal behavior
+    //     uint cullMask,                       // Mask for visibility culling
+    //     uint sbtRecordOffset,                // Offset into the SBT for ray type
+    //     uint sbtRecordStride,                // Stride between SBT records for ray type
+    //     uint missShaderIndex,                // Index of the miss shader in the SBT
+    //     vec3 origin,                         // Ray origin
+    //     float tmin,                          // Minimum ray parameter
+    //     vec3 direction,                      // Ray direction
+    //     float tmax,                          // Maximum ray parameter
+    //     int payloadLocation,                 // Location of the ray payload
+    // );
+
+
+    // For a basic primary ray:
+    // rayFlags: 0 (default)
+    // cullMask: 0xFF (trace against all geometry)
+    // sbtRecordOffset: 0 (assuming the first set of records in SBT is for primary rays)
+    // sbtRecordStride: 0 (assuming a single record per ray type for simplicity)
+    // missShaderIndex: 0 (assuming the first miss shader in SBT is the one we want)
+    // tmin: 0.001 (small offset to avoid self-intersection)
+    // tmax: 10000.0 (arbitrary large value for maximum ray distance)
+    // payloadLocation: 0 (matches the layout(location = 0) of the payload struct)
+
+    traceRayEXT(
+        TLAS,
+        0,         // rayFlags
+        0xFF,      // cullMask
+        0,         // sbtRecordOffset
+        0,         // sbtRecordStride
+        0,         // missShaderIndex
+        origin.xyz,
+        0.001,     // tmin (small epsilon to avoid self-intersection)
+        direction,
+        10000.0,   // tmax
+        0         // payloadLocation
+    );
+
+    // The traceRayEXT call is blocking. When it returns, the payload contains
+    // the result from the closest hit shader (if a hit occurred) or the miss shader.
+    // Output the final color to the framebuffer (implicitly via a storage image binding,
+    // which is not shown in this basic example but would be necessary in a full app).
+    // For demonstration, we'll assume the payload.color is the final pixel color.
+    // In a real application, you would write payload.color to a storage image.
+    // For now, let's just conceptually say the payload holds the result.
+    // payload.color now holds the final color for this pixel.
+}
