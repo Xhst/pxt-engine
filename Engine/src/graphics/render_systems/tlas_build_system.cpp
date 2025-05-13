@@ -3,8 +3,9 @@
 #include "scene/ecs/component.hpp"
 
 namespace PXTEngine {
-	TLASBuildSystem::TLASBuildSystem(Context& context, BLASRegistry& blasRegistry)
-		: m_context(context), m_blasRegistry(blasRegistry) {
+	TLASBuildSystem::TLASBuildSystem(Context& context, BLASRegistry& blasRegistry, Shared<DescriptorAllocatorGrowable> allocator)
+		: m_context(context), m_blasRegistry(blasRegistry), m_descriptorAllocator(allocator) {
+		createDescriptorSetLayout();
 	}
 
 	TLASBuildSystem::~TLASBuildSystem() {
@@ -195,6 +196,9 @@ namespace PXTEngine {
 		// Destroy the scratch buffer (it's only needed during build) and other buffers like
 		// instance buffer or staging buffer. we can potentially keep the instance buffer for reuse.
 		// Buffers will be deleted after end of this function cause they are Unique.
+
+		// Create descriptor set for TLAS
+		createDescriptorSet();
 	}
 
 	VkTransformMatrixKHR TLASBuildSystem::glmToVkTransformMatrix(const glm::mat4& glmMatrix) {
@@ -214,6 +218,28 @@ namespace PXTEngine {
 		}
 
 		return vkMatrix;
+	}
+
+	void TLASBuildSystem::createDescriptorSetLayout() {
+		// TLAS DESCRIPTOR SET LAYOUT
+		// needed for raytracing pipeline layout
+		m_TLASDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+			.build();
+	}
+
+	void TLASBuildSystem::createDescriptorSet() {
+		// TLAS DESCRIPTOR SET
+		m_descriptorAllocator->allocate(m_TLASDescriptorSetLayout->getDescriptorSetLayout(), m_TLASDescriptorSet);
+
+		VkWriteDescriptorSetAccelerationStructureKHR tlasInfo{};
+		tlasInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+		tlasInfo.accelerationStructureCount = 1;
+		tlasInfo.pAccelerationStructures = &m_tlas;
+
+		DescriptorWriter(m_context, *m_TLASDescriptorSetLayout)
+			.writeTLAS(0, tlasInfo)
+			.updateSet(m_TLASDescriptorSet);
 	}
 
 	void TLASBuildSystem::destroyTLAS() {
