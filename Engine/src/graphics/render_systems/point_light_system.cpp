@@ -55,7 +55,7 @@ namespace PXTEngine {
     void PointLightSystem::createPipeline(VkRenderPass renderPass) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
-        PipelineConfigInfo pipelineConfig{};
+        RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         Pipeline::enableAlphaBlending(pipelineConfig);
 

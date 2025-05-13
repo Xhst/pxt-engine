@@ -64,7 +64,7 @@ namespace PXTEngine {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         // Default Solid Pipeline
-        PipelineConfigInfo pipelineConfig{};
+        RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;

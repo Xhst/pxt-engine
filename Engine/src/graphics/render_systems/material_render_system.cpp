@@ -82,7 +82,7 @@ namespace PXTEngine {
     void MaterialRenderSystem::createPipeline(VkRenderPass renderPass) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
-        PipelineConfigInfo pipelineConfig{};
+        RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;

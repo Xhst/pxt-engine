@@ -257,7 +257,7 @@ namespace PXTEngine {
     void ShadowMapRenderSystem::createPipeline() {
 		PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
-        PipelineConfigInfo pipelineConfig{};
+        RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = m_renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
