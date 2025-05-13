@@ -13,7 +13,7 @@ namespace PXTEngine {
 
     class RayTracingRenderSystem {
     public:
-        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, BLASRegistry& blasRegistry, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout);
+        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, BLASRegistry& blasRegistry, DescriptorSetLayout& globalSetLayout);
         ~RayTracingRenderSystem();
 
         RayTracingRenderSystem(const RayTracingRenderSystem&) = delete;
@@ -23,18 +23,27 @@ namespace PXTEngine {
         void render(FrameInfo& frameInfo);
 
     private:
-		void createShaderBindingTable();
+		void createDescriptorSets();
+		void defineShaderGroups();
         void createPipelineLayout(DescriptorSetLayout& setLayout);
-        void createPipeline(VkRenderPass renderPass);
+        void createPipeline();
+		void createShaderBindingTable();
 
         Context& m_context;
         TextureRegistry& m_textureRegistry;
 		BLASRegistry& m_blasRegistry; // used only to initialize tlasBuildSystem
-        TLASBuildSystem m_tlasBuildSystem{m_context, m_blasRegistry};
+        
+        Shared<DescriptorAllocatorGrowable> m_descriptorAllocator = nullptr;
+        
+        TLASBuildSystem m_tlasBuildSystem{m_context, m_blasRegistry, m_descriptorAllocator};
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 
-        Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
+        std::vector<ShaderGroupInfo> m_shaderGroups{};
+
+
+		VkDescriptorSet m_tlasDescriptorSet = VK_NULL_HANDLE;
+        Unique<DescriptorSetLayout> m_tlasDescriptorSetLayout{};
     };
 }

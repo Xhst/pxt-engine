@@ -60,7 +60,6 @@ namespace PXTEngine {
 			m_descriptorAllocator,
 			m_textureRegistry,
 			m_blasRegistry,
-			m_renderer.getSwapChainRenderPass(),
 			*m_globalSetLayout
 		);
 	}
