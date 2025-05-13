@@ -7,16 +7,38 @@
 
 namespace PXTEngine {
 
+	struct ShaderGroupInfo {
+		VkRayTracingShaderGroupTypeKHR type;
+		std::vector<std::pair<VkShaderStageFlagBits, std::string>> stages;
+	};
+
     /**
-     * @struct PipelineConfigInfo
-     * @brief Configuration information for the graphics pipeline.
+     * @struct RayTracingPipelineConfigInfo
+     * @brief Configuration information for the RAYTRACING pipeline.
+     *
+     * This structure contains various settings and configurations for creating a Vulkan raytracing pipeline.
+	 * Such as the shader groups, pipeline layout and max recursion depth.
+     */
+    struct RayTracingPipelineConfigInfo {
+        RayTracingPipelineConfigInfo() = default;
+        RayTracingPipelineConfigInfo(const RayTracingPipelineConfigInfo&) = delete;
+        RayTracingPipelineConfigInfo& operator=(const RayTracingPipelineConfigInfo&) = delete;
+
+		std::vector<ShaderGroupInfo> shaderGroups{};
+        VkPipelineLayout pipelineLayout = nullptr;
+        uint32_t maxPipelineRayRecursionDepth = 1;
+    };
+
+    /**
+     * @struct RasterizationPipelineConfigInfo
+     * @brief Configuration information for the GRAPHICS pipeline.
      *
      * This structure contains various settings and configurations for creating a Vulkan graphics pipeline.
      */
-    struct PipelineConfigInfo {
-        PipelineConfigInfo() = default;
-        PipelineConfigInfo(const PipelineConfigInfo&) = delete;
-        PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
+    struct RasterizationPipelineConfigInfo {
+        RasterizationPipelineConfigInfo() = default;
+        RasterizationPipelineConfigInfo(const RasterizationPipelineConfigInfo&) = delete;
+        RasterizationPipelineConfigInfo& operator=(const RasterizationPipelineConfigInfo&) = delete;
 
         std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
@@ -45,7 +67,8 @@ namespace PXTEngine {
     class Pipeline {
        public:
         Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
-                 const PipelineConfigInfo& configInfo);
+                 const RasterizationPipelineConfigInfo& configInfo);
+		Pipeline(Context& context, const RayTracingPipelineConfigInfo& configInfo);
                  
         ~Pipeline();
 
@@ -54,20 +77,22 @@ namespace PXTEngine {
 
         void bind(VkCommandBuffer commandBuffer);
 
-        static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
-        static void enableAlphaBlending(PipelineConfigInfo& configInfo);
+        static void defaultPipelineConfigInfo(RasterizationPipelineConfigInfo& configInfo);
+        static void enableAlphaBlending(RasterizationPipelineConfigInfo& configInfo);
 
        private:
         static std::vector<char> readFile(const std::string& filename);
 
         void createGraphicsPipeline(
             const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
-            const PipelineConfigInfo& configInfo);
+            const RasterizationPipelineConfigInfo& configInfo);
+
+		void createRayTracingPipeline(const RayTracingPipelineConfigInfo& configInfo);
 
         void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 
         Context& m_context;
-        VkPipeline m_graphicsPipeline;
+        VkPipeline m_pipeline;
 
         std::vector<VkShaderModule> m_shaderModules{};
     };

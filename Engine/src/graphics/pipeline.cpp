@@ -15,15 +15,20 @@ namespace PXTEngine {
     };
 
     Pipeline::Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
-                       const PipelineConfigInfo& configInfo) : m_context(context) {
+                       const RasterizationPipelineConfigInfo& configInfo) : m_context(context) {
         createGraphicsPipeline(shaderFilePaths, configInfo);
     }
 
-    Pipeline::~Pipeline() {
+	Pipeline::Pipeline(Context& context, const RayTracingPipelineConfigInfo& configInfo)
+        : m_context(context) {
+		createRayTracingPipeline(configInfo);
+	}
+
+	Pipeline::~Pipeline() {
 		for (const auto shaderModule : m_shaderModules) {
 			vkDestroyShaderModule(m_context.getDevice(), shaderModule, nullptr);
 		}
-        vkDestroyPipeline(m_context.getDevice(), m_graphicsPipeline, nullptr);
+        vkDestroyPipeline(m_context.getDevice(), m_pipeline, nullptr);
     }
 
     std::vector<char> Pipeline::readFile(const std::string& filename) {
@@ -56,8 +61,8 @@ namespace PXTEngine {
 	}
 
 	void Pipeline::createGraphicsPipeline(
-		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilepaths,
-		const PipelineConfigInfo& configInfo
+		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
+		const RasterizationPipelineConfigInfo& configInfo
 	) {
 		// Ensure that the pipeline layout and render pass are properly set.
 		PXT_ASSERT(configInfo.pipelineLayout != nullptr,
@@ -84,7 +89,7 @@ namespace PXTEngine {
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 
 		// Loop through each provided shader stage.
-		for (const auto& [stage, filepath] : shaderFilepaths) {
+		for (const auto& [stage, filepath] : shaderFilePaths) {
 			// Read the shader binary code from the file.
 			auto shaderCode = readFile(filepath);
 
@@ -141,7 +146,7 @@ namespace PXTEngine {
 			1,
 			&pipelineInfo,
 			nullptr,
-			&m_graphicsPipeline) != VK_SUCCESS) {
+			&m_pipeline) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
 
@@ -153,11 +158,93 @@ namespace PXTEngine {
 		m_shaderModules.clear();
 	}
 
-    void Pipeline::bind(VkCommandBuffer commandBuffer) {
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+	void Pipeline::createRayTracingPipeline(const RayTracingPipelineConfigInfo& configInfo) {
+		// --- Prepare shader stages ---
+		// Containers to keep created shader stage infos and shader group infos.
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+		std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups;
+
+		// Loop each group
+		for (const auto& group : configInfo.shaderGroups) {
+			// Loop through each provided shader stage in the group
+			for (const auto& [stage, filepath] : group.stages) {
+				// Read the shader binary code from the file.
+				auto shaderCode = readFile(filepath);
+
+				// Create the shader module.
+				VkShaderModule shaderModule;
+				createShaderModule(shaderCode, &shaderModule);
+				m_shaderModules.push_back(shaderModule);
+
+				// Prepare the shader stage create info.
+				VkPipelineShaderStageCreateInfo shaderStageInfo{};
+				shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+				shaderStageInfo.stage = stage;
+				shaderStageInfo.module = shaderModule;
+				shaderStageInfo.pName = "main";
+				shaderStageInfo.flags = 0;
+				shaderStageInfo.pNext = nullptr;
+				shaderStages.push_back(shaderStageInfo);
+			}
+
+			// Prepare the shader group create info.
+			VkRayTracingShaderGroupCreateInfoKHR shaderGroupInfo{};
+			shaderGroupInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+			shaderGroupInfo.type = group.type;
+			// first we set them all unused
+			shaderGroupInfo.generalShader = VK_SHADER_UNUSED_KHR;
+			shaderGroupInfo.closestHitShader = VK_SHADER_UNUSED_KHR;
+			shaderGroupInfo.anyHitShader = VK_SHADER_UNUSED_KHR;
+			shaderGroupInfo.intersectionShader = VK_SHADER_UNUSED_KHR;
+			// then we set the correct shader index
+			// TODO: handle intersection shaders and any hit inside chit group
+			switch (group.type) {
+			case VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR:
+				shaderGroupInfo.generalShader = static_cast<uint32_t>(shaderStages.size() - 1);
+				break;
+			case VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR:
+				shaderGroupInfo.closestHitShader = static_cast<uint32_t>(shaderStages.size() - 1);
+				break;
+			case VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR:
+				shaderGroupInfo.anyHitShader = static_cast<uint32_t>(shaderStages.size() - 1);
+				break;
+			default:
+				throw std::runtime_error("Unsupported shader group type");
+				break;
+			}
+
+			shaderGroups.push_back(shaderGroupInfo);
+		}
+
+		VkRayTracingPipelineCreateInfoKHR pipelineInfo = {};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+		pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+		pipelineInfo.pStages = shaderStages.data();
+		pipelineInfo.groupCount = static_cast<uint32_t>(shaderGroups.size());
+		pipelineInfo.pGroups = shaderGroups.data();
+		pipelineInfo.maxPipelineRayRecursionDepth = configInfo.maxPipelineRayRecursionDepth;
+		pipelineInfo.layout = configInfo.pipelineLayout;
+		// pipelineInfo.pLibraryInfo = ...; // For pipeline libraries
+		// pipelineInfo.pLibraryInterface = ...; // For pipeline libraries
+		// pipelineInfo.pDynamicState = ...; // For dynamic states
+
+		if (vkCreateRayTracingPipelinesKHR(m_context.getDevice(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create ray tracing pipeline!");
+		}
+
+		// --- Clean up: Destroy the shader modules ---
+		for (auto& shaderModule : m_shaderModules) {
+			vkDestroyShaderModule(m_context.getDevice(), shaderModule, nullptr);
+			shaderModule = VK_NULL_HANDLE;
+		}
+		m_shaderModules.clear();
+	}
+
+	void Pipeline::bind(VkCommandBuffer commandBuffer) {
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
     }
 
-    void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo) {
+    void Pipeline::defaultPipelineConfigInfo(RasterizationPipelineConfigInfo& configInfo) {
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         configInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
@@ -231,7 +318,7 @@ namespace PXTEngine {
         configInfo.attributeDescriptions = VulkanMesh::getVertexAttributeDescriptions();
     }
 
-    void Pipeline::enableAlphaBlending(PipelineConfigInfo& configInfo) {
+    void Pipeline::enableAlphaBlending(RasterizationPipelineConfigInfo& configInfo) {
         configInfo.colorBlendAttachment.colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
             VK_COLOR_COMPONENT_A_BIT; 
