@@ -90,7 +90,12 @@ namespace PXTEngine {
 
     void Application::createGlobalDescriptorSet() {
         m_globalSetLayout = DescriptorSetLayout::Builder(m_context)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 
+                VK_SHADER_STAGE_VERTEX_BIT | 
+                VK_SHADER_STAGE_FRAGMENT_BIT |
+                VK_SHADER_STAGE_RAYGEN_BIT_KHR |
+				VK_SHADER_STAGE_MISS_BIT_KHR |
+				VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
             .build();
 
         for (int i = 0; i < m_globalDescriptorSets.size(); i++) {

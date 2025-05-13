@@ -67,7 +67,7 @@ namespace PXTEngine {
 		void createDescriptorSet() {
 			// TEXTURE DESCRIPTOR SET
 			m_textureDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-				.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, getTextureCount())
+				.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, getTextureCount())
 				.build();
 
 			std::vector<VkDescriptorImageInfo> imageInfos;
