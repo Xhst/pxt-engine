@@ -223,23 +223,23 @@ namespace PXTEngine {
 	void TLASBuildSystem::createDescriptorSetLayout() {
 		// TLAS DESCRIPTOR SET LAYOUT
 		// needed for raytracing pipeline layout
-		m_TLASDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+		m_tlasDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR)
 			.build();
 	}
 
 	void TLASBuildSystem::createDescriptorSet() {
 		// TLAS DESCRIPTOR SET
-		m_descriptorAllocator->allocate(m_TLASDescriptorSetLayout->getDescriptorSetLayout(), m_TLASDescriptorSet);
+		m_descriptorAllocator->allocate(m_tlasDescriptorSetLayout->getDescriptorSetLayout(), m_tlasDescriptorSet);
 
 		VkWriteDescriptorSetAccelerationStructureKHR tlasInfo{};
 		tlasInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 		tlasInfo.accelerationStructureCount = 1;
 		tlasInfo.pAccelerationStructures = &m_tlas;
 
-		DescriptorWriter(m_context, *m_TLASDescriptorSetLayout)
+		DescriptorWriter(m_context, *m_tlasDescriptorSetLayout)
 			.writeTLAS(0, tlasInfo)
-			.updateSet(m_TLASDescriptorSet);
+			.updateSet(m_tlasDescriptorSet);
 	}
 
 	void TLASBuildSystem::destroyTLAS() {

@@ -17,8 +17,8 @@ namespace PXTEngine {
 
 		void createTLAS(FrameInfo& frameInfo);
 		void updateTLAS() {} // to implement later
-		VkDescriptorSet getTLASDescriptorSet() const { return m_TLASDescriptorSet; }
-		VkDescriptorSetLayout getTLASDescriptorSetLayout() const { return m_TLASDescriptorSetLayout->getDescriptorSetLayout(); }
+		VkDescriptorSet getTLASDescriptorSet() const { return m_tlasDescriptorSet; }
+		VkDescriptorSetLayout getTLASDescriptorSetLayout() const { return m_tlasDescriptorSetLayout->getDescriptorSetLayout(); }
 	private:
 		void destroyTLAS();
 		VkTransformMatrixKHR glmToVkTransformMatrix(const glm::mat4& glmMatrix);
@@ -34,7 +34,7 @@ namespace PXTEngine {
 		VkAccelerationStructureCreateInfoKHR m_createInfo{};
 
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
-		Shared<DescriptorSetLayout> m_TLASDescriptorSetLayout = nullptr;
-		VkDescriptorSet m_TLASDescriptorSet = VK_NULL_HANDLE;
+		Shared<DescriptorSetLayout> m_tlasDescriptorSetLayout = nullptr;
+		VkDescriptorSet m_tlasDescriptorSet = VK_NULL_HANDLE;
 	};
 }
