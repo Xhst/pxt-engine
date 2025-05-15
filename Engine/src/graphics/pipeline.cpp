@@ -167,6 +167,17 @@ namespace PXTEngine {
 		// Loop each group
 		for (const auto& group : configInfo.shaderGroups) {
 			// Loop through each provided shader stage in the group
+			// Prepare the shader group create info.
+			VkRayTracingShaderGroupCreateInfoKHR shaderGroupInfo{};
+			shaderGroupInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+			shaderGroupInfo.type = group.type;
+			// first we set them all unused
+			shaderGroupInfo.generalShader = VK_SHADER_UNUSED_KHR;
+			shaderGroupInfo.closestHitShader = VK_SHADER_UNUSED_KHR;
+			shaderGroupInfo.anyHitShader = VK_SHADER_UNUSED_KHR;
+			shaderGroupInfo.intersectionShader = VK_SHADER_UNUSED_KHR;
+			shaderGroupInfo.pShaderGroupCaptureReplayHandle = nullptr; // Optional
+
 			for (const auto& [stage, filepath] : group.stages) {
 				// Read the shader binary code from the file.
 				auto shaderCode = readFile(filepath);
@@ -185,32 +196,44 @@ namespace PXTEngine {
 				shaderStageInfo.flags = 0;
 				shaderStageInfo.pNext = nullptr;
 				shaderStages.push_back(shaderStageInfo);
-			}
 
-			// Prepare the shader group create info.
-			VkRayTracingShaderGroupCreateInfoKHR shaderGroupInfo{};
-			shaderGroupInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
-			shaderGroupInfo.type = group.type;
-			// first we set them all unused
-			shaderGroupInfo.generalShader = VK_SHADER_UNUSED_KHR;
-			shaderGroupInfo.closestHitShader = VK_SHADER_UNUSED_KHR;
-			shaderGroupInfo.anyHitShader = VK_SHADER_UNUSED_KHR;
-			shaderGroupInfo.intersectionShader = VK_SHADER_UNUSED_KHR;
-			// then we set the correct shader index
-			// TODO: handle intersection shaders and any hit inside chit group
-			switch (group.type) {
-			case VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR:
-				shaderGroupInfo.generalShader = static_cast<uint32_t>(shaderStages.size() - 1);
-				break;
-			case VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR:
-				shaderGroupInfo.closestHitShader = static_cast<uint32_t>(shaderStages.size() - 1);
-				break;
-			case VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR:
-				shaderGroupInfo.anyHitShader = static_cast<uint32_t>(shaderStages.size() - 1);
-				break;
-			default:
-				throw std::runtime_error("Unsupported shader group type");
-				break;
+				uint32_t currentStageIndex = static_cast<uint32_t>(shaderStages.size() - 1);
+
+				// then we set the correct shader index in the group
+				// TODO: handle intersection shaders and any hit inside chit group
+				switch (group.type) {
+				case VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR:
+					// For RGEN or MISS, there's only one shader in the group
+					shaderGroupInfo.generalShader = currentStageIndex;
+					break;
+				case VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR:
+					if (stage == VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR) {
+						shaderGroupInfo.closestHitShader = currentStageIndex;
+					}
+					else if (stage == VK_SHADER_STAGE_ANY_HIT_BIT_KHR) {
+						shaderGroupInfo.anyHitShader = currentStageIndex;
+					}
+					// Add other stages in the future (e.. intersection for custom primitive hit groups)
+					/* else if (stage == VK_SHADER_STAGE_INTERSECTION_BIT_KHR) {
+						shaderGroupInfo.intersectionShader = currentStageIndex;
+					}
+					*/
+					break;
+				case VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR:
+					if (stage == VK_SHADER_STAGE_INTERSECTION_BIT_KHR) {
+						shaderGroupInfo.intersectionShader = currentStageIndex;
+					}
+					else if (stage == VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR) {
+						shaderGroupInfo.closestHitShader = currentStageIndex;
+					}
+					else if (stage == VK_SHADER_STAGE_ANY_HIT_BIT_KHR) {
+						shaderGroupInfo.anyHitShader = currentStageIndex;
+					}
+					break;
+				default:
+					// Handle error or unsupported group type
+					throw std::runtime_error("Unsupported shader group type in createRayTracingPipeline");
+				}
 			}
 
 			shaderGroups.push_back(shaderGroupInfo);

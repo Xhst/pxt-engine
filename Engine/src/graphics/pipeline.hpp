@@ -80,6 +80,8 @@ namespace PXTEngine {
         static void defaultPipelineConfigInfo(RasterizationPipelineConfigInfo& configInfo);
         static void enableAlphaBlending(RasterizationPipelineConfigInfo& configInfo);
 
+		VkPipeline getHandle() const { return m_pipeline; }
+
        private:
         static std::vector<char> readFile(const std::string& filename);
 
