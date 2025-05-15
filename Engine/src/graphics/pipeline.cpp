@@ -200,7 +200,6 @@ namespace PXTEngine {
 				uint32_t currentStageIndex = static_cast<uint32_t>(shaderStages.size() - 1);
 
 				// then we set the correct shader index in the group
-				// TODO: handle intersection shaders and any hit inside chit group
 				switch (group.type) {
 				case VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR:
 					// For RGEN or MISS, there's only one shader in the group
