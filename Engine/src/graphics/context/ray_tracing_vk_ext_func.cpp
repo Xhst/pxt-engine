@@ -94,6 +94,6 @@ void g_loadRayTracingFunctions(VkDevice device) {
     //     vkGetDeviceProcAddr(device, "vkCmdSetRayTracingPipelineStackSizeKHR"));
     // if (!vkCmdSetRayTracingPipelineStackSizeKHR_) throw std::runtime_error("Failed to load vkCmdSetRayTracingPipelineStackSizeKHR");
 
-    std::cout << "Successfully loaded Vulkan Ray Tracing and BDA function pointers.\n";
+    std::cout << "Successfully loaded Vulkan Ray Tracing function pointers.\n";
 }
 
