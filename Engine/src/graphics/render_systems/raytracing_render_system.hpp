@@ -41,9 +41,10 @@ namespace PXTEngine {
         VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 
         std::vector<ShaderGroupInfo> m_shaderGroups{};
-
-
-		VkDescriptorSet m_tlasDescriptorSet = VK_NULL_HANDLE;
-        Unique<DescriptorSetLayout> m_tlasDescriptorSetLayout{};
+        Unique<VulkanBuffer> m_sbtBuffer = nullptr;
+        VkStridedDeviceAddressRegionKHR m_raygenRegion;
+        VkStridedDeviceAddressRegionKHR m_missRegion;
+        VkStridedDeviceAddressRegionKHR m_hitRegion;
+        VkStridedDeviceAddressRegionKHR m_callableRegion; // empty for now
     };
 }
