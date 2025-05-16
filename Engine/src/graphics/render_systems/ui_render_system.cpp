@@ -5,9 +5,9 @@
 
 namespace PXTEngine {
 
-	UiRenderSystem::UiRenderSystem(Context& context, VkRenderPass renderPass, std::array<VkDescriptorImageInfo, 6> shadowMapDebugImageInfos, VkDescriptorImageInfo sceneImageInfo) : m_context(context) {
+	UiRenderSystem::UiRenderSystem(Context& context, VkRenderPass renderPass, VkDescriptorImageInfo sceneImageInfo) : m_context(context) {
 		initImGui(renderPass);
-		createDescriptorSets(sceneImageInfo, shadowMapDebugImageInfos);
+		createDescriptorSets(sceneImageInfo);
 	}
 
 	UiRenderSystem::~UiRenderSystem() {
@@ -91,7 +91,7 @@ namespace PXTEngine {
 		return descriptorSet;
 	}
 
-	void UiRenderSystem::createDescriptorSets(VkDescriptorImageInfo sceneImageInfo, std::array<VkDescriptorImageInfo, 6> shadowMapDebugImageInfos) {
+	void UiRenderSystem::createDescriptorSets(VkDescriptorImageInfo sceneImageInfo) {
 		m_sceneDescriptorSet = addImGuiTexture(
 			sceneImageInfo.sampler,
 			sceneImageInfo.imageView,

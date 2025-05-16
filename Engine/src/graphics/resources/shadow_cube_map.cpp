@@ -48,7 +48,7 @@ namespace PXTEngine {
 		subresourceRange.levelCount = 1;
 		subresourceRange.layerCount = 6;
 
-		m_context.transitionImageLayout(
+		m_context.transitionImageLayoutSingleTimeCmd(
 			m_vkImage,
 			m_imageFormat,
 			VK_IMAGE_LAYOUT_UNDEFINED,

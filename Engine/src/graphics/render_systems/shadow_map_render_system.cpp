@@ -171,7 +171,7 @@ namespace PXTEngine {
 		subresourceRange.layerCount = 1;
 
 		// TODO: verify source and destination access masks
-		m_context.transitionImageLayout(
+		m_context.transitionImageLayoutSingleTimeCmd(
 			m_depthStencilImageFb->getVkImage(),
 			m_depthStencilImageFb->getImageFormat(),
 			VK_IMAGE_LAYOUT_UNDEFINED,
