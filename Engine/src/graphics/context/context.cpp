@@ -308,6 +308,11 @@ namespace PXTEngine {
 				// Image will be read in a shader (sampler, input attachment)
 				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 				break;
+			case VK_IMAGE_LAYOUT_GENERAL:
+				// Image will be used as a general image
+				// Make sure any writes to the image have been finished
+				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+				break;
 			default:
 				// Other source layouts aren't handled (yet)
 				throw std::runtime_error("Unsupported new image layout when transitioning");
