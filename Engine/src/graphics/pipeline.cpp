@@ -254,6 +254,8 @@ namespace PXTEngine {
 			throw std::runtime_error("Failed to create ray tracing pipeline!");
 		}
 
+		m_pipelineBindPoint = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;
+
 		// --- Clean up: Destroy the shader modules ---
 		for (auto& shaderModule : m_shaderModules) {
 			vkDestroyShaderModule(m_context.getDevice(), shaderModule, nullptr);
@@ -263,7 +265,7 @@ namespace PXTEngine {
 	}
 
 	void Pipeline::bind(VkCommandBuffer commandBuffer) {
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+        vkCmdBindPipeline(commandBuffer, m_pipelineBindPoint, m_pipeline);
     }
 
     void Pipeline::defaultPipelineConfigInfo(RasterizationPipelineConfigInfo& configInfo) {
