@@ -16,6 +16,11 @@ layout(location = 0) rayPayloadEXT struct RayPayload {
 // Declare the top-level acceleration structure (TLAS)
 layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
 
+// Declare the output storage image
+// The format qualifier (e.g., rgba8, rgba32f) should match how the image was created in Vulkan.
+// rgba8 is common for 8-bit per channel normalized output. Use rgba32f for HDR float output.
+layout(set = 3, binding = 0, rgba8) uniform image2D outputImage;
+
 void main()
 {
     // Calculate the ray direction based on the launch ID (pixel coordinates)
@@ -36,52 +41,29 @@ void main()
     // The ray direction is from origin to target
     vec3 direction = normalize(target.xyz - origin.xyz);
 
+    // Initialize payload (optional, but good practice if miss shader might not always be hit)
+    payload.color = vec4(0.0, 0.0, 0.0, 1.0); // Default to black
+    payload.t = -1.0;
+
     // --- Launch the ray ---
-    // traceRayEXT(
-    //     accelerationStructureEXT topLevelAS, // The TLAS to trace against
-    //     uint rayFlags,                       // Flags controlling ray traversal behavior
-    //     uint cullMask,                       // Mask for visibility culling
-    //     uint sbtRecordOffset,                // Offset into the SBT for ray type
-    //     uint sbtRecordStride,                // Stride between SBT records for ray type
-    //     uint missShaderIndex,                // Index of the miss shader in the SBT
-    //     vec3 origin,                         // Ray origin
-    //     float tmin,                          // Minimum ray parameter
-    //     vec3 direction,                      // Ray direction
-    //     float tmax,                          // Maximum ray parameter
-    //     int payloadLocation,                 // Location of the ray payload
-    // );
-
-
-    // For a basic primary ray:
-    // rayFlags: 0 (default)
-    // cullMask: 0xFF (trace against all geometry)
-    // sbtRecordOffset: 0 (assuming the first set of records in SBT is for primary rays)
-    // sbtRecordStride: 0 (assuming a single record per ray type for simplicity)
-    // missShaderIndex: 0 (assuming the first miss shader in SBT is the one we want)
-    // tmin: 0.001 (small offset to avoid self-intersection)
-    // tmax: 10000.0 (arbitrary large value for maximum ray distance)
-    // payloadLocation: 0 (matches the layout(location = 0) of the payload struct)
-
     traceRayEXT(
         TLAS,
-        0,         // rayFlags
-        0xFF,      // cullMask
-        0,         // sbtRecordOffset
-        0,         // sbtRecordStride
-        0,         // missShaderIndex
+        0,       // rayFlags (gl_RayFlagsOpaqueEXT, gl_RayFlagsNoOpaqueEXT, etc.)
+        0xFF,    // cullMask
+        0,       // sbtRecordOffset
+        0,       // sbtRecordStride
+        0,       // missShaderIndex
         origin.xyz,
-        0.001,     // tmin (small epsilon to avoid self-intersection)
+        0.001,   // tmin (small epsilon to avoid self-intersection)
         direction,
-        10000.0,   // tmax
-        0         // payloadLocation
+        10000.0, // tmax
+        0        // payloadLocation (matches layout(location = 0) of the payload struct)
     );
 
     // The traceRayEXT call is blocking. When it returns, the payload contains
     // the result from the closest hit shader (if a hit occurred) or the miss shader.
-    // Output the final color to the framebuffer (implicitly via a storage image binding,
-    // which is not shown in this basic example but would be necessary in a full app).
-    // For demonstration, we'll assume the payload.color is the final pixel color.
-    // In a real application, you would write payload.color to a storage image.
-    // For now, let's just conceptually say the payload holds the result.
-    // payload.color now holds the final color for this pixel.
+
+    // Write the final color from the payload to the output storage image
+    // gl_LaunchIDEXT.xy provides the integer pixel coordinates for the store operation.
+    imageStore(outputImage, ivec2(gl_LaunchIDEXT.xy), payload.color);
 }
