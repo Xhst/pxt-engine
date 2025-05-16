@@ -7,23 +7,25 @@
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/resources/texture_registry.hpp"
 #include "graphics/render_systems/tlas_build_system.hpp"
+#include "graphics/renderer.hpp"
 #include "scene/scene.hpp"
 
 namespace PXTEngine {
 
     class RayTracingRenderSystem {
     public:
-        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, BLASRegistry& blasRegistry, DescriptorSetLayout& globalSetLayout);
+        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, BLASRegistry& blasRegistry, DescriptorSetLayout& globalSetLayout, Renderer& renderer);
         ~RayTracingRenderSystem();
 
         RayTracingRenderSystem(const RayTracingRenderSystem&) = delete;
         RayTracingRenderSystem& operator=(const RayTracingRenderSystem&) = delete;
 
         void update(FrameInfo& frameInfo);
-        void render(FrameInfo& frameInfo);
+        void render(FrameInfo& frameInfo, Renderer& renderer);
+		void updateUi(FrameInfo& frameInfo);
 
     private:
-		void createDescriptorSets();
+		void createDescriptorSets(Renderer& renderer);
 		void defineShaderGroups();
         void createPipelineLayout(DescriptorSetLayout& setLayout);
         void createPipeline();
@@ -46,5 +48,16 @@ namespace PXTEngine {
         VkStridedDeviceAddressRegionKHR m_missRegion;
         VkStridedDeviceAddressRegionKHR m_hitRegion;
         VkStridedDeviceAddressRegionKHR m_callableRegion; // empty for now
+
+        // to test
+		Unique<VulkanImage> m_storageImage = nullptr;
+		VkDescriptorSet m_storageImageDescriptorSet = VK_NULL_HANDLE;
+		Unique<DescriptorSetLayout> m_storageImageDescriptorSetLayout = nullptr;
+
+		// imgui descriptor set
+		VkDescriptorSet m_imguiDescriptorSet = VK_NULL_HANDLE;
+		Unique<DescriptorSetLayout> m_imguiDescriptorSetLayout = nullptr;
+
+		bool m_isFirstUpdate = true;
     };
 }

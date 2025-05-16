@@ -50,7 +50,6 @@ namespace PXTEngine {
 		m_uiRenderSystem = createUnique<UiRenderSystem>(
 			m_context,
 			m_renderer.getSwapChainRenderPass(),
-			m_shadowMapRenderSystem->getDebugShadowMapImageInfos(),
 			// TODO: replace with scene image info
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
@@ -60,7 +59,8 @@ namespace PXTEngine {
 			m_descriptorAllocator,
 			m_textureRegistry,
 			m_blasRegistry,
-			*m_globalSetLayout
+			*m_globalSetLayout,
+			m_renderer
 		);
 	}
 
@@ -91,6 +91,10 @@ namespace PXTEngine {
 		// do how many passes it needs to do (6 in this case - 1 point light)
 		m_shadowMapRenderSystem->render(frameInfo, m_renderer);
 		m_shadowMapRenderSystem->updateUi();
+
+		// test
+		m_rayTracingRenderSystem->render(frameInfo, m_renderer);
+		m_rayTracingRenderSystem->updateUi(frameInfo);
 
 		// render main frame
 		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
