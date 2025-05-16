@@ -48,6 +48,13 @@ namespace PXTEngine {
          */
         float getAspectRatio() const { return m_swapChain->extentAspectRatio(); }
 
+		/**
+		 * @brief Gets the swap chain extent.
+		 *
+		 * @return The swap chain extent.
+		 */
+		VkExtent2D getSwapChainExtent() const { return m_swapChain->getSwapChainExtent(); }
+
         /**
          * @brief Checks if a frame is currently in progress.
          * 
