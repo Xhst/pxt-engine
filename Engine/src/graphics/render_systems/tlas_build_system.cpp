@@ -5,7 +5,7 @@
 namespace PXTEngine {
 	TLASBuildSystem::TLASBuildSystem(Context& context, BLASRegistry& blasRegistry, Shared<DescriptorAllocatorGrowable> allocator)
 		: m_context(context), m_blasRegistry(blasRegistry), m_descriptorAllocator(allocator) {
-		createDescriptorSetLayout();
+		createDescriptorSet();
 	}
 
 	TLASBuildSystem::~TLASBuildSystem() {
@@ -13,9 +13,7 @@ namespace PXTEngine {
 	}
 
 	void TLASBuildSystem::createTLAS(FrameInfo& frameInfo) {
-		if (m_tlas != VK_NULL_HANDLE) {
-			destroyTLAS();
-		}
+		VkAccelerationStructureKHR newTlas = VK_NULL_HANDLE;
 
 		//  Create a acceleration structure instance vector 
 		std::vector<VkAccelerationStructureInstanceKHR> instances;
@@ -147,7 +145,7 @@ namespace PXTEngine {
 		m_createInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 		// createInfo.deviceAddress = // Optional: if using buffer device address capture/replay
 
-		if (vkCreateAccelerationStructureKHR(m_context.getDevice(), &m_createInfo, nullptr, &m_tlas) != VK_SUCCESS) {
+		if (vkCreateAccelerationStructureKHR(m_context.getDevice(), &m_createInfo, nullptr, &newTlas) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create top-level acceleration structure!");
 		}
 
@@ -155,7 +153,7 @@ namespace PXTEngine {
 		VkCommandBuffer commandBuffer = m_context.beginSingleTimeCommands();
 
 		// Update build info with destination and scratch
-		buildInfo.dstAccelerationStructure = m_tlas;
+		buildInfo.dstAccelerationStructure = newTlas;
 		buildInfo.scratchData.deviceAddress = scratchBufferAddr;
 
 		// Define the build range (how many instances to build)
@@ -197,8 +195,17 @@ namespace PXTEngine {
 		// instance buffer or staging buffer. we can potentially keep the instance buffer for reuse.
 		// Buffers will be deleted after end of this function cause they are Unique.
 
-		// Create descriptor set for TLAS
-		createDescriptorSet();
+		// Update descriptor set for TLAS
+		updateDescriptorSet(newTlas);
+
+		// Then destroy old one and assign the new one
+		destroyTLAS();
+
+		// If not done in this order it will give a validation error
+		// because the TLAS is still in use by the descriptor when we destroy it.
+		// TODO: add a list of SWAPCHAIN::MAX_FRAMES_IN_FLIGHT tlases with their descriptor sets
+
+		m_tlas = newTlas;
 	}
 
 	VkTransformMatrixKHR TLASBuildSystem::glmToVkTransformMatrix(const glm::mat4& glmMatrix) {
@@ -220,22 +227,21 @@ namespace PXTEngine {
 		return vkMatrix;
 	}
 
-	void TLASBuildSystem::createDescriptorSetLayout() {
+	void TLASBuildSystem::createDescriptorSet() {
 		// TLAS DESCRIPTOR SET LAYOUT
 		// needed for raytracing pipeline layout
 		m_tlasDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR)
 			.build();
+
+		m_descriptorAllocator->allocate(m_tlasDescriptorSetLayout->getDescriptorSetLayout(), m_tlasDescriptorSet);
 	}
 
-	void TLASBuildSystem::createDescriptorSet() {
-		// TLAS DESCRIPTOR SET
-		m_descriptorAllocator->allocate(m_tlasDescriptorSetLayout->getDescriptorSetLayout(), m_tlasDescriptorSet);
-
+	void TLASBuildSystem::updateDescriptorSet(VkAccelerationStructureKHR& newTlas) {
 		VkWriteDescriptorSetAccelerationStructureKHR tlasInfo{};
 		tlasInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 		tlasInfo.accelerationStructureCount = 1;
-		tlasInfo.pAccelerationStructures = &m_tlas;
+		tlasInfo.pAccelerationStructures = &newTlas;
 
 		DescriptorWriter(m_context, *m_tlasDescriptorSetLayout)
 			.writeTLAS(0, tlasInfo)

@@ -22,8 +22,8 @@ namespace PXTEngine {
 	private:
 		void destroyTLAS();
 		VkTransformMatrixKHR glmToVkTransformMatrix(const glm::mat4& glmMatrix);
-		void createDescriptorSetLayout();
 		void createDescriptorSet();
+		void updateDescriptorSet(VkAccelerationStructureKHR& newTlas);
 
 		Context& m_context;
 		BLASRegistry& m_blasRegistry;
