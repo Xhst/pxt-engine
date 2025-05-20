@@ -440,7 +440,7 @@ namespace PXTEngine {
 		ImTextureID rt_image = (ImTextureID)m_imguiDescriptorSet;
 
 		ImGui::Begin("Ray Tracing Image");
-		ImGui::Image(rt_image, ImVec2(512, 512), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image(rt_image, ImVec2(512, 512));
 		ImGui::End();
 	}
 }
