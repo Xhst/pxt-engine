@@ -42,14 +42,16 @@ namespace PXTEngine {
 			// Define the instance
 			VkAccelerationStructureInstanceKHR instance{};
 			instance.transform = transformMatrix;
-			instance.instanceCustomIndex = instanceIndex; // Example: Use loop index
+			instance.instanceCustomIndex = instanceIndex; // for now its just a loop index -> it is a custom index per instance
+			                                              // we can get it in the shader via InstanceCustomIndexKHR
 			instance.mask = 0xFF; // Visible to all rays initially
-			instance.instanceShaderBindingTableRecordOffset = 0; // Example: Use base offset
+			instance.instanceShaderBindingTableRecordOffset = 0; // this is 0 for every instance for now
+			                                                     // it is the offset in the SBT hit region
+			                                                     // (which hit shader the instance should use)
 			instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR; // Example flags
 			instance.accelerationStructureReference = blasAddress;
 
 			instances.push_back(instance);
-			instanceIndex++;
 		}
 
 		// Upload Instance Data 
