@@ -16,6 +16,6 @@ void main()
 {
     // This shader is executed if the ray does not hit any geometry.
     // Set the color in the payload to a default value, e.g., the ambient light color.
-    payload.color = ubo.ambientLightColor;
+    payload.color = vec4(ubo.ambientLightColor.xyz, 1.0);
     payload.t = -1.0; // Indicate no hit
 }

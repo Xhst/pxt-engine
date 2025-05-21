@@ -23,41 +23,45 @@ layout(set = 3, binding = 0, rgba8) uniform image2D outputImage;
 
 void main()
 {
-    // Calculate the ray direction based on the launch ID (pixel coordinates)
-    // and the inverse view-projection matrix from the UBO.
     // gl_LaunchIDEXT is the pixel coordinate (x, y, z) of the current invocation.
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+
     // gl_LaunchSizeEXT is the total number of ray generation invocations (width, height, depth).
-    vec2 fragCoord = vec2(gl_LaunchIDEXT.xy);
-    vec2 screenPos = fragCoord / vec2(gl_LaunchSizeEXT.xy);
-    vec2 ndcPos = screenPos * 2.0 - 1.0; // Convert to NDC space [-1, 1]
+    const vec2 imageDimensions = vec2(gl_LaunchSizeEXT.xy);
 
-    // Construct the ray in world space
-    // The ray origin is the camera position (inverse of view matrix translation)
-    vec4 origin = ubo.inverseViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+    // Normalized device coordinates (NDC), converted to [-1, 1] range (NDC space)
+    const vec2 ndc = pixelCenter / imageDimensions * 2.0 - 1.0; 
 
-    // The ray target is the point in world space corresponding to the pixel
-    vec4 target = ubo.inverseViewMatrix * inverse(ubo.projectionMatrix) * vec4(ndcPos.x, ndcPos.y, 0.0, 1.0);
+    // Ray origin and direction in camera/view space
+    // Assuming perspective projection
+    vec4 rayOriginView = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 rayTargetView = /*ubo.inverseProjectionMatrix*/ inverse(ubo.projectionMatrix) * vec4(ndc.x, ndc.y, 1.0, 1.0); // Point on far plane
 
-    // The ray direction is from origin to target
-    vec3 direction = normalize(target.xyz - origin.xyz);
-
-    // Initialize payload (optional, but good practice if miss shader might not always be hit)
+    // Transform ray to world space
+    vec3 rayOriginWorld = (ubo.inverseViewMatrix * rayOriginView).xyz;
+    vec3 rayDirWorld    = normalize((ubo.inverseViewMatrix * vec4(normalize(rayTargetView.xyz / rayTargetView.w), 0.0)).xyz);
+    
+    // Initialize payload
     payload.color = vec4(0.0, 0.0, 0.0, 1.0); // Default to black
     payload.t = -1.0;
 
-    // --- Launch the ray ---
-    traceRayEXT(
-        TLAS,
-        0,       // rayFlags (gl_RayFlagsOpaqueEXT, gl_RayFlagsNoOpaqueEXT, etc.)
-        0xFF,    // cullMask
-        0,       // sbtRecordOffset
-        0,       // sbtRecordStride
-        0,       // missShaderIndex
-        origin.xyz,
-        0.001,   // tmin (small epsilon to avoid self-intersection)
-        direction,
-        10000.0, // tmax
-        0        // payloadLocation (matches layout(location = 0) of the payload struct)
+    // Ray parameters
+    uint rayFlags = gl_RayFlagsOpaqueEXT; // Assume opaque geometry for now
+    uint cullMask = 0xFF;                 // Standard cull mask
+    float tMin    = 0.001;                // Minimum intersection distance
+    float tMax    = 10000.0;              // Maximum intersection distance
+
+    traceRayEXT(TLAS,     // Top-level acceleration structure
+        rayFlags,         // Ray flags
+        cullMask,         // Cull mask
+        0,                // SBT record offset for raygen shader (usually 0)
+        0,                // SBT record stride for raygen shader (usually 0)
+        0,                // Miss shader index (which miss shader in the SBT to use)
+        rayOriginWorld,   // Ray origin
+        tMin,             // Ray min distance
+        rayDirWorld,      // Ray direction
+        tMax,             // Ray max distance
+        0                 // Payload location (must match the rayPayloadEXT layout location)
     );
 
     // The traceRayEXT call is blocking. When it returns, the payload contains
