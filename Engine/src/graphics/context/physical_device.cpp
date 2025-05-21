@@ -160,6 +160,12 @@ namespace PXTEngine {
             requiredExtensions.erase(extension.extensionName);
         }
 
+        std::cout << "Required extensions not satisfied are:\n" << '\n';
+
+		for (const auto& extension : requiredExtensions) {
+			std::cout << extension << '\n';
+		}
+
         return requiredExtensions.empty();
     }
 

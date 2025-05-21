@@ -2,21 +2,24 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "x64-Debug",
-            "generator": "Visual Studio 17 2022",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
+          "name": "x64-Debug",
+          "generator": "Visual Studio 17 2022",
+          "binaryDir": "${sourceDir}/out/build/${presetName}",
+          "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Debug"
+          },
+          "environment": {
+            "NV_ALLOW_RAYTRACING_VALIDATION": "1"
+          }
         },
-        {
-            "name": "x64-Release",
-            "generator": "Visual Studio 17 2022",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
-            }
+      {
+        "name": "x64-Release",
+        "generator": "Visual Studio 17 2022",
+        "binaryDir": "${sourceDir}/out/build/${presetName}",
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "Release"
         }
+      }
     ],
     "buildPresets": [
         {

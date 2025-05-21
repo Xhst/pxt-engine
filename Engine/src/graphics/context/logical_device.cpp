@@ -67,13 +67,18 @@ namespace PXTEngine {
         rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
         rtPipelineFeatures.rayTracingPipeline = VK_TRUE; // Enable this feature
 
+        // Validation layer for raytracing by Nvidia
+        VkPhysicalDeviceRayTracingValidationFeaturesNV rayTracingValidationFeatures{};
+		rayTracingValidationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
+
         // --- Feature Chaining ---
         // Chain the features in this order 
         // BDA -> Descriptor Indexing -> Accel Struct -> RT Pipeline
         bufferDeviceAddressFeatures.pNext = &indexingFeatures;
         indexingFeatures.pNext = &accelStructFeatures;
         accelStructFeatures.pNext = &rtPipelineFeatures;
-        rtPipelineFeatures.pNext = nullptr; // Make sure the last one points to nullptr
+        rtPipelineFeatures.pNext = &rayTracingValidationFeatures;
+        rayTracingValidationFeatures.pNext = nullptr; // Make sure the last one points to nullptr
 
         // This structure holds the physical device features that are required for the logical device.
         VkPhysicalDeviceFeatures2 deviceFeatures2{};
@@ -111,6 +116,13 @@ namespace PXTEngine {
         }
         if (!rtPipelineFeatures.rayTracingPipeline) {
             throw std::runtime_error("Required rayTracingPipeline feature is not supported!");
+        }
+
+		// finally check if the validation layer for raytracing is supported
+        if (!rayTracingValidationFeatures.rayTracingValidation) {
+            // end the chain before and create the device
+			std::cout << "Ray tracing validation layer not supported, disabling it." << std::endl;
+            rtPipelineFeatures.pNext = nullptr;
         }
 
         VkDeviceCreateInfo createInfo = {};
