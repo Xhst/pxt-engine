@@ -51,7 +51,8 @@ void main()
     float tMin    = 0.001;                // Minimum intersection distance
     float tMax    = 10000.0;              // Maximum intersection distance
 
-    traceRayEXT(TLAS,     // Top-level acceleration structure
+    traceRayEXT(
+        TLAS,             // Top-level acceleration structure
         rayFlags,         // Ray flags
         cullMask,         // Cull mask
         0,                // SBT record offset for raygen shader (usually 0)
