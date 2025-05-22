@@ -3,12 +3,14 @@
 namespace PXTEngine {
 	MasterRenderSystem::MasterRenderSystem(Context& context, Renderer& renderer, 
 			Shared<DescriptorAllocatorGrowable> descriptorAllocator, 
-			TextureRegistry& textureRegistry, BLASRegistry& blasRegistry,
+			TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, 
+			BLASRegistry& blasRegistry,
 			Shared<DescriptorSetLayout> globalSetLayout)
 		:	m_context(context), 
 			m_renderer(renderer),
 			m_descriptorAllocator(std::move(descriptorAllocator)),
 			m_textureRegistry(textureRegistry),
+		    m_materialRegistry(materialRegistry),
 			m_blasRegistry(blasRegistry),
 			m_globalSetLayout(std::move(globalSetLayout)),
 			m_offscreenColorFormat(m_renderer.getSwapChainImageFormat())
@@ -267,6 +269,7 @@ namespace PXTEngine {
 			m_context,
 			m_descriptorAllocator,
 			m_textureRegistry,
+			m_materialRegistry,
 			m_blasRegistry,
 			*m_globalSetLayout,
 			m_sceneImage

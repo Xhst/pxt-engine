@@ -1,5 +1,6 @@
 #pragma once
 
+#include "graphics/resources/material_registry.hpp"
 #include "graphics/resources/blas_registry.hpp"
 #include "graphics/resources/vk_buffer.hpp"
 #include "graphics/frame_info.hpp"
@@ -8,7 +9,8 @@
 namespace PXTEngine {
 	class TLASBuildSystem {
 	public:
-		TLASBuildSystem(Context& context, BLASRegistry& blasRegistry, Shared<DescriptorAllocatorGrowable> allocator);
+		TLASBuildSystem(Context& context, MaterialRegistry& materialRegistry, BLASRegistry& blasRegistry, 
+			Shared<DescriptorAllocatorGrowable> allocator);
 		~TLASBuildSystem();
 
 		// Delete the copy constructor and copy assignment operator
@@ -26,6 +28,7 @@ namespace PXTEngine {
 		void updateDescriptorSet(VkAccelerationStructureKHR& newTlas);
 
 		Context& m_context;
+		MaterialRegistry& m_materialRegistry;
 		BLASRegistry& m_blasRegistry;
 
 		VkAccelerationStructureKHR m_tlas = VK_NULL_HANDLE;

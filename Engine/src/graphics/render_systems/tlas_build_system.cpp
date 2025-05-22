@@ -3,8 +3,12 @@
 #include "scene/ecs/component.hpp"
 
 namespace PXTEngine {
-	TLASBuildSystem::TLASBuildSystem(Context& context, BLASRegistry& blasRegistry, Shared<DescriptorAllocatorGrowable> allocator)
-		: m_context(context), m_blasRegistry(blasRegistry), m_descriptorAllocator(allocator) {
+	TLASBuildSystem::TLASBuildSystem(Context& context, MaterialRegistry& materialRegistry, 
+		BLASRegistry& blasRegistry, Shared<DescriptorAllocatorGrowable> allocator)
+		: m_context(context), 
+		m_materialRegistry(materialRegistry),
+		m_blasRegistry(blasRegistry), 
+		m_descriptorAllocator(allocator) {
 		createDescriptorSet();
 	}
 
@@ -20,8 +24,6 @@ namespace PXTEngine {
 
 		//  Get all BLAS and components from entities that have transform & mesh components 
 		auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MeshComponent, MaterialComponent>();
-		//TODO: replace with actual instanceCustomIndex based on material?
-		uint32_t instanceIndex = 0;
 
 		for (auto entity : view) {
 			const auto& [transformComponent, meshComponent, materialComponent] = view.get<TransformComponent, MeshComponent, MaterialComponent>(entity);
@@ -42,8 +44,11 @@ namespace PXTEngine {
 			// Define the instance
 			VkAccelerationStructureInstanceKHR instance{};
 			instance.transform = transformMatrix;
-			instance.instanceCustomIndex = instanceIndex; // for now its just a loop index -> it is a custom index per instance
-			                                              // we can get it in the shader via InstanceCustomIndexKHR
+
+			// we can get it in the shader via InstanceCustomIndexKHR
+			instance.instanceCustomIndex = m_materialRegistry.getIndex(material->id);
+
+
 			instance.mask = 0xFF; // Visible to all rays initially
 			instance.instanceShaderBindingTableRecordOffset = 0; // this is 0 for every instance for now
 			                                                     // it is the offset in the SBT hit region

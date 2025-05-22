@@ -6,6 +6,7 @@
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/frame_info.hpp"
 #include "graphics/resources/texture_registry.hpp"
+#include "graphics/resources/material_registry.hpp"
 #include "graphics/resources/blas_registry.hpp"
 
 #include "graphics/render_systems/material_render_system.hpp"
@@ -22,6 +23,7 @@ namespace PXTEngine {
 		MasterRenderSystem(Context& context, Renderer& renderer, 
 						   Shared<DescriptorAllocatorGrowable> descriptorAllocator,
 						   TextureRegistry& textureRegistry,
+						   MaterialRegistry& materialRegistry,
 						   BLASRegistry& blasRegistry,
 						   Shared<DescriptorSetLayout> globalSetLayout);
 
@@ -49,6 +51,7 @@ namespace PXTEngine {
 		Context& m_context;
 		Renderer& m_renderer;
 		TextureRegistry& m_textureRegistry;
+		MaterialRegistry& m_materialRegistry;
 		BLASRegistry& m_blasRegistry;
 
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;

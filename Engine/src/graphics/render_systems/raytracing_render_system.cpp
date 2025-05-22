@@ -5,10 +5,11 @@
 namespace PXTEngine {
 	RayTracingRenderSystem::RayTracingRenderSystem(
 		Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator,
-		TextureRegistry& textureRegistry, BLASRegistry& blasRegistry,
+		TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, BLASRegistry& blasRegistry,
 		DescriptorSetLayout& globalSetLayout, Shared<VulkanImage> sceneImage)
 		: m_context(context),
 		m_textureRegistry(textureRegistry),
+		m_materialRegistry(materialRegistry),
 		m_blasRegistry(blasRegistry),
 		m_descriptorAllocator(descriptorAllocator),
 		m_sceneImage(sceneImage)
@@ -90,7 +91,8 @@ namespace PXTEngine {
 			setLayout.getDescriptorSetLayout(),
 			m_tlasBuildSystem.getTLASDescriptorSetLayout(),
 			m_textureRegistry.getDescriptorSetLayout(),
-			m_storageImageDescriptorSetLayout->getDescriptorSetLayout()
+			m_storageImageDescriptorSetLayout->getDescriptorSetLayout(),
+			m_materialRegistry.getDescriptorSetLayout(),
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -318,7 +320,13 @@ namespace PXTEngine {
 	void RayTracingRenderSystem::render(FrameInfo& frameInfo, Renderer& renderer) {
 		m_pipeline->bind(frameInfo.commandBuffer);
 
-		std::array<VkDescriptorSet, 4> descriptorSets = { frameInfo.globalDescriptorSet, m_tlasBuildSystem.getTLASDescriptorSet(), m_textureRegistry.getDescriptorSet(), m_storageImageDescriptorSet};
+		std::array<VkDescriptorSet, 5> descriptorSets = { 
+			frameInfo.globalDescriptorSet, 
+			m_tlasBuildSystem.getTLASDescriptorSet(), 
+			m_textureRegistry.getDescriptorSet(),
+			m_storageImageDescriptorSet,
+			m_materialRegistry.getDescriptorSet()
+		};
 	
 		vkCmdBindDescriptorSets(
 			frameInfo.commandBuffer,

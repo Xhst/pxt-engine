@@ -6,6 +6,7 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/resources/texture_registry.hpp"
+#include "graphics/resources/material_registry.hpp"
 #include "graphics/render_systems/tlas_build_system.hpp"
 #include "graphics/renderer.hpp"
 #include "scene/scene.hpp"
@@ -14,7 +15,7 @@ namespace PXTEngine {
 
     class RayTracingRenderSystem {
     public:
-        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, BLASRegistry& blasRegistry, DescriptorSetLayout& globalSetLayout, Shared<VulkanImage> sceneImage);
+        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, BLASRegistry& blasRegistry, DescriptorSetLayout& globalSetLayout, Shared<VulkanImage> sceneImage);
         ~RayTracingRenderSystem();
 
         RayTracingRenderSystem(const RayTracingRenderSystem&) = delete;
@@ -33,11 +34,12 @@ namespace PXTEngine {
 
         Context& m_context;
         TextureRegistry& m_textureRegistry;
+		MaterialRegistry& m_materialRegistry;
 		BLASRegistry& m_blasRegistry; // used only to initialize tlasBuildSystem
         
         Shared<DescriptorAllocatorGrowable> m_descriptorAllocator = nullptr;
         
-        TLASBuildSystem m_tlasBuildSystem{m_context, m_blasRegistry, m_descriptorAllocator};
+        TLASBuildSystem m_tlasBuildSystem{m_context, m_materialRegistry, m_blasRegistry, m_descriptorAllocator};
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
