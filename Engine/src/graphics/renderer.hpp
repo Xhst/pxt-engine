@@ -55,6 +55,13 @@ namespace PXTEngine {
 		 */
 		VkExtent2D getSwapChainExtent() const { return m_swapChain->getSwapChainExtent(); }
 
+		/**
+		 * @brief Gets the swap chain image format.
+		 *
+		 * @return The swap chain image format.
+		 */
+		VkFormat getSwapChainImageFormat() const { return m_swapChain->getSwapChainImageFormat(); }
+
         /**
          * @brief Checks if a frame is currently in progress.
          * 

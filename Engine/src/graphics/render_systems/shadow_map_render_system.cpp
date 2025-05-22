@@ -309,18 +309,6 @@ namespace PXTEngine {
             nullptr
         );
 
-		// Set the viewport and scissor for the cube's faces framebuffers
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(m_shadowMapSize);
-		viewport.height = static_cast<float>(m_shadowMapSize);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		VkRect2D scissor{ {0, 0}, this->getExtent() };
-		vkCmdSetViewport(frameInfo.commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(frameInfo.commandBuffer, 0, 1, &scissor);
-
 		// get all the entities with a transform and model component (for later)
         auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MeshComponent>();
 
