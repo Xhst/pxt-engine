@@ -37,23 +37,22 @@ public:
 
         auto bunny = rm.get<Mesh>(MODELS_PATH + "bunny/bunny.obj");
         auto bunnyMaterial = Material::Builder()
+            .setAlbedoColor(glm::vec4(1.0, 0.0, 0.0, 1.0))
             .setAlbedoMap(rm.get<Image>(MODELS_PATH + "bunny/terracotta.jpg", &albedoInfo))
             .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
 			.setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
             .build();
+		rm.add(bunnyMaterial, "bunny_material");
 
         auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
         auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
 		auto defaultMaterial = rm.get<Material>(DEFAULT_MATERIAL);
 
-        auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png", &albedoInfo);
-        auto texture = rm.get<Image>(TEXTURES_PATH + "texture.jpg", &albedoInfo);
-        auto barrelBase = rm.get<Image>(TEXTURES_PATH + "barrel/barrel.png", &albedoInfo);
-        auto barrelNormal = rm.get<Image>(TEXTURES_PATH + "barrel/barrel_normal.png");
-        auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png", &albedoInfo);
-        auto wallStoneNormal = rm.get<Image>(TEXTURES_PATH + "wall_stone/normal.png");
-        auto wallStoneRoughness = rm.get<Image>(TEXTURES_PATH + "wall_stone/roughness.png");
-        auto wallStoneAO = rm.get<Image>(TEXTURES_PATH + "wall_stone/ambient_occlusion.png");
+        //auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png", &albedoInfo);
+        //auto wallStoneNormal = rm.get<Image>(TEXTURES_PATH + "wall_stone/normal.png");
+        //auto wallStoneRoughness = rm.get<Image>(TEXTURES_PATH + "wall_stone/roughness.png");
+        //auto wallStoneAO = rm.get<Image>(TEXTURES_PATH + "wall_stone/ambient_occlusion.png");
+
         auto stylizedStoneBase = rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png", &albedoInfo);
         auto stylizedStoneNormal = rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png");
 		auto stylizedStoneRoughness = rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png");
@@ -65,6 +64,7 @@ public:
 			.setRoughnessMap(stylizedStoneRoughness)
 			.setAmbientOcclusionMap(stylizedStoneAO)
 			.build();
+		rm.add(stylizedStoneMaterial, "stylized_stone_material");
 
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
