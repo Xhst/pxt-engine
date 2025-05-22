@@ -213,7 +213,7 @@ namespace PXTEngine {
 
     void SwapChain::createRenderPass() {
         VkAttachmentDescription depthAttachment{};
-        depthAttachment.format = findDepthFormat();
+        depthAttachment.format = m_context.findDepthFormat();
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -294,7 +294,7 @@ namespace PXTEngine {
     }
 
     void SwapChain::createDepthResources() {
-        VkFormat depthFormat = findDepthFormat();
+        VkFormat depthFormat = m_context.findDepthFormat();
         m_swapChainDepthFormat = depthFormat;
         VkExtent2D swapChainExtent = getSwapChainExtent();
 
@@ -414,11 +414,4 @@ namespace PXTEngine {
             return actualExtent;
         }
     }
-
-    VkFormat SwapChain::findDepthFormat() {
-        return m_context.findSupportedFormat(
-            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-            VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-    }
-
 }
