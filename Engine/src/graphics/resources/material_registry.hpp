@@ -13,12 +13,12 @@
 namespace PXTEngine {
 
 	struct MaterialData {
-		glm::vec4 albedoColor{ 1.f };
-		int albedoMapIndex = 0;
-		int normalMapIndex = 1;
-		int ambientOcclusionMapIndex = 0;
-		int metallicMapIndex = 0;
-		int roughnessMapIndex = 0;
+		glm::vec4 albedoColor;
+		int albedoMapIndex;
+		int normalMapIndex;
+		int ambientOcclusionMapIndex;
+		int metallicMapIndex;
+		int roughnessMapIndex;
 	};
 
 	class MaterialRegistry {
@@ -76,7 +76,7 @@ namespace PXTEngine {
 
 			std::vector<MaterialData> materialsData;
 
-			for (auto& material : m_materials) {
+			for (const auto& material : m_materials) {
 				materialsData.push_back(getMaterialData(material));
 			}
 
@@ -96,7 +96,9 @@ namespace PXTEngine {
 				sizeof(MaterialData) * materialsData.size()
 			);
 
-			Unique<VulkanBuffer> materialsBuffer = createUnique<VulkanBuffer>(
+			stagingBuffer->unmap();
+
+			m_materialsGpuBuffer = createUnique<VulkanBuffer>(
 				m_context,
 				bufferSize,
 				1,
@@ -104,9 +106,9 @@ namespace PXTEngine {
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
 
-			m_context.copyBuffer(stagingBuffer->getBuffer(), materialsBuffer->getBuffer(), bufferSize);
+			m_context.copyBuffer(stagingBuffer->getBuffer(), m_materialsGpuBuffer->getBuffer(), bufferSize);
 
-			auto bufferInfo = materialsBuffer->descriptorInfo();
+			auto bufferInfo = m_materialsGpuBuffer->descriptorInfo();
 
 			m_descriptorAllocator->allocate(
 				m_materialDescriptorSetLayout->getDescriptorSetLayout(), 
@@ -139,6 +141,7 @@ namespace PXTEngine {
 		std::vector<Shared<Material>> m_materials;
 		std::unordered_map<ResourceId, uint32_t> m_idToIndex;
 
+		Unique<VulkanBuffer> m_materialsGpuBuffer = nullptr;
 		VkDescriptorSet m_materialDescriptorSet = VK_NULL_HANDLE;
 		Shared<DescriptorSetLayout> m_materialDescriptorSetLayout = nullptr;
 	};
