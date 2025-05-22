@@ -50,12 +50,17 @@ namespace PXTEngine {
         m_textureRegistry.setDescriptorAllocator(m_descriptorAllocator);
 		m_textureRegistry.createDescriptorSet();
 
+		// create the descriptor sets for the materials
+		m_materialRegistry.setDescriptorAllocator(m_descriptorAllocator);
+		m_materialRegistry.createDescriptorSet();
+
 		// create the render systems
         m_masterRenderSystem = createUnique<MasterRenderSystem>(
             m_context,
             m_renderer,
             m_descriptorAllocator,
             m_textureRegistry,
+			m_materialRegistry,
 			m_blasRegistry,
             m_globalSetLayout
         );
@@ -162,7 +167,16 @@ namespace PXTEngine {
 				m_blasRegistry.getOrCreateBLAS(mesh);
 			}
 		});
+
+        m_resourceManager.foreach([&](const Shared<Resource>& resource) {
+            if (resource->getType() == Resource::Type::Material) {
+                auto material = std::static_pointer_cast<Material>(resource);
+
+                m_materialRegistry.add(material);
+            }
+        });
     }
+
 
 
     void Application::run() {
