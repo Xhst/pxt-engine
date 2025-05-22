@@ -10,7 +10,6 @@ namespace PXTEngine {
 		}
 
 		createSCMImage();
-		transitionSCMLayout();
 		createSCMImageViews();
 		createSCMSampler();
 	}
@@ -39,23 +38,6 @@ namespace PXTEngine {
 
 		// Create the image
 		m_context.createImageWithInfo(imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkImage, m_imageMemory);
-	}
-
-	void ShadowCubeMap::transitionSCMLayout() {
-		VkImageSubresourceRange subresourceRange = {};
-		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subresourceRange.baseMipLevel = 0;
-		subresourceRange.levelCount = 1;
-		subresourceRange.layerCount = 6;
-
-		m_context.transitionImageLayoutSingleTimeCmd(
-			m_vkImage,
-			m_imageFormat,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			subresourceRange);
 	}
 
 	void ShadowCubeMap::createSCMImageViews() {

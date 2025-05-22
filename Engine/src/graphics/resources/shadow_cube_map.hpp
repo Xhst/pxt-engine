@@ -25,7 +25,6 @@ namespace PXTEngine {
 		uint32_t m_size; // Size of the cube map faces
 
 		void createSCMImage();
-		void transitionSCMLayout();
 		void createSCMImageViews();
 		void createSCMSampler();
 
