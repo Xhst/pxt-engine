@@ -10,17 +10,226 @@ namespace PXTEngine {
 			m_descriptorAllocator(std::move(descriptorAllocator)),
 			m_textureRegistry(textureRegistry),
 			m_blasRegistry(blasRegistry),
-			m_globalSetLayout(std::move(globalSetLayout)) {
-
+			m_globalSetLayout(std::move(globalSetLayout)),
+			m_offscreenColorFormat(m_renderer.getSwapChainImageFormat())
+	{
+		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
+		m_sceneExtent = {
+			static_cast<uint32_t>(swapChainExtent.width * 0.7),
+			static_cast<uint32_t>(swapChainExtent.height * 0.7)
+		};
+		createRenderPass();
+		createSceneImage();
+		createOffscreenDepthResources();
+		createOffscreenFrameBuffer();
 		createRenderSystems();
+		
+		createDescriptorSetsImGui();
 	}
 
-	MasterRenderSystem::~MasterRenderSystem() {};
+	MasterRenderSystem::~MasterRenderSystem() {
+		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
+		vkDestroyRenderPass(m_context.getDevice(), m_offscreenRenderPass, nullptr);
+	};
+
+	void MasterRenderSystem::createRenderPass() {
+		VkAttachmentDescription depthAttachment{};
+		depthAttachment.format = m_context.findDepthFormat();
+		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depthAttachmentRef{};
+		depthAttachmentRef.attachment = 1;
+		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentDescription colorAttachment = {};
+		colorAttachment.format = m_offscreenColorFormat;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		VkAttachmentReference colorAttachmentRef = {};
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
+		subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+		VkSubpassDependency dependency = {};
+		dependency.dstSubpass = 0;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.srcAccessMask = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+
+		// A second dependency for the transition to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		// This ensures that when the render pass finishes, the image is ready for sampling.
+		VkSubpassDependency readDependency{};
+		readDependency.srcSubpass = 0;
+		readDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+		readDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		readDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT; // Read in fragment shader
+		readDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		readDependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT; // Read by shader
+
+		std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+		std::array<VkSubpassDependency, 2> dependencies = { dependency, readDependency };
+
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		renderPassInfo.pAttachments = attachments.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+		renderPassInfo.pDependencies = dependencies.data();
+
+		if (vkCreateRenderPass(m_context.getDevice(), &renderPassInfo, nullptr, &m_offscreenRenderPass) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create offscreen render pass for MasterRenderSystem!");
+		}
+	}
+
+	void MasterRenderSystem::createSceneImage() {
+		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
+
+		VkImageCreateInfo sceneImageInfo{};
+		sceneImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		sceneImageInfo.imageType = VK_IMAGE_TYPE_2D;
+		sceneImageInfo.extent.width = m_sceneExtent.width;
+		sceneImageInfo.extent.height = m_sceneExtent.height;
+		sceneImageInfo.extent.depth = 1;
+		sceneImageInfo.mipLevels = 1;
+		sceneImageInfo.arrayLayers = 1;
+		sceneImageInfo.format = m_offscreenColorFormat;
+		sceneImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		sceneImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		sceneImageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | // to be writable in a renderpass
+							   VK_IMAGE_USAGE_SAMPLED_BIT |			 // to be readable in a shader
+							   VK_IMAGE_USAGE_STORAGE_BIT;			 // to be writable for raytracing shaders
+		sceneImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		sceneImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		m_sceneImage = createShared<VulkanImage>(
+			m_context,
+			sceneImageInfo,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		);
+
+		VkImageViewCreateInfo colorViewInfo{};
+		colorViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		colorViewInfo.image = m_sceneImage->getVkImage();
+		colorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		colorViewInfo.format = m_offscreenColorFormat;
+		colorViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		colorViewInfo.subresourceRange.baseMipLevel = 0;
+		colorViewInfo.subresourceRange.levelCount = 1;
+		colorViewInfo.subresourceRange.baseArrayLayer = 0;
+		colorViewInfo.subresourceRange.layerCount = 1;
+
+		m_sceneImage->createImageView(colorViewInfo);
+
+		// sampler for later imgui access
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		// Addressing Mode: Clamp to edge is usually best for render targets
+		// This prevents "wrapping" artifacts if the sampling coordinates go slightly outside [0,1]
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.anisotropyEnable = VK_FALSE;
+		samplerInfo.maxAnisotropy = 1.0f; // Ignored if anisotropyEnable is VK_FALSE
+		// Unnormalized coordinates: Use normalized UVs (0.0 to 1.0)
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		// Comparison: Not for texture sampling, leave disabled
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		samplerInfo.mipLodBias = 0.0f;
+		samplerInfo.minLod = 0.0f;
+		samplerInfo.maxLod = 0.0f; // Only use base mip level
+
+		m_sceneImage->createSampler(samplerInfo);
+	}
+
+	void MasterRenderSystem::createOffscreenDepthResources() {
+		// DEPTH RESOURCE
+		VkFormat depthFormat = m_context.findDepthFormat();
+		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
+
+		VkImageCreateInfo imageInfo{};
+		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageInfo.extent.width = m_sceneExtent.width;
+		imageInfo.extent.height = m_sceneExtent.height;
+		imageInfo.extent.depth = 1;
+		imageInfo.mipLevels = 1;
+		imageInfo.arrayLayers = 1;
+		imageInfo.format = depthFormat;
+		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		m_offscreenDepthImage = createUnique<VulkanImage>(
+			m_context,
+			imageInfo,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		);
+
+		VkImageViewCreateInfo viewInfo{};
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = m_offscreenDepthImage->getVkImage();
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = depthFormat;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+
+		m_offscreenDepthImage->createImageView(viewInfo);
+	}
+
+	void MasterRenderSystem::createOffscreenFrameBuffer() {
+		// Create the offscreen framebuffer
+		std::array<VkImageView, 2> attachments = { m_sceneImage->getImageView(), m_offscreenDepthImage->getImageView() };
+		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
+
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = m_offscreenRenderPass;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
+		framebufferInfo.width = m_sceneExtent.width;
+		framebufferInfo.height = m_sceneExtent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(m_context.getDevice(), &framebufferInfo, nullptr, &m_offscreenFb) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create offscreen framebuffer for MasterRenderSystem!");
+		}
+	}
 
 	void MasterRenderSystem::createRenderSystems() {
 		m_pointLightSystem = createUnique<PointLightSystem>(
 			m_context,
-			m_renderer.getSwapChainRenderPass(),
+			m_offscreenRenderPass,
 			m_globalSetLayout->getDescriptorSetLayout()
 		);
 
@@ -34,8 +243,8 @@ namespace PXTEngine {
 			m_context,
 			m_descriptorAllocator,
 			m_textureRegistry,
-			m_renderer.getSwapChainRenderPass(),
 			*m_globalSetLayout,
+			m_offscreenRenderPass,
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 
@@ -43,7 +252,7 @@ namespace PXTEngine {
 			m_context,
 			m_descriptorAllocator,
 			m_textureRegistry,
-			m_renderer.getSwapChainRenderPass(),
+			m_offscreenRenderPass,
 			*m_globalSetLayout
 		);
 
@@ -60,7 +269,7 @@ namespace PXTEngine {
 			m_textureRegistry,
 			m_blasRegistry,
 			*m_globalSetLayout,
-			m_renderer
+			m_sceneImage
 		);
 	}
 
@@ -92,22 +301,32 @@ namespace PXTEngine {
 		m_shadowMapRenderSystem->render(frameInfo, m_renderer);
 		m_shadowMapRenderSystem->updateUi();
 
-		// test
-		m_rayTracingRenderSystem->render(frameInfo, m_renderer);
-		m_rayTracingRenderSystem->updateUi(frameInfo);
-
-		// render main frame
-		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-
-		// choose if debug or not
-		if (m_isDebugEnabled) {
-			m_debugRenderSystem->render(frameInfo);
+		// render to offscreen main render pass
+		if (m_isRaytracingEnabled) {
+			m_rayTracingRenderSystem->render(frameInfo, m_renderer);
+			// this for now just transitions the scene image back to shader_read_only_optimal
+			m_rayTracingRenderSystem->updateUi(frameInfo);
 		}
 		else {
-			m_materialRenderSystem->render(frameInfo);
+			//begin offscreen render pass
+			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
+				m_offscreenFb, m_sceneExtent);
+
+			// choose if debug or not
+			if (m_isDebugEnabled) {
+				m_debugRenderSystem->render(frameInfo);
+			}
+			else {
+				m_materialRenderSystem->render(frameInfo);
+			}
+			
+			m_pointLightSystem->render(frameInfo);
+
+			m_renderer.endRenderPass(frameInfo.commandBuffer);
 		}
-		
-		m_pointLightSystem->render(frameInfo);
+
+		// render imgui and present
+		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
 
 		// render ui and end imgui frame
 		m_uiRenderSystem->render(frameInfo);
@@ -115,9 +334,37 @@ namespace PXTEngine {
 		m_renderer.endRenderPass(frameInfo.commandBuffer);
 	}
 
-	void MasterRenderSystem::updateUi() {
-		ImGui::Begin("Debug Renderer");
+	void MasterRenderSystem::createDescriptorSetsImGui() {
+		// DESCRIPTOR SET FOR IMGUI VIEWPORT
+		m_sceneDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.build();
 
+		VkDescriptorImageInfo imageInfo;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = m_sceneImage->getImageView();
+		imageInfo.sampler = m_sceneImage->getImageSampler();
+
+		m_descriptorAllocator->allocate(m_sceneDescriptorSetLayout->getDescriptorSetLayout(), m_sceneDescriptorSet);
+
+		DescriptorWriter(m_context, *m_sceneDescriptorSetLayout)
+			.writeImage(0, &imageInfo)
+			.updateSet(m_sceneDescriptorSet);
+	}
+
+	void MasterRenderSystem::updateUi() {
+		ImTextureID scene = (ImTextureID)m_sceneDescriptorSet;
+		ImVec2 extent = ImVec2(static_cast<float>(m_sceneExtent.width), static_cast<float>(m_sceneExtent.height));
+
+		ImGui::Begin("Viewport");
+		ImGui::Image(scene, extent);
+		ImGui::End();
+
+		ImGui::Begin("Raytracing Renderer");
+		ImGui::Checkbox("Enable Raytracing", &m_isRaytracingEnabled);
+		ImGui::End();
+
+		ImGui::Begin("Debug Renderer");
 		ImGui::Checkbox("Enable Debug", &m_isDebugEnabled);
 		
 		if (m_isDebugEnabled) {
@@ -127,7 +374,6 @@ namespace PXTEngine {
 		else {
 			ImGui::Text("Debug Renderer is disabled");
 		}
-
 		ImGui::End();
 	}
 }
