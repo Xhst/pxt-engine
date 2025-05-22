@@ -45,33 +45,22 @@ public:
 		rm.add(bunnyMaterial, "bunny_material");
 
         auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
-        auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
-		auto defaultMaterial = rm.get<Material>(DEFAULT_MATERIAL);
-
-        //auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png", &albedoInfo);
-        //auto wallStoneNormal = rm.get<Image>(TEXTURES_PATH + "wall_stone/normal.png");
-        //auto wallStoneRoughness = rm.get<Image>(TEXTURES_PATH + "wall_stone/roughness.png");
-        //auto wallStoneAO = rm.get<Image>(TEXTURES_PATH + "wall_stone/ambient_occlusion.png");
-
-        auto stylizedStoneBase = rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png", &albedoInfo);
-        auto stylizedStoneNormal = rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png");
-		auto stylizedStoneRoughness = rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png");
-        auto stylizedStoneAO = rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png");
-
 		auto stylizedStoneMaterial = Material::Builder()
-			.setAlbedoMap(stylizedStoneBase)
-			.setNormalMap(stylizedStoneNormal)
-			.setRoughnessMap(stylizedStoneRoughness)
-			.setAmbientOcclusionMap(stylizedStoneAO)
+            .setAlbedoColor(glm::vec4(1.0, 1.0, 0.0, 1.0))
+			.setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png", &albedoInfo))
+			.setNormalMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png"))
+			.setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png"))
+			.setAmbientOcclusionMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png"))
 			.build();
 		rm.add(stylizedStoneMaterial, "stylized_stone_material");
+
+        auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
 
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MeshComponent>(ground)
 			.add<MaterialComponent>(MaterialComponent::Builder()
 				.setMaterial(stylizedStoneMaterial)
-				.setTilingFactor(50.0f)
 				.build());
 #if 0
         entity = getScene().createEntity("Roof")
