@@ -30,9 +30,12 @@ namespace PXTEngine {
     };
 
     MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator,
-    	TextureRegistry& textureRegistry, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout,
-    	VkDescriptorImageInfo shadowMapImageInfo)
-	: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry) {
+    	TextureRegistry& textureRegistry, DescriptorSetLayout& globalSetLayout,
+    	VkRenderPass renderPass, VkDescriptorImageInfo shadowMapImageInfo)
+        : m_context(context),
+        m_descriptorAllocator(descriptorAllocator),
+        m_textureRegistry(textureRegistry)
+    {
 		createDescriptorSets(shadowMapImageInfo);
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);

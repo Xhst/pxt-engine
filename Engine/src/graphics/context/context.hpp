@@ -202,6 +202,17 @@ namespace PXTEngine {
 		 */
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
 				               		 VkFormatFeatureFlags features);
+		/**
+		 * @brief Finds a supported depth format.
+		 *
+		 * This function queries the device for a compatible depth format,
+		 * selecting from VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+		 * and VK_FORMAT_D24_UNORM_S8_UINT. The format is chosen based on
+		 * optimal image tiling and depth-stencil attachment support.
+		 *
+		 * @return The best available Vulkan format for depth buffering.
+		 */
+		VkFormat findDepthFormat();
 
 		/* ----------------------- End Buffer Helper Functions ---------------------- */
 		

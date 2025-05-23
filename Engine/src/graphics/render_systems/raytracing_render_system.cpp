@@ -6,13 +6,15 @@ namespace PXTEngine {
 	RayTracingRenderSystem::RayTracingRenderSystem(
 		Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator,
 		TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, BLASRegistry& blasRegistry,
-		DescriptorSetLayout& globalSetLayout, Renderer& renderer)
+		DescriptorSetLayout& globalSetLayout, Shared<VulkanImage> sceneImage)
 		: m_context(context),
 		m_textureRegistry(textureRegistry),
 		m_materialRegistry(materialRegistry),
 		m_blasRegistry(blasRegistry),
-		m_descriptorAllocator(descriptorAllocator) {
-		createDescriptorSets(renderer);
+		m_descriptorAllocator(descriptorAllocator),
+		m_sceneImage(sceneImage)
+	{
+		createDescriptorSets();
 		defineShaderGroups();
 		createPipelineLayout(globalSetLayout);
 		createPipeline();
@@ -24,87 +26,7 @@ namespace PXTEngine {
 	}
 
 
-	void RayTracingRenderSystem::createDescriptorSets(Renderer& renderer) {
-		// to test
-		// create image
-		ImageInfo imageInfo{};
-		imageInfo.width = renderer.getSwapChainExtent().width;
-		imageInfo.height = renderer.getSwapChainExtent().height;
-		imageInfo.format = ImageFormat::RGBA8_LINEAR;
-
-		m_storageImage = createUnique<VulkanImage>(
-			m_context,
-			VkImageCreateInfo{
-				VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-				nullptr,
-				0,
-				VK_IMAGE_TYPE_2D,
-				pxtToVulkanImageFormat(imageInfo.format),
-				{imageInfo.width, imageInfo.height, 1},
-				1,
-				1,
-				VK_SAMPLE_COUNT_1_BIT,
-				VK_IMAGE_TILING_OPTIMAL,
-				VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-				VK_SHARING_MODE_EXCLUSIVE,
-				0,
-				nullptr,
-				VK_IMAGE_LAYOUT_UNDEFINED
-			},
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-		);
-
-		// create image view
-		VkImageViewCreateInfo viewInfo{};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = m_storageImage->getVkImage();
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = pxtToVulkanImageFormat(imageInfo.format);
-		viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-		 
-		m_storageImage->createImageView(viewInfo);
-	
-		// transition output image to general layout for ray gen shader
-		m_context.transitionImageLayoutSingleTimeCmd(
-			m_storageImage->getVkImage(),
-			m_storageImage->getImageFormat(),
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_GENERAL
-		);
-
-		// Create a sampler
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-		samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		samplerInfo.unnormalizedCoordinates = VK_FALSE;
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
-		// Mipmapping settings
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = 0.0f;
-
-		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = m_context.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
-
-		m_storageImage->createSampler(samplerInfo);
-
+	void RayTracingRenderSystem::createDescriptorSets() {
 		// Create storage image descriptor set
 		m_storageImageDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
@@ -114,7 +36,7 @@ namespace PXTEngine {
 
 		VkDescriptorImageInfo descriptorImageInfo;
 		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		descriptorImageInfo.imageView = m_storageImage->getImageView();
+		descriptorImageInfo.imageView = m_sceneImage->getImageView();
 		descriptorImageInfo.sampler = VK_NULL_HANDLE;
 
 		m_descriptorAllocator->allocate(m_storageImageDescriptorSetLayout->getDescriptorSetLayout(), m_storageImageDescriptorSet);
@@ -122,21 +44,6 @@ namespace PXTEngine {
 		DescriptorWriter(m_context, *m_storageImageDescriptorSetLayout)
 			.writeImage(0, &descriptorImageInfo)
 			.updateSet(m_storageImageDescriptorSet);
-
-		// create imgui descriptor set
-		m_imguiDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-				VK_SHADER_STAGE_FRAGMENT_BIT,
-				1)
-			.build();
-
-		m_descriptorAllocator->allocate(m_imguiDescriptorSetLayout->getDescriptorSetLayout(), m_imguiDescriptorSet);
-
-		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		descriptorImageInfo.sampler = m_storageImage->getImageSampler();
-		DescriptorWriter(m_context, *m_imguiDescriptorSetLayout)
-			.writeImage(0, &descriptorImageInfo)
-			.updateSet(m_imguiDescriptorSet);
 	}
 
 	void RayTracingRenderSystem::defineShaderGroups() {
@@ -383,15 +290,26 @@ namespace PXTEngine {
 	void RayTracingRenderSystem::update(FrameInfo& frameInfo) {
 		m_tlasBuildSystem.createTLAS(frameInfo);
 
-		if (m_isFirstUpdate) {
-			m_isFirstUpdate = false; // first update is done, next times we have to transition the image layout
+		if (m_isFirstFrame) {
+			m_isFirstFrame = false; // first frame is done, next times we have to transition from shader read only optimal
+			
+			m_context.transitionImageLayout(
+				frameInfo.commandBuffer,
+				m_sceneImage->getVkImage(),
+				m_sceneImage->getImageFormat(),
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_GENERAL,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
+			);
+
 			return;
 		}
 
 		m_context.transitionImageLayout(
 			frameInfo.commandBuffer,
-			m_storageImage->getVkImage(),
-			m_storageImage->getImageFormat(),
+			m_sceneImage->getVkImage(),
+			m_sceneImage->getImageFormat(),
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_IMAGE_LAYOUT_GENERAL,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -437,18 +355,12 @@ namespace PXTEngine {
 		// transition output image to shader read only layout for imgui
 		m_context.transitionImageLayout(
 			frameInfo.commandBuffer,
-			m_storageImage->getVkImage(),
-			m_storageImage->getImageFormat(),
+			m_sceneImage->getVkImage(),
+			m_sceneImage->getImageFormat(),
 			VK_IMAGE_LAYOUT_GENERAL,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
 		);
-
-		ImTextureID rt_image = (ImTextureID)m_imguiDescriptorSet;
-
-		ImGui::Begin("Ray Tracing Image");
-		ImGui::Image(rt_image, ImVec2(512, 512));
-		ImGui::End();
 	}
 }

@@ -38,7 +38,13 @@ namespace PXTEngine {
 		void doRenderPasses(FrameInfo& frameInfo);
 
 	private:
+		void createRenderPass();
+		void createSceneImage();
+		void createOffscreenDepthResources();
+		void createOffscreenFrameBuffer();
 		void createRenderSystems();
+
+		void createDescriptorSetsImGui();
 
 		void updateUi();
 
@@ -61,6 +67,19 @@ namespace PXTEngine {
 		Unique<DebugRenderSystem> m_debugRenderSystem = nullptr;
 		Unique<RayTracingRenderSystem> m_rayTracingRenderSystem = nullptr;
 
+		VkRenderPass m_offscreenRenderPass;
+		VkFramebuffer m_offscreenFb;
+
+		Shared<VulkanImage> m_sceneImage;
+		VkFormat m_offscreenColorFormat;
+		Unique<VulkanImage> m_offscreenDepthImage;
+
+		VkDescriptorSet m_sceneDescriptorSet = VK_NULL_HANDLE;
+		Unique<DescriptorSetLayout> m_sceneDescriptorSetLayout = nullptr;
+
+		VkExtent2D m_sceneExtent;
+
 		bool m_isDebugEnabled = false;
+		bool m_isRaytracingEnabled = false;
 	};
 }

@@ -114,18 +114,6 @@ namespace PXTEngine {
         }
 
         /**
-         * @brief Finds a supported depth format for the swap chain.
-         *
-         * This function queries the device for a compatible depth format,
-         * selecting from VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-         * and VK_FORMAT_D24_UNORM_S8_UINT. The format is chosen based on
-         * optimal image tiling and depth-stencil attachment support.
-         *
-         * @return The best available Vulkan format for depth buffering.
-         */
-        VkFormat findDepthFormat();
-
-        /**
          * @brief Acquires the next available swap chain image.
          *
          * This function waits for the current frame's fence to ensure the GPU has finished
