@@ -12,7 +12,7 @@
 
 namespace PXTEngine {
 
-	struct MaterialData {
+	struct alignas(16) MaterialData {
 		glm::vec4 albedoColor;
 		int albedoMapIndex;
 		int normalMapIndex;
