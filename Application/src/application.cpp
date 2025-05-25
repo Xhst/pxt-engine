@@ -37,7 +37,6 @@ public:
 
         auto bunny = rm.get<Mesh>(MODELS_PATH + "bunny/bunny.obj");
         auto bunnyMaterial = Material::Builder()
-            .setAlbedoColor(glm::vec4(1.0, 0.0, 0.0, 1.0))
             .setAlbedoMap(rm.get<Image>(MODELS_PATH + "bunny/terracotta.jpg", &albedoInfo))
             .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
 			.setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
@@ -46,7 +45,6 @@ public:
 
         auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
 		auto stylizedStoneMaterial = Material::Builder()
-            .setAlbedoColor(glm::vec4(1.0, 1.0, 0.0, 1.0))
 			.setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png", &albedoInfo))
 			.setNormalMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png"))
 			.setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png"))
@@ -108,7 +106,7 @@ public:
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights (white, green, blue)
-        entity = createPointLight(0.05f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
+        entity = createPointLight(0.1f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
         entity.get<TransformComponent>().translation = glm::vec3{10.0f / (float) sqrt(3), 0.5f, 0.2f};
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0
