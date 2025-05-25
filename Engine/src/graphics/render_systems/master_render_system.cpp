@@ -12,9 +12,22 @@ namespace PXTEngine {
 			m_textureRegistry(textureRegistry),
 		    m_materialRegistry(materialRegistry),
 			m_blasRegistry(blasRegistry),
-			m_globalSetLayout(std::move(globalSetLayout)),
-			m_offscreenColorFormat(m_renderer.getSwapChainImageFormat())
+			m_globalSetLayout(std::move(globalSetLayout))
 	{
+		m_offscreenColorFormat = m_context.findSupportedFormat(
+			{ VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM },
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
+			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
+			VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT
+		);
+
+		std::cout << "Offscreen color format: " << m_offscreenColorFormat << std::endl;
+
+		if (m_offscreenColorFormat == VK_FORMAT_UNDEFINED) {
+			throw std::runtime_error("Failed to find a suitable offscreen color format for MasterRenderSystem's render target!");
+		}
+
 		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
 		m_sceneExtent = {
 			static_cast<uint32_t>(swapChainExtent.width * 0.7),
