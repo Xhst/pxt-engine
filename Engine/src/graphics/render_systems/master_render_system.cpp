@@ -143,6 +143,16 @@ namespace PXTEngine {
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 		);
 
+		// transition once to SHADER_READ_ONLY_OPTIMAL layout
+		m_context.transitionImageLayoutSingleTimeCmd(
+			m_sceneImage->getVkImage(),
+			m_sceneImage->getImageFormat(),
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+		);
+
 		VkImageViewCreateInfo colorViewInfo{};
 		colorViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		colorViewInfo.image = m_sceneImage->getVkImage();
