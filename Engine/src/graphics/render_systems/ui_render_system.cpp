@@ -43,7 +43,12 @@ namespace PXTEngine {
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
 
-		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		// enable docking and load ini file
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+		io.IniFilename = IMGUI_INI_FILEPATH.c_str();
+		std::cout << "ImGui .ini file set to: " << io.IniFilename << std::endl;
 
 		ImGui_ImplGlfw_InitForVulkan(m_context.getWindow().getBaseWindow(), true);
 		ImGui_ImplVulkan_InitInfo initInfo{};
