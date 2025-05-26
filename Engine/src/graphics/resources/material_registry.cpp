@@ -25,14 +25,6 @@ namespace PXTEngine {
 		return it != m_idToIndex.end() ? it->second : 0;
 	}
 
-	uint32_t MaterialRegistry::getMaterialCount() const {
-		return static_cast<uint32_t>(m_materials.size());
-	}
-
-	std::vector<Shared<Material>> MaterialRegistry::getMaterials() {
-		return m_materials;
-	}
-
 	VkDescriptorSet MaterialRegistry::getDescriptorSet() {
 		return m_materialDescriptorSet;
 	}
