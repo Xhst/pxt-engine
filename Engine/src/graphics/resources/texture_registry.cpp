@@ -15,6 +15,7 @@ namespace PXTEngine {
 
 	uint32_t TextureRegistry::add(const Shared<Image>& image) {
 		auto* texture = dynamic_cast<Texture2D*>(image.get());
+
 		if (!texture) {
 			return 0;
 		}
@@ -31,14 +32,6 @@ namespace PXTEngine {
 		return it != m_idToIndex.end() ? it->second : 0;
 	}
 
-	uint32_t TextureRegistry::getTextureCount() const {
-		return static_cast<uint32_t>(m_textures.size());
-	}
-
-	std::vector<Shared<Image>> TextureRegistry::getTextures() {
-		return m_textures;
-	}
-
 	VkDescriptorSet TextureRegistry::getDescriptorSet() {
 		return m_textureDescriptorSet;
 	}
@@ -49,7 +42,7 @@ namespace PXTEngine {
 
 	void TextureRegistry::createDescriptorSet() {
 		m_textureDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, getTextureCount())
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, static_cast<uint32_t>(m_textures.size()))
 			.build();
 
 		std::vector<VkDescriptorImageInfo> imageInfos;
