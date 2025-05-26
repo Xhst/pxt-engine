@@ -48,6 +48,10 @@ namespace PXTEngine {
 		 */
 		[[nodiscard]] uint32_t getIndex(const ResourceId& id) const;
 
+		uint32_t getTextureCount() const {
+			return static_cast<uint32_t>(m_textures.size());
+		}
+
 		/**
 		 * @brief Returns the Vulkan descriptor set that holds all texture bindings.
 		 *
