@@ -425,11 +425,17 @@ namespace PXTEngine {
 
 	void MasterRenderSystem::updateUi() {
 		ImTextureID scene = (ImTextureID)m_sceneDescriptorSet;
-		ImVec2 extent = ImVec2(static_cast<float>(m_sceneExtent.width), static_cast<float>(m_sceneExtent.height));
 
+		// we push a style var to remove the viewpoer window padding
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("Viewport");
+
+		// we see the size of the imgui window and we scale the scene image to fit it
+		ImVec2 extent = ImGui::GetContentRegionAvail();
+
 		ImGui::Image(scene, extent);
 		ImGui::End();
+		ImGui::PopStyleVar();
 
 		ImGui::Begin("Raytracing Renderer");
 		ImGui::Checkbox("Enable Raytracing", &m_isRaytracingEnabled);

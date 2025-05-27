@@ -116,67 +116,24 @@ namespace PXTEngine {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		// MAIN MENU BAR (might become a method itself in the future)
 		if (ImGui::BeginMainMenuBar()) {
-			// 2. Begin the "File" menu
-			// This creates a clickable menu item in the menu bar.
 			if (ImGui::BeginMenu("File")) {
-				// 3. Add menu items
-				// ImGui::MenuItem returns true if the item is clicked.
-
-				// "New" option
-				if (ImGui::MenuItem("New", "Ctrl+N")) { // Optional: provide a shortcut hint
-					// Handle "New" action
-					// For example, set a flag to create a new document
-					// m_createNewFile = true;
-					ImGui::Text("Action: New File"); // For demonstration
+				if (ImGui::MenuItem("Open...")) {
+					// TODO: Implement "Open" logic here
+					printf("File -> Open... clicked!\n");
 				}
-
-				// "Open..." option
-				if (ImGui::MenuItem("Open...", "Ctrl+O")) {
-					// Handle "Open" action
-					// m_openFile = true;
-					ImGui::Text("Action: Open File"); // For demonstration
+				if (ImGui::MenuItem("Exit")) {
+					// TODO: Implement "Exit" logic here
+					printf("File -> Exit clicked!\n");
 				}
-
-				// "Save" option
-				if (ImGui::MenuItem("Save", "Ctrl+S")) {
-					// Handle "Save" action
-					// m_saveFile = true;
-					ImGui::Text("Action: Save File"); // For demonstration
-				}
-
-				// "Save As..." option
-				if (ImGui::MenuItem("Save As...")) {
-					// Handle "Save As" action
-					// m_saveFileAs = true;
-					ImGui::Text("Action: Save File As"); // For demonstration
-				}
-
-				// Add a separator for visual grouping
-				ImGui::Separator();
-
-				// "Exit" option
-				if (ImGui::MenuItem("Exit", "Alt+F4")) {
-					// Handle "Exit" action
-					// This would typically set a flag to close your application window
-					// m_window.close();
-					ImGui::Text("Action: Exit Application"); // For demonstration
-				}
-
-				// 4. End the "File" menu
 				ImGui::EndMenu();
 			}
-
-			// You can add more top-level menus here, e.g., "Edit", "View", "Help"
-			if (ImGui::BeginMenu("Edit")) {
-				if (ImGui::MenuItem("Undo", "Ctrl+Z")) { /* ... */ }
-				if (ImGui::MenuItem("Redo", "Ctrl+Y")) { /* ... */ }
-				ImGui::EndMenu();
-			}
-
-			// 5. End the main menu bar
 			ImGui::EndMainMenuBar();
 		}
+
+		// IMPORTANT: This is required for docking to work in the main window (for customizations, view imgui_demo.cpp)
+		ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 	}
 
 	void UiRenderSystem::buildUi() {
