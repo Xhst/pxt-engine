@@ -112,7 +112,7 @@ namespace PXTEngine {
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             m_pipelineLayout,
             0,
-            descriptorSets.size(),
+            static_cast<uint32_t>(descriptorSets.size()),
             descriptorSets.data(),
             0,
             nullptr
