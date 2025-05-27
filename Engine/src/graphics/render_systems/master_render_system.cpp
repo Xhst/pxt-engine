@@ -31,10 +31,6 @@ namespace PXTEngine {
 		// to handle viewport resizing
 		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
 		m_lastFrameSwapChainExtent = swapChainExtent;
-		m_sceneExtent = {
-			static_cast<uint32_t>(swapChainExtent.width * 0.7),
-			static_cast<uint32_t>(swapChainExtent.height * 0.7)
-		};
 
 		createRenderPass();
 		createSceneImage();
@@ -58,10 +54,6 @@ namespace PXTEngine {
 		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
 
 		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
-		m_sceneExtent = {
-			static_cast<uint32_t>(swapChainExtent.width * 0.7),
-			static_cast<uint32_t>(swapChainExtent.height * 0.7)
-		};
 
 		createSceneImage();
 		createOffscreenDepthResources();

@@ -79,7 +79,6 @@ namespace PXTEngine {
 		VkDescriptorSet m_sceneDescriptorSet = VK_NULL_HANDLE;
 		Unique<DescriptorSetLayout> m_sceneDescriptorSetLayout = nullptr;
 
-		VkExtent2D m_sceneExtent;
 		VkExtent2D m_lastFrameSwapChainExtent;
 
 		bool m_isDebugEnabled = false;
