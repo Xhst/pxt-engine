@@ -164,8 +164,9 @@ namespace PXTEngine {
 
         std::cout << "Required extensions not supported are:\n" << '\n';
 
-        // Use the erase-remove idiom to filter the deviceExtensions vector
         deviceExtensions.erase(
+			// this is a functional approach. It iterates from begin to end and
+            // removes all the elements that satisfy the predicate (lamba function returning bool)
             std::remove_if(deviceExtensions.begin(), deviceExtensions.end(),
                 [&](const char* extNameCStr) {
                     // Convert const char* to std::string for easier comparison and checks
