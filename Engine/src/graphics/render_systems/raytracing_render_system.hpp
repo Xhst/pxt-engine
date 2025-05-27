@@ -25,6 +25,8 @@ namespace PXTEngine {
         void render(FrameInfo& frameInfo, Renderer& renderer);
 		void updateUi(FrameInfo& frameInfo);
 
+        void updateSceneImage(Shared<VulkanImage> sceneImage);
+
     private:
 		void createDescriptorSets();
 		void defineShaderGroups();

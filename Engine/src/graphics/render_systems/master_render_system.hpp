@@ -38,6 +38,7 @@ namespace PXTEngine {
 		void doRenderPasses(FrameInfo& frameInfo);
 
 	private:
+		void recreateViewportResources();
 		void createRenderPass();
 		void createSceneImage();
 		void createOffscreenDepthResources();
@@ -45,6 +46,7 @@ namespace PXTEngine {
 		void createRenderSystems();
 
 		void createDescriptorSetsImGui();
+		void updateImguiDescriptorSet();
 
 		void updateUi();
 
@@ -78,6 +80,7 @@ namespace PXTEngine {
 		Unique<DescriptorSetLayout> m_sceneDescriptorSetLayout = nullptr;
 
 		VkExtent2D m_sceneExtent;
+		VkExtent2D m_lastFrameSwapChainExtent;
 
 		bool m_isDebugEnabled = false;
 		bool m_isRaytracingEnabled = false;

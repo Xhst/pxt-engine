@@ -46,6 +46,19 @@ namespace PXTEngine {
 			.updateSet(m_storageImageDescriptorSet);
 	}
 
+	void RayTracingRenderSystem::updateSceneImage(Shared<VulkanImage> sceneImage) {
+		VkDescriptorImageInfo descriptorImageInfo;
+		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		descriptorImageInfo.imageView = sceneImage->getImageView();
+		descriptorImageInfo.sampler = VK_NULL_HANDLE;
+
+		DescriptorWriter(m_context, *m_storageImageDescriptorSetLayout)
+			.writeImage(0, &descriptorImageInfo)
+			.updateSet(m_storageImageDescriptorSet);
+		
+		m_sceneImage = sceneImage;
+	}
+
 	void RayTracingRenderSystem::defineShaderGroups() {
 		m_shaderGroups = {
 			// General RayGen Group

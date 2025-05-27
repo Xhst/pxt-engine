@@ -28,11 +28,14 @@ namespace PXTEngine {
 			throw std::runtime_error("Failed to find a suitable offscreen color format for MasterRenderSystem's render target!");
 		}
 
+		// to handle viewport resizing
 		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
+		m_lastFrameSwapChainExtent = swapChainExtent;
 		m_sceneExtent = {
 			static_cast<uint32_t>(swapChainExtent.width * 0.7),
 			static_cast<uint32_t>(swapChainExtent.height * 0.7)
 		};
+
 		createRenderPass();
 		createSceneImage();
 		createOffscreenDepthResources();
@@ -46,6 +49,26 @@ namespace PXTEngine {
 		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
 		vkDestroyRenderPass(m_context.getDevice(), m_offscreenRenderPass, nullptr);
 	};
+
+	void MasterRenderSystem::recreateViewportResources() {
+		// wait for the device to be idle
+		vkDeviceWaitIdle(m_context.getDevice());
+
+		// destroy old resources
+		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
+
+		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
+		m_sceneExtent = {
+			static_cast<uint32_t>(swapChainExtent.width * 0.7),
+			static_cast<uint32_t>(swapChainExtent.height * 0.7)
+		};
+
+		createSceneImage();
+		createOffscreenDepthResources();
+		createOffscreenFrameBuffer();
+
+		updateImguiDescriptorSet();
+	}
 
 	void MasterRenderSystem::createRenderPass() {
 		VkAttachmentDescription depthAttachment{};
@@ -123,8 +146,8 @@ namespace PXTEngine {
 		VkImageCreateInfo sceneImageInfo{};
 		sceneImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		sceneImageInfo.imageType = VK_IMAGE_TYPE_2D;
-		sceneImageInfo.extent.width = m_sceneExtent.width;
-		sceneImageInfo.extent.height = m_sceneExtent.height;
+		sceneImageInfo.extent.width = swapChainExtent.width;
+		sceneImageInfo.extent.height = swapChainExtent.height;
 		sceneImageInfo.extent.depth = 1;
 		sceneImageInfo.mipLevels = 1;
 		sceneImageInfo.arrayLayers = 1;
@@ -200,8 +223,8 @@ namespace PXTEngine {
 		VkImageCreateInfo imageInfo{};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = m_sceneExtent.width;
-		imageInfo.extent.height = m_sceneExtent.height;
+		imageInfo.extent.width = swapChainExtent.width;
+		imageInfo.extent.height = swapChainExtent.height;
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
@@ -242,8 +265,8 @@ namespace PXTEngine {
 		framebufferInfo.renderPass = m_offscreenRenderPass;
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		framebufferInfo.pAttachments = attachments.data();
-		framebufferInfo.width = m_sceneExtent.width;
-		framebufferInfo.height = m_sceneExtent.height;
+		framebufferInfo.width = swapChainExtent.width;
+		framebufferInfo.height = swapChainExtent.height;
 		framebufferInfo.layers = 1;
 
 		if (vkCreateFramebuffer(m_context.getDevice(), &framebufferInfo, nullptr, &m_offscreenFb) != VK_SUCCESS) {
@@ -300,6 +323,17 @@ namespace PXTEngine {
 	}
 
 	void MasterRenderSystem::onUpdate(FrameInfo& frameInfo, GlobalUbo& ubo) {
+		// check if viewport size has changed, if so recreate resources
+		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
+		if (swapChainExtent.width != m_lastFrameSwapChainExtent.width ||
+			swapChainExtent.height != m_lastFrameSwapChainExtent.height) {
+			recreateViewportResources();
+
+			// update scene image for raytracing
+			m_rayTracingRenderSystem->updateSceneImage(m_sceneImage);
+			m_lastFrameSwapChainExtent = swapChainExtent;
+		}
+		
 		// update ubo buffer
 		ubo.projection = frameInfo.camera.getProjectionMatrix();
 		ubo.view = frameInfo.camera.getViewMatrix();
@@ -336,7 +370,7 @@ namespace PXTEngine {
 		else {
 			//begin offscreen render pass
 			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
-				m_offscreenFb, m_sceneExtent);
+				m_offscreenFb, m_renderer.getSwapChainExtent());
 
 			// choose if debug or not
 			if (m_isDebugEnabled) {
@@ -372,6 +406,17 @@ namespace PXTEngine {
 		imageInfo.sampler = m_sceneImage->getImageSampler();
 
 		m_descriptorAllocator->allocate(m_sceneDescriptorSetLayout->getDescriptorSetLayout(), m_sceneDescriptorSet);
+
+		DescriptorWriter(m_context, *m_sceneDescriptorSetLayout)
+			.writeImage(0, &imageInfo)
+			.updateSet(m_sceneDescriptorSet);
+	}
+
+	void MasterRenderSystem::updateImguiDescriptorSet() {
+		VkDescriptorImageInfo imageInfo;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = m_sceneImage->getImageView();
+		imageInfo.sampler = m_sceneImage->getImageSampler();
 
 		DescriptorWriter(m_context, *m_sceneDescriptorSetLayout)
 			.writeImage(0, &imageInfo)
