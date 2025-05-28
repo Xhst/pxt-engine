@@ -48,6 +48,7 @@ namespace PXTEngine {
 		void createDescriptorSetsImGui();
 		void updateImguiDescriptorSet();
 
+		ImVec2 getImageSizeWithAspectRatioForImGuiWindow(ImVec2 windowSize, float aspectRatio);
 		void updateUi();
 
 		Context& m_context;
@@ -80,6 +81,7 @@ namespace PXTEngine {
 		Unique<DescriptorSetLayout> m_sceneDescriptorSetLayout = nullptr;
 
 		VkExtent2D m_lastFrameSwapChainExtent;
+		ImVec2 m_sceneImageExtentInWindow = { 960, 540 };
 
 		bool m_isDebugEnabled = false;
 		bool m_isRaytracingEnabled = false;
