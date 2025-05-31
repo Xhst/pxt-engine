@@ -7,7 +7,7 @@
 #include "graphics/context/context.hpp"
 #include "graphics/frame_info.hpp"
 #include "graphics/resources/vk_buffer.hpp"
-#include "graphics/resources/shadow_cube_map.hpp"
+#include "graphics/resources/cube_map.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 
 namespace PXTEngine {
@@ -56,7 +56,7 @@ namespace PXTEngine {
         std::array<Unique<VulkanBuffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightUniformBuffers;
         std::array<VkDescriptorSet, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightDescriptorSets;
 
-        Unique<ShadowCubeMap> m_shadowCubeMap;
+        Unique<CubeMap> m_shadowCubeMap;
 		VkDescriptorImageInfo m_shadowMapDescriptorInfo{ VK_NULL_HANDLE };
 		std::array<VkDescriptorImageInfo, 6> m_debugImageDescriptorInfos;
 		std::array<VkDescriptorSet, 6> m_shadowMapDebugDescriptorSets;
