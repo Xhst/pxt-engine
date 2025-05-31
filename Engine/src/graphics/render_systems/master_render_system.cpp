@@ -303,6 +303,13 @@ namespace PXTEngine {
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 
+		m_skyboxRenderSystem = createUnique<SkyboxRenderSystem>(
+			m_context,
+			m_descriptorAllocator,
+			*m_globalSetLayout,
+			m_offscreenRenderPass
+		);
+
 		m_rayTracingRenderSystem = createUnique<RayTracingRenderSystem>(
 			m_context,
 			m_descriptorAllocator,
@@ -364,6 +371,8 @@ namespace PXTEngine {
 			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
 				m_offscreenFb, m_renderer.getSwapChainExtent());
 
+			m_skyboxRenderSystem->render(frameInfo);
+
 			// choose if debug or not
 			if (m_isDebugEnabled) {
 				m_debugRenderSystem->render(frameInfo);
@@ -371,7 +380,7 @@ namespace PXTEngine {
 			else {
 				m_materialRenderSystem->render(frameInfo);
 			}
-			
+
 			m_pointLightSystem->render(frameInfo);
 
 			m_renderer.endRenderPass(frameInfo.commandBuffer);

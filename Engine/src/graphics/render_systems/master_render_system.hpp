@@ -14,7 +14,9 @@
 #include "graphics/render_systems/point_light_system.hpp"
 #include "graphics/render_systems/ui_render_system.hpp"
 #include "graphics/render_systems/debug_render_system.hpp"
+#include "graphics/render_systems/skybox_render_system.hpp"
 #include "graphics/render_systems/raytracing_render_system.hpp"
+
 
 namespace PXTEngine {
 
@@ -68,6 +70,7 @@ namespace PXTEngine {
 		Unique<ShadowMapRenderSystem> m_shadowMapRenderSystem = nullptr;
 		Unique<UiRenderSystem> m_uiRenderSystem = nullptr;
 		Unique<DebugRenderSystem> m_debugRenderSystem = nullptr;
+		Unique<SkyboxRenderSystem> m_skyboxRenderSystem = nullptr;
 		Unique<RayTracingRenderSystem> m_rayTracingRenderSystem = nullptr;
 
 		VkRenderPass m_offscreenRenderPass;
