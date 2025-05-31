@@ -9,6 +9,8 @@
 #include "graphics/frame_info.hpp"
 #include "graphics/render_systems/master_render_system.hpp"
 #include "graphics/resources/texture_registry.hpp"
+#include "graphics/resources/material_registry.hpp"
+#include "graphics/resources/blas_registry.hpp"
 #include "resources/resource_manager.hpp"
 #include "resources/types/material.hpp"
 #include "scene/scene.hpp"
@@ -53,7 +55,7 @@ namespace PXTEngine {
 		void createUboBuffers();
         void createGlobalDescriptorSet();
         void createDefaultResources();
-        void registerImages();
+        void registerResources();
 
         void start();
         void run();
@@ -65,6 +67,7 @@ namespace PXTEngine {
 
         Window m_window{WindowData()};
         Context m_context{m_window};
+
         Renderer m_renderer{m_window, m_context};
         Unique<MasterRenderSystem> m_masterRenderSystem;
 
@@ -78,6 +81,8 @@ namespace PXTEngine {
 
         ResourceManager m_resourceManager{};
         TextureRegistry m_textureRegistry{m_context};
+		MaterialRegistry m_materialRegistry{m_context, m_textureRegistry};
+		BLASRegistry m_blasRegistry{m_context};
 
         static Application* m_instance;
 

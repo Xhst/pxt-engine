@@ -39,7 +39,7 @@ namespace PXTEngine {
             PXT_PROFILE("PXTEngine::Application::loadScene");
             loadScene();
         }
-        registerImages();
+        registerResources();
 
 		// create the pool manager, ubo buffers, and global descriptor sets
 		createDescriptorPoolAllocator();
@@ -50,12 +50,18 @@ namespace PXTEngine {
         m_textureRegistry.setDescriptorAllocator(m_descriptorAllocator);
 		m_textureRegistry.createDescriptorSet();
 
+		// create the descriptor sets for the materials
+		m_materialRegistry.setDescriptorAllocator(m_descriptorAllocator);
+		m_materialRegistry.createDescriptorSet();
+
 		// create the render systems
         m_masterRenderSystem = createUnique<MasterRenderSystem>(
             m_context,
             m_renderer,
             m_descriptorAllocator,
             m_textureRegistry,
+			m_materialRegistry,
+			m_blasRegistry,
             m_globalSetLayout
         );
 
@@ -89,7 +95,12 @@ namespace PXTEngine {
 
     void Application::createGlobalDescriptorSet() {
         m_globalSetLayout = DescriptorSetLayout::Builder(m_context)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 
+                VK_SHADER_STAGE_VERTEX_BIT | 
+                VK_SHADER_STAGE_FRAGMENT_BIT |
+                VK_SHADER_STAGE_RAYGEN_BIT_KHR |
+				VK_SHADER_STAGE_MISS_BIT_KHR |
+				VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
             .build();
 
         for (int i = 0; i < m_globalDescriptorSets.size(); i++) {
@@ -144,15 +155,28 @@ namespace PXTEngine {
 		m_resourceManager.add(defaultMaterial, DEFAULT_MATERIAL);
     }
 
-    void Application::registerImages() {
+    void Application::registerResources() {
 		// iterate over resource and register images
 		m_resourceManager.foreach([&](const Shared<Resource>& resource) {
-			if (resource->getType() != Resource::Type::Image) return;
-
-			const auto image = std::static_pointer_cast<Image>(resource);
-			m_textureRegistry.add(image);
+            if (resource->getType() == Resource::Type::Image) {
+                const auto image = std::static_pointer_cast<Image>(resource);
+                m_textureRegistry.add(image);
+            }
+			else if (resource->getType() == Resource::Type::Mesh) {
+				auto mesh = std::static_pointer_cast<Mesh>(resource);
+				m_blasRegistry.getOrCreateBLAS(mesh);
+			}
 		});
+
+        m_resourceManager.foreach([&](const Shared<Resource>& resource) {
+            if (resource->getType() == Resource::Type::Material) {
+                auto material = std::static_pointer_cast<Material>(resource);
+
+                m_materialRegistry.add(material);
+            }
+        });
     }
+
 
 
     void Application::run() {

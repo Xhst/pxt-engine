@@ -14,21 +14,21 @@ namespace PXTEngine {
 
     VulkanMesh::VulkanMesh(Context& context, std::vector<Mesh::Vertex>& vertices, 
         std::vector<uint32_t>& indices)
-        : m_context(context), m_vertices(vertices), m_indices(indices) {
-        createVertexBuffers();
-        createIndexBuffers();
+        : m_context(context) {
+        createVertexBuffers(vertices);
+        createIndexBuffers(indices);
     }
 
     VulkanMesh::~VulkanMesh() = default;
 
-    void VulkanMesh::createVertexBuffers() {
-        m_vertexCount = static_cast<uint32_t>(m_vertices.size());
+    void VulkanMesh::createVertexBuffers(std::vector<Mesh::Vertex>& vertices) {
+        m_vertexCount = static_cast<uint32_t>(vertices.size());
 
         PXT_ASSERT(m_vertexCount >= 3, "Vertex count must be at least 3");
 
-        VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertexCount;
+        VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCount;
 
-        uint32_t vertexSize = sizeof(m_vertices[0]);
+        uint32_t vertexSize = sizeof(vertices[0]);
 
         VulkanBuffer stagingBuffer{
             m_context,
@@ -39,27 +39,30 @@ namespace PXTEngine {
         };
 
         stagingBuffer.map();
-        stagingBuffer.writeToBuffer((void*) m_vertices.data());
+        stagingBuffer.writeToBuffer((void*) vertices.data());
 
         m_vertexBuffer = createUnique<VulkanBuffer>(
             m_context, 
-            vertexSize, 
+            vertexSize,
             m_vertexCount, 
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT  |
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |                           // to create BLASes
+            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR, // to create BLASes
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
 
         m_context.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
     }
 
-    void VulkanMesh::createIndexBuffers() {
-        m_indexCount = static_cast<uint32_t>(m_indices.size());
+    void VulkanMesh::createIndexBuffers(std::vector<uint32_t>& indices) {
+        m_indexCount = static_cast<uint32_t>(indices.size());
         m_hasIndexBuffer = m_indexCount > 0;
 
         if (!m_hasIndexBuffer) return;
 
-        VkDeviceSize bufferSize = sizeof(m_indices[0]) * m_indexCount;
-        uint32_t indexSize = sizeof(m_indices[0]);
+        VkDeviceSize bufferSize = sizeof(indices[0]) * m_indexCount;
+        uint32_t indexSize = sizeof(indices[0]);
 
         VulkanBuffer stagingBuffer{
             m_context,
@@ -70,13 +73,16 @@ namespace PXTEngine {
         };
 
         stagingBuffer.map();
-        stagingBuffer.writeToBuffer((void*) m_indices.data());
+        stagingBuffer.writeToBuffer((void*)indices.data());
 
         m_indexBuffer = createUnique<VulkanBuffer>(
             m_context, 
             indexSize, 
             m_indexCount, 
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+            VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |                           // to create BLASes
+            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR, // to create BLASes
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
         );
 

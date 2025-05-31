@@ -124,7 +124,7 @@ namespace PXTEngine {
         return score;
     }
 
-    bool PhysicalDevice::isDeviceSuitable(VkPhysicalDevice device) const {
+    bool PhysicalDevice::isDeviceSuitable(VkPhysicalDevice device) {
         QueueFamilyIndices indices = findQueueFamiliesForDevice(device);
 
         bool extensionsSupported = checkDeviceExtensionSupport(device);
@@ -142,7 +142,7 @@ namespace PXTEngine {
         return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
     }
 
-    bool PhysicalDevice::checkDeviceExtensionSupport(const VkPhysicalDevice device) const {
+    bool PhysicalDevice::checkDeviceExtensionSupport(const VkPhysicalDevice device) {
         uint32_t extensionCount;
 
         // Gets the count of available device extensions.
@@ -153,14 +153,47 @@ namespace PXTEngine {
         // Populates the availableExtensions vector with the properties of each extension.
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-        std::set<std::string> requiredExtensions(m_instance.deviceExtensions.begin(), m_instance.deviceExtensions.end());
-
-        // Removes any extension from requiredExtensions that is found in the available extensions list.
+        // Populate a set of available extension names for efficient lookup
+        std::set<std::string> availableExtensionNames;
         for (const auto& extension : availableExtensions) {
-            requiredExtensions.erase(extension.extensionName);
+            availableExtensionNames.insert(extension.extensionName);
         }
 
-        return requiredExtensions.empty();
+        // Flag to track if any essential (non-NV) required extension is missing
+        bool allRequiredSupported = true;
+
+        std::cout << "Required extensions not supported are:\n" << '\n';
+
+        deviceExtensions.erase(
+			// this is a functional approach. It iterates from begin to end and
+            // removes all the elements that satisfy the predicate (lamba function returning bool)
+            std::remove_if(deviceExtensions.begin(), deviceExtensions.end(),
+                [&](const char* extNameCStr) {
+                    // Convert const char* to std::string for easier comparison and checks
+                    std::string extNameStr(extNameCStr);
+
+                    // Check if this extension is available on the physical device
+                    if (availableExtensionNames.count(extNameStr) == 0) {
+                        // This extension is requested but NOT supported by the physical device
+
+                        // Check if it's the NVIDIA-specific ray tracing validation extension
+                        if (extNameStr.find("VK_NV") != std::string::npos) {
+                            std::cout << extNameStr << " (OPTIONAL - Nvidia ext not supported, removed)\n";
+                            return true; // Return true to mark this element for removal
+                        }
+                        else {
+                            // This is a REQUIRED extension that is not supported
+                            std::cout << extNameStr << " (REQUIRED - NOT SUPPORTED)\n";
+                            allRequiredSupported = false; 
+                            return false; // Keep this in the list so vkCreateDevice fails with its error
+                        }
+                    }
+                    // If the extension IS available, we don't want to remove it
+                    return false;
+                }),
+            deviceExtensions.end());
+
+        return allRequiredSupported;
     }
 
     QueueFamilyIndices PhysicalDevice::findQueueFamiliesForDevice(const VkPhysicalDevice device) const {

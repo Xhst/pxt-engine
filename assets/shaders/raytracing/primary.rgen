@@ -1,0 +1,74 @@
+#version 460
+
+#extension GL_EXT_ray_tracing : require
+#extension GL_GOOGLE_include_directive : require
+
+// Include the global UBO definition
+#include "../ubo/global_ubo.glsl"
+
+// Define the ray payload structure. This struct is passed between shader stages.
+// The layout(location = 0) specifies the location for the payload.
+layout(location = 0) rayPayloadEXT struct RayPayload {
+    vec4 color; // The color accumulated along the ray
+    float t;    // The hit distance (t-value)
+} payload;
+
+// Declare the top-level acceleration structure (TLAS)
+layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
+
+// Declare the output storage image
+// The format qualifier (e.g., rgba8, rgba32f) should match how the image was created in Vulkan.
+// rgba8 is common for 8-bit per channel normalized output. Use rgba32f for HDR float output.
+layout(set = 3, binding = 0, rgba8) uniform image2D outputImage;
+
+void main()
+{
+    // gl_LaunchIDEXT is the pixel coordinate (x, y, z) of the current invocation.
+    const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
+
+    // gl_LaunchSizeEXT is the total number of ray generation invocations (width, height, depth).
+    const vec2 imageDimensions = vec2(gl_LaunchSizeEXT.xy);
+
+    // Normalized device coordinates (NDC), converted to [-1, 1] range (NDC space)
+    const vec2 ndc = pixelCenter / imageDimensions * 2.0 - 1.0; 
+
+    // Ray origin and direction in camera/view space
+    // Assuming perspective projection
+    vec4 rayOriginView = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 rayTargetView = /*ubo.inverseProjectionMatrix*/ inverse(ubo.projectionMatrix) * vec4(ndc.x, ndc.y, 1.0, 1.0); // Point on far plane
+
+    // Transform ray to world space
+    vec3 rayOriginWorld = (ubo.inverseViewMatrix * rayOriginView).xyz;
+    vec3 rayDirWorld    = normalize((ubo.inverseViewMatrix * vec4(normalize(rayTargetView.xyz / rayTargetView.w), 0.0)).xyz);
+    
+    // Initialize payload
+    payload.color = vec4(0.0, 0.0, 0.0, 1.0); // Default to black
+    payload.t = -1.0;
+
+    // Ray parameters
+    uint rayFlags = gl_RayFlagsOpaqueEXT; // Assume opaque geometry for now
+    uint cullMask = 0xFF;                 // Standard cull mask
+    float tMin    = 0.001;                // Minimum intersection distance
+    float tMax    = 10000.0;              // Maximum intersection distance
+
+    traceRayEXT(
+        TLAS,             // Top-level acceleration structure
+        rayFlags,         // Ray flags
+        cullMask,         // Cull mask
+        0,                // SBT record offset for raygen shader (usually 0)
+        0,                // SBT record stride for raygen shader (usually 0)
+        0,                // Miss shader index (which miss shader in the SBT to use)
+        rayOriginWorld,   // Ray origin
+        tMin,             // Ray min distance
+        rayDirWorld,      // Ray direction
+        tMax,             // Ray max distance
+        0                 // Payload location (must match the rayPayloadEXT layout location)
+    );
+
+    // The traceRayEXT call is blocking. When it returns, the payload contains
+    // the result from the closest hit shader (if a hit occurred) or the miss shader.
+
+    // Write the final color from the payload to the output storage image
+    // gl_LaunchIDEXT.xy provides the integer pixel coordinates for the store operation.
+    imageStore(outputImage, ivec2(gl_LaunchIDEXT.xy), payload.color);
+}

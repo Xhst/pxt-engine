@@ -5,6 +5,10 @@
 #include <stdexcept>
 #include <unordered_set>
 
+#ifndef ENABLE_RAYTRACING_EXT
+#define ENABLE_RAYTRACING_EXT 1
+#endif
+
 namespace PXTEngine {
 
     /* ------------------------ Local callback functions ------------------------ */

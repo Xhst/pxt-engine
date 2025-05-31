@@ -54,12 +54,20 @@ namespace PXTEngine {
          */
         void draw(VkCommandBuffer commandBuffer);
 
-        const std::vector<Vertex>& getVertices() const override {
-			return m_vertices;
+        const uint32_t getVertexCount() const override {
+			return m_vertexCount;
         }
 
-        const std::vector<uint32_t>& getIndices() const override {
-			return m_indices;
+        const uint32_t getIndexCount() const override {
+			return m_indexCount;
+        }
+
+		VkDeviceAddress getVertexBufferDeviceAddress() const {
+            return m_vertexBuffer->getDeviceAddress();
+		}
+
+        VkDeviceAddress getIndexBufferDeviceAddress() const {
+            return m_indexBuffer->getDeviceAddress();
         }
 
         Type getType() const override {
@@ -70,17 +78,15 @@ namespace PXTEngine {
         /**
          * @brief Creates and allocates vertex buffers.
          */
-        void createVertexBuffers();
+        void createVertexBuffers(std::vector<Mesh::Vertex>& vertices);
 
         /**
          * @brief Creates and allocates index buffers.
          */
-        void createIndexBuffers();
+        void createIndexBuffers(std::vector<uint32_t>& indices);
 
         Context& m_context;
 
-        std::vector<Mesh::Vertex>& m_vertices;
-        std::vector<uint32_t>& m_indices;
 		float m_tilingFactor = 1.0f;
 
         Unique<VulkanBuffer> m_vertexBuffer;

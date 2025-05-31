@@ -78,6 +78,13 @@ namespace PXTEngine {
 			return Type::Image;
 		}
 
+		VkExtent2D getExtent() const {
+			return { m_info.width, m_info.height };
+		}
+
+		float getAspectRatio() const {
+			return static_cast<float>(m_info.width) / static_cast<float>(m_info.height);
+		}
 
 		VkImage getVkImage() { return m_vkImage; }
 		const VkImageView getImageView() { return m_imageView; }

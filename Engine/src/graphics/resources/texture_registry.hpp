@@ -3,6 +3,7 @@
 #include "core/memory.hpp"
 #include "resources/resource.hpp"
 #include "resources/types/image.hpp"
+#include "graphics/descriptors/descriptors.hpp"
 #include "graphics/resources/texture2d.hpp"
 
 #include <vector>
@@ -10,90 +11,74 @@
 
 namespace PXTEngine {
 
+	/**
+	 * @class TextureRegistry
+	 *
+	 * @brief Manages a collection of textures and their binding to GPU descriptor sets.
+	 */
 	class TextureRegistry {
 	public:
-		TextureRegistry(Context& context) : m_context(context) {
-			m_textureDescriptorSet = VK_NULL_HANDLE;
-			m_textureDescriptorSetLayout = nullptr;
-			m_descriptorAllocator = nullptr;
-		}
+		explicit TextureRegistry(Context& context);
 
-		void setDescriptorAllocator(Shared<DescriptorAllocatorGrowable> descriptorAllocator) {
-			m_descriptorAllocator = descriptorAllocator;
-		}
+		/**
+		 * @brief Sets the descriptor allocator for the registry.
+		 *
+		 * @param descriptorAllocator Shared pointer to a growable descriptor allocator.
+		 */
+		void setDescriptorAllocator(Shared<DescriptorAllocatorGrowable> descriptorAllocator);
 
-		uint32_t add(const Shared<Image>& image) {
-			auto* texture = dynamic_cast<Texture2D*>(image.get());
+		/**
+		 * @brief Adds a texture to the registry.
+		 *
+		 * Only 2D textures (Texture2D) are supported. 
+		 * If the provided image is not a Texture2D, the function returns 0.
+		 *
+		 * @param image Shared pointer to the image.
+		 *
+		 * @return Index of the added texture if valid, otherwise 0.
+		 */
+		uint32_t add(const Shared<Image>& image);
 
-			if (!texture) {
-				return 0;
-			}
+		/**
+		 * @brief Gets the index of a texture in the registry by its resource ID.
+		 *
+		 * @param id Resource ID of the texture.
+		 *
+		 * @return Index if found, otherwise 0.
+		 */
+		[[nodiscard]] uint32_t getIndex(const ResourceId& id) const;
 
-			// Add the resource to the list
-			const auto index = static_cast<uint32_t>(m_textures.size());
-			m_textures.push_back(image);
-
-			m_idToIndex[image->id] = index;
-
-			return index;
-		}
-
-		[[nodiscard]] uint32_t getIndex(const ResourceId& id) const {
-			auto it = m_idToIndex.find(id);
-
-			if (it != m_idToIndex.end()) {
-				return it->second;
-			}
-
-			return 0;
-		}
-
-		[[nodiscard]] uint32_t getTextureCount() const {
+		uint32_t getTextureCount() const {
 			return static_cast<uint32_t>(m_textures.size());
 		}
 
-		std::vector<Shared<Image>> getTextures() {
-			return m_textures;
-		}
+		/**
+		 * @brief Returns the Vulkan descriptor set that holds all texture bindings.
+		 *
+		 * @return Vulkan descriptor set.
+		 */
+		VkDescriptorSet getDescriptorSet();
 
-		VkDescriptorSet getDescriptorSet() {
-			return m_textureDescriptorSet;
-		}
+		/**
+		 * @brief Returns the Vulkan descriptor set layout used for texture bindings.
+		 *
+		 * @return Vulkan descriptor set layout.
+		 */
+		VkDescriptorSetLayout getDescriptorSetLayout();
 
-		VkDescriptorSetLayout getDescriptorSetLayout() {
-			return m_textureDescriptorSetLayout->getDescriptorSetLayout();
-		}
-
-		void createDescriptorSet() {
-			// TEXTURE DESCRIPTOR SET
-			m_textureDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-				.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, getTextureCount())
-				.build();
-
-			std::vector<VkDescriptorImageInfo> imageInfos;
-			for (const auto& image : m_textures) {
-				const auto texture = std::static_pointer_cast<Texture2D>(image);
-
-				VkDescriptorImageInfo imageInfo{};
-				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo.imageView = texture->getImageView();
-				imageInfo.sampler = texture->getImageSampler();
-				imageInfos.push_back(imageInfo);
-			}
-
-			m_descriptorAllocator->allocate(m_textureDescriptorSetLayout->getDescriptorSetLayout(), m_textureDescriptorSet);
-
-			DescriptorWriter(m_context, *m_textureDescriptorSetLayout)
-				.writeImages(0, imageInfos.data(), static_cast<uint32_t>(imageInfos.size()))
-				.updateSet(m_textureDescriptorSet);
-		}
+		/**
+		 * @brief Creates a Vulkan descriptor set for all registered textures.
+		 *
+		 * This function constructs a descriptor set layout with a combined image sampler binding,
+		 * prepares image info for each texture, allocates the descriptor set, and writes all image bindings to it.
+		 */
+		void createDescriptorSet();
 
 	private:
 		std::vector<Shared<Image>> m_textures;
 		std::unordered_map<ResourceId, uint32_t> m_idToIndex;
 
 		Context& m_context;
-
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
 		Shared<DescriptorSetLayout> m_textureDescriptorSetLayout;
 		VkDescriptorSet m_textureDescriptorSet;

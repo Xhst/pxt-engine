@@ -41,37 +41,24 @@ public:
             .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
 			.setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
             .build();
+		rm.add(bunnyMaterial, "bunny_material");
 
         auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
-        auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
-		auto defaultMaterial = rm.get<Material>(DEFAULT_MATERIAL);
-
-        auto shrek = rm.get<Image>(TEXTURES_PATH + "shrek_420x420.png", &albedoInfo);
-        auto texture = rm.get<Image>(TEXTURES_PATH + "texture.jpg", &albedoInfo);
-        auto barrelBase = rm.get<Image>(TEXTURES_PATH + "barrel/barrel.png", &albedoInfo);
-        auto barrelNormal = rm.get<Image>(TEXTURES_PATH + "barrel/barrel_normal.png");
-        auto wallStoneBase = rm.get<Image>(TEXTURES_PATH + "wall_stone/base.png", &albedoInfo);
-        auto wallStoneNormal = rm.get<Image>(TEXTURES_PATH + "wall_stone/normal.png");
-        auto wallStoneRoughness = rm.get<Image>(TEXTURES_PATH + "wall_stone/roughness.png");
-        auto wallStoneAO = rm.get<Image>(TEXTURES_PATH + "wall_stone/ambient_occlusion.png");
-        auto stylizedStoneBase = rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png", &albedoInfo);
-        auto stylizedStoneNormal = rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png");
-		auto stylizedStoneRoughness = rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png");
-        auto stylizedStoneAO = rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png");
-
 		auto stylizedStoneMaterial = Material::Builder()
-			.setAlbedoMap(stylizedStoneBase)
-			.setNormalMap(stylizedStoneNormal)
-			.setRoughnessMap(stylizedStoneRoughness)
-			.setAmbientOcclusionMap(stylizedStoneAO)
+			.setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/base.png", &albedoInfo))
+			.setNormalMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/normal.png"))
+			.setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/roughness.png"))
+			.setAmbientOcclusionMap(rm.get<Image>(TEXTURES_PATH + "stylized_stone/ambient_occlusion.png"))
 			.build();
+		rm.add(stylizedStoneMaterial, "stylized_stone_material");
+
+        auto vase = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
 
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MeshComponent>(ground)
 			.add<MaterialComponent>(MaterialComponent::Builder()
 				.setMaterial(stylizedStoneMaterial)
-				.setTilingFactor(50.0f)
 				.build());
 #if 0
         entity = getScene().createEntity("Roof")
@@ -119,7 +106,7 @@ public:
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights (white, green, blue)
-        entity = createPointLight(0.05f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
+        entity = createPointLight(0.1f, 0.025f, glm::vec3{1.f, 1.f, 1.f});
         entity.get<TransformComponent>().translation = glm::vec3{10.0f / (float) sqrt(3), 0.5f, 0.2f};
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0

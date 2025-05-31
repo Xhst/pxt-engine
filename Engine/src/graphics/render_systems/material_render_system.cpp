@@ -30,9 +30,12 @@ namespace PXTEngine {
     };
 
     MaterialRenderSystem::MaterialRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator,
-    	TextureRegistry& textureRegistry, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout,
-    	VkDescriptorImageInfo shadowMapImageInfo)
-	: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry) {
+    	TextureRegistry& textureRegistry, DescriptorSetLayout& globalSetLayout,
+    	VkRenderPass renderPass, VkDescriptorImageInfo shadowMapImageInfo)
+        : m_context(context),
+        m_descriptorAllocator(descriptorAllocator),
+        m_textureRegistry(textureRegistry)
+    {
 		createDescriptorSets(shadowMapImageInfo);
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
@@ -82,7 +85,7 @@ namespace PXTEngine {
     void MaterialRenderSystem::createPipeline(VkRenderPass renderPass) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
-        PipelineConfigInfo pipelineConfig{};
+        RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
@@ -109,7 +112,7 @@ namespace PXTEngine {
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             m_pipelineLayout,
             0,
-            descriptorSets.size(),
+            static_cast<uint32_t>(descriptorSets.size()),
             descriptorSets.data(),
             0,
             nullptr

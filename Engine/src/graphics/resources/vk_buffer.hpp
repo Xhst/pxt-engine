@@ -195,6 +195,8 @@ namespace PXTEngine {
          */
         VkDeviceSize getBufferSize() const { return m_bufferSize; }
 
+        VkDeviceAddress getDeviceAddress() const;
+
         private:
         /**
          * @brief Calculates the aligned instance size.

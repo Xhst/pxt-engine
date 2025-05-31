@@ -213,7 +213,7 @@ namespace PXTEngine {
 
     void SwapChain::createRenderPass() {
         VkAttachmentDescription depthAttachment{};
-        depthAttachment.format = findDepthFormat();
+        depthAttachment.format = m_context.findDepthFormat();
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -294,7 +294,7 @@ namespace PXTEngine {
     }
 
     void SwapChain::createDepthResources() {
-        VkFormat depthFormat = findDepthFormat();
+        VkFormat depthFormat = m_context.findDepthFormat();
         m_swapChainDepthFormat = depthFormat;
         VkExtent2D swapChainExtent = getSwapChainExtent();
 
@@ -367,13 +367,46 @@ namespace PXTEngine {
 
     VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(
         const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+        // Common & Desirable: sRGB 8-bit per channel (B8G8R8A8_SRGB or R8G8B8A8_SRGB).
+        // This is usually the preferred format for standard monitors, providing correct
+        // sRGB gamma correction for visually accurate output. B8G8R8A8 is more common
+        // on Windows, R8G8B8A8 on other platforms, but both are widely supported.
         for (const auto& availableFormat : availableFormats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                std::cout << "Selected VK_FORMAT_B8G8R8A8_SRGB with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR." << std::endl;
+                return availableFormat;
+            }
+        }
+        for (const auto& availableFormat : availableFormats) {
+            if (availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB &&
+                availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                std::cout << "Selected VK_FORMAT_R8G8B8A8_SRGB with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR." << std::endl;
                 return availableFormat;
             }
         }
 
+        // Good Fallback: Linear 8-bit per channel (B8G8R8A8_UNORM or R8G8B8A8_UNORM).
+        // If sRGB isn't available, UNORM is a common fallback. It doesn't apply sRGB
+        // gamma correction automatically, so your rendering might appear too dark.
+        // However, it's widely supported.
+        for (const auto& availableFormat : availableFormats) {
+            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
+                availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) { // Still prefer sRGB color space if possible
+                std::cout << "Selected VK_FORMAT_B8G8R8A8_UNORM with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR (linear)." << std::endl;
+                return availableFormat;
+            }
+        }
+        for (const auto& availableFormat : availableFormats) {
+            if (availableFormat.format == VK_FORMAT_R8G8B8A8_UNORM &&
+                availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) { // Still prefer sRGB color space if possible
+                std::cout << "Selected VK_FORMAT_R8G8B8A8_UNORM with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR (linear)." << std::endl;
+                return availableFormat;
+            }
+        }
+
+		std::cout << "Using default surface format:" << availableFormats[0].format << 
+            ", " << availableFormats[0].colorSpace << std::endl;
         return availableFormats[0];
     }
 
@@ -414,11 +447,4 @@ namespace PXTEngine {
             return actualExtent;
         }
     }
-
-    VkFormat SwapChain::findDepthFormat() {
-        return m_context.findSupportedFormat(
-            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-            VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-    }
-
 }

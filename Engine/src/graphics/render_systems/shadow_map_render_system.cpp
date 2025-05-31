@@ -171,7 +171,7 @@ namespace PXTEngine {
 		subresourceRange.layerCount = 1;
 
 		// TODO: verify source and destination access masks
-		m_context.transitionImageLayout(
+		m_context.transitionImageLayoutSingleTimeCmd(
 			m_depthStencilImageFb->getVkImage(),
 			m_depthStencilImageFb->getImageFormat(),
 			VK_IMAGE_LAYOUT_UNDEFINED,
@@ -257,7 +257,7 @@ namespace PXTEngine {
     void ShadowMapRenderSystem::createPipeline() {
 		PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
-        PipelineConfigInfo pipelineConfig{};
+        RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = m_renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
@@ -308,18 +308,6 @@ namespace PXTEngine {
             0,
             nullptr
         );
-
-		// Set the viewport and scissor for the cube's faces framebuffers
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(m_shadowMapSize);
-		viewport.height = static_cast<float>(m_shadowMapSize);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		VkRect2D scissor{ {0, 0}, this->getExtent() };
-		vkCmdSetViewport(frameInfo.commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(frameInfo.commandBuffer, 0, 1, &scissor);
 
 		// get all the entities with a transform and model component (for later)
         auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MeshComponent>();

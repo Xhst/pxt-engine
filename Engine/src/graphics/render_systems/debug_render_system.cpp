@@ -64,7 +64,7 @@ namespace PXTEngine {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         // Default Solid Pipeline
-        PipelineConfigInfo pipelineConfig{};
+        RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
@@ -105,7 +105,7 @@ namespace PXTEngine {
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             m_pipelineLayout,
             0,
-            descriptorSets.size(),
+            static_cast<uint32_t>(descriptorSets.size()),
             descriptorSets.data(),
             0,
             nullptr

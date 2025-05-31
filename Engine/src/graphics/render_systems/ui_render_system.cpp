@@ -5,9 +5,9 @@
 
 namespace PXTEngine {
 
-	UiRenderSystem::UiRenderSystem(Context& context, VkRenderPass renderPass, std::array<VkDescriptorImageInfo, 6> shadowMapDebugImageInfos, VkDescriptorImageInfo sceneImageInfo) : m_context(context) {
+	UiRenderSystem::UiRenderSystem(Context& context, VkRenderPass renderPass, VkDescriptorImageInfo sceneImageInfo) : m_context(context) {
 		initImGui(renderPass);
-		createDescriptorSets(sceneImageInfo, shadowMapDebugImageInfos);
+		createDescriptorSets(sceneImageInfo);
 	}
 
 	UiRenderSystem::~UiRenderSystem() {
@@ -43,7 +43,12 @@ namespace PXTEngine {
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
 
-		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		// enable docking and load ini file
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+		io.IniFilename = IMGUI_INI_FILEPATH.c_str();
+		std::cout << "ImGui .ini file set to: " << io.IniFilename << std::endl;
 
 		ImGui_ImplGlfw_InitForVulkan(m_context.getWindow().getBaseWindow(), true);
 		ImGui_ImplVulkan_InitInfo initInfo{};
@@ -91,7 +96,7 @@ namespace PXTEngine {
 		return descriptorSet;
 	}
 
-	void UiRenderSystem::createDescriptorSets(VkDescriptorImageInfo sceneImageInfo, std::array<VkDescriptorImageInfo, 6> shadowMapDebugImageInfos) {
+	void UiRenderSystem::createDescriptorSets(VkDescriptorImageInfo sceneImageInfo) {
 		m_sceneDescriptorSet = addImGuiTexture(
 			sceneImageInfo.sampler,
 			sceneImageInfo.imageView,
@@ -110,6 +115,25 @@ namespace PXTEngine {
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		// MAIN MENU BAR (might become a method itself in the future)
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("File")) {
+				if (ImGui::MenuItem("Open...")) {
+					// TODO: Implement "Open" logic here
+					printf("File -> Open... clicked!\n");
+				}
+				if (ImGui::MenuItem("Exit")) {
+					// TODO: Implement "Exit" logic here
+					printf("File -> Exit clicked!\n");
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
+
+		// IMPORTANT: This is required for docking to work in the main window (for customizations, view imgui_demo.cpp)
+		ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 	}
 
 	void UiRenderSystem::buildUi() {

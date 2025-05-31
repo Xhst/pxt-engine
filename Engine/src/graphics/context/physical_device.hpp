@@ -128,6 +128,20 @@ namespace PXTEngine {
         }
 
         VkPhysicalDeviceProperties properties;
+
+        std::vector<const char*> deviceExtensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			// descriptor indexing extension
+            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+            // ray tracing extensions
+            VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+            VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+            VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+			VK_NV_RAY_TRACING_VALIDATION_EXTENSION_NAME,
+			// buffer device address extension
+            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
+        };
+
 	private:
         /**
          * @brief Picks a suitable physical device.
@@ -153,7 +167,7 @@ namespace PXTEngine {
          * @param device The physical device to check.
          * @return true if the device is suitable, false otherwise.
          */
-        bool isDeviceSuitable(VkPhysicalDevice device) const;
+        bool isDeviceSuitable(VkPhysicalDevice device);
 
         /**
          * @brief Finds the queue families for a physical device.
@@ -180,11 +194,13 @@ namespace PXTEngine {
          * @brief Checks if the required device extensions are supported.
          *
          * This function checks if all the required device extensions are supported by the physical device.
+		 * If some extensions are optional (for example, NVIDIA-specific extensions), they are ignored and
+		 * removed form deviceExtensions vector.
          *
          * @param device The physical device to check.
          * @return true if all extensions are supported, false otherwise.
          */
-        bool checkDeviceExtensionSupport(VkPhysicalDevice device) const;
+        bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
         Instance& m_instance;
         Surface& m_surface;

@@ -11,7 +11,7 @@ namespace PXTEngine {
 
 	class UiRenderSystem {
 	public:
-		UiRenderSystem(Context& context, VkRenderPass renderPass, std::array<VkDescriptorImageInfo, 6> shadowMapDebugImageInfos, VkDescriptorImageInfo sceneImageInfo);
+		UiRenderSystem(Context& context, VkRenderPass renderPass, VkDescriptorImageInfo sceneImageInfo);
 		~UiRenderSystem();
 
 		UiRenderSystem(const UiRenderSystem&) = delete;
@@ -22,7 +22,7 @@ namespace PXTEngine {
 
 	private:
 		void initImGui(VkRenderPass& renderPass);
-		void createDescriptorSets(VkDescriptorImageInfo sceneImageInfo, std::array<VkDescriptorImageInfo, 6> shadowMapDebugImageInfos);
+		void createDescriptorSets(VkDescriptorImageInfo sceneImageInfo);
 		VkDescriptorSet addImGuiTexture(VkSampler sampler, VkImageView imageView, VkImageLayout layout);
 
 		void buildUi();
