@@ -13,11 +13,13 @@ namespace PXTEngine {
 		return createUnique<VulkanSkybox>(context, paths);
     }
 
-	VulkanSkybox::VulkanSkybox(Context& context, const std::array<std::string, 6>& paths)
+	VulkanSkybox::VulkanSkybox(Context& context,
+        const std::array<std::string, 6>& paths)
 		: m_context(context) {
 		// Load the skybox textures from the provided faces
 		loadTextures(paths);
 	}
+
 	void VulkanSkybox::loadTextures(const std::array<std::string, 6>& paths) {
         VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 		int width, height, channels;
@@ -117,6 +119,22 @@ namespace PXTEngine {
             cubemapSubresourceRange
         );
 	}
+
+    void VulkanSkybox::createDescriptorSet(Shared<DescriptorAllocatorGrowable> descriptorAllocator) {
+        m_skyboxDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_MISS_BIT_KHR)
+            .build();
+
+        descriptorAllocator->allocate(m_skyboxDescriptorSetLayout->getDescriptorSetLayout(), m_skyboxDescriptorSet);
+
+        // Get the VkDescriptorImageInfo from the Skybox object
+        VkDescriptorImageInfo skyboxImageInfo = getDescriptorImageInfo();
+
+        DescriptorWriter(m_context, *m_skyboxDescriptorSetLayout)
+            .writeImage(0, &skyboxImageInfo)
+            .updateSet(m_skyboxDescriptorSet);
+    }
 
     VkDescriptorImageInfo VulkanSkybox::getDescriptorImageInfo() const {
         VkDescriptorImageInfo imageInfo{};

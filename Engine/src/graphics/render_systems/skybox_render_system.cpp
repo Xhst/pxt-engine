@@ -18,17 +18,13 @@ namespace PXTEngine {
 
     SkyboxRenderSystem::SkyboxRenderSystem(
         Context& context,
-        Shared<DescriptorAllocatorGrowable> descriptorAllocator,
 		Shared<Environment> environment,
         DescriptorSetLayout& globalSetLayout,
         VkRenderPass renderPass)
-        : m_context(context),
-        m_descriptorAllocator(descriptorAllocator)
+        : m_context(context)
     {
-
 		m_skybox = std::static_pointer_cast<VulkanSkybox>(environment->getSkybox());
 
-        createDescriptorSets();
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
     }
@@ -37,25 +33,10 @@ namespace PXTEngine {
         vkDestroyPipelineLayout(m_context.getDevice(), m_pipelineLayout, nullptr);
     }
 
-    void SkyboxRenderSystem::createDescriptorSets() {
-        m_skyboxDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-            .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .build();
-
-        m_descriptorAllocator->allocate(m_skyboxDescriptorSetLayout->getDescriptorSetLayout(), m_skyboxDescriptorSet);
-
-        // Get the VkDescriptorImageInfo from the Skybox object
-        VkDescriptorImageInfo skyboxImageInfo = m_skybox->getDescriptorImageInfo();
-
-        DescriptorWriter(m_context, *m_skyboxDescriptorSetLayout)
-            .writeImage(0, &skyboxImageInfo)
-            .updateSet(m_skyboxDescriptorSet);
-    }
-
     void SkyboxRenderSystem::createPipelineLayout(DescriptorSetLayout& globalSetLayout) {
         std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
             globalSetLayout.getDescriptorSetLayout(),
-            m_skyboxDescriptorSetLayout->getDescriptorSetLayout()
+            m_skybox->getDescriptorSetLayout()
         };
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -107,7 +88,7 @@ namespace PXTEngine {
     void SkyboxRenderSystem::render(FrameInfo& frameInfo) {
         m_pipeline->bind(frameInfo.commandBuffer);
 
-        std::array<VkDescriptorSet, 2> descriptorSets = { frameInfo.globalDescriptorSet, m_skyboxDescriptorSet };
+        std::array<VkDescriptorSet, 2> descriptorSets = { frameInfo.globalDescriptorSet, m_skybox->getDescriptorSet()};
 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

@@ -43,10 +43,10 @@ namespace PXTEngine {
         }
         registerResources();
 
-		// create the pool manager, ubo buffers, and global descriptor sets
-		createDescriptorPoolAllocator();
-		createUboBuffers();
-		createGlobalDescriptorSet();
+        // create the pool manager, ubo buffers, and global descriptor sets
+        createDescriptorPoolAllocator();
+        createUboBuffers();
+        createGlobalDescriptorSet();
 
 		// create the descriptor sets for the textures
         m_textureRegistry.setDescriptorAllocator(m_descriptorAllocator);
@@ -55,6 +55,12 @@ namespace PXTEngine {
 		// create the descriptor sets for the materials
 		m_materialRegistry.setDescriptorAllocator(m_descriptorAllocator);
 		m_materialRegistry.createDescriptorSet();
+
+		// create descriptor set for skybox
+        if (m_scene.getEnvironment()->getSkybox()) {
+			auto skybox = std::static_pointer_cast<VulkanSkybox>(m_scene.getEnvironment()->getSkybox());
+            skybox->createDescriptorSet(m_descriptorAllocator);
+        }
 
 		// create the render systems
         m_masterRenderSystem = createUnique<MasterRenderSystem>(

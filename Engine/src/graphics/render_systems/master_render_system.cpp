@@ -307,7 +307,6 @@ namespace PXTEngine {
 
 		m_skyboxRenderSystem = createUnique<SkyboxRenderSystem>(
 			m_context,
-			m_descriptorAllocator,
 			m_environment,
 			*m_globalSetLayout,
 			m_offscreenRenderPass

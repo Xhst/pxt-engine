@@ -18,7 +18,6 @@ namespace PXTEngine {
     public:
         SkyboxRenderSystem(
             Context& context,
-            Shared<DescriptorAllocatorGrowable> descriptorAllocator,
 			Shared<Environment> environment,
             DescriptorSetLayout& globalSetLayout,
             VkRenderPass renderPass
@@ -32,19 +31,14 @@ namespace PXTEngine {
         void render(FrameInfo& frameInfo);
 
     private:
-        void createDescriptorSets();
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
         Context& m_context;
-        Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
         Shared<VulkanSkybox> m_skybox;
 
         Unique<Pipeline> m_pipeline;
-
         VkPipelineLayout m_pipelineLayout;
-        VkDescriptorSet m_skyboxDescriptorSet;
-        Unique<DescriptorSetLayout> m_skyboxDescriptorSetLayout;
     };
 
 }
