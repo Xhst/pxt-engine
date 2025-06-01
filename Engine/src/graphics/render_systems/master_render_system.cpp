@@ -5,14 +5,16 @@ namespace PXTEngine {
 			Shared<DescriptorAllocatorGrowable> descriptorAllocator, 
 			TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, 
 			BLASRegistry& blasRegistry,
-			Shared<DescriptorSetLayout> globalSetLayout)
+			Shared<DescriptorSetLayout> globalSetLayout,
+			Shared<Environment> environment)
 		:	m_context(context), 
 			m_renderer(renderer),
 			m_descriptorAllocator(std::move(descriptorAllocator)),
 			m_textureRegistry(textureRegistry),
 		    m_materialRegistry(materialRegistry),
 			m_blasRegistry(blasRegistry),
-			m_globalSetLayout(std::move(globalSetLayout))
+			m_globalSetLayout(std::move(globalSetLayout)),
+			m_environment(std::move(environment))
 	{
 		m_offscreenColorFormat = m_context.findSupportedFormat(
 			{ VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM },
@@ -306,6 +308,7 @@ namespace PXTEngine {
 		m_skyboxRenderSystem = createUnique<SkyboxRenderSystem>(
 			m_context,
 			m_descriptorAllocator,
+			m_environment,
 			*m_globalSetLayout,
 			m_offscreenRenderPass
 		);

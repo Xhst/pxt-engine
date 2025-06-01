@@ -17,6 +17,8 @@
 #include "graphics/render_systems/skybox_render_system.hpp"
 #include "graphics/render_systems/raytracing_render_system.hpp"
 
+#include "scene/environment.hpp"
+
 
 namespace PXTEngine {
 
@@ -27,7 +29,8 @@ namespace PXTEngine {
 						   TextureRegistry& textureRegistry,
 						   MaterialRegistry& materialRegistry,
 						   BLASRegistry& blasRegistry,
-						   Shared<DescriptorSetLayout> globalSetLayout);
+						   Shared<DescriptorSetLayout> globalSetLayout,
+						   Shared<Environment> environment);
 
 		~MasterRenderSystem();
 
@@ -62,6 +65,8 @@ namespace PXTEngine {
 		Shared<DescriptorAllocatorGrowable> m_descriptorAllocator;
 
 		Shared<DescriptorSetLayout> m_globalSetLayout{};
+
+		Shared<Environment> m_environment;
 
 		std::array<Unique<VulkanBuffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_uboBuffers;
 

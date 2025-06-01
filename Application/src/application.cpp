@@ -12,6 +12,19 @@ public:
     App() : Application() {}
 
     void loadScene() override {
+
+        std::array<std::string, 6> skyboxTextures;
+        skyboxTextures[CubeFace::BACK] = TEXTURES_PATH + "skybox/bluecloud_bk.jpg";
+        skyboxTextures[CubeFace::FRONT] = TEXTURES_PATH + "skybox/bluecloud_ft.jpg";
+        skyboxTextures[CubeFace::LEFT] = TEXTURES_PATH + "skybox/bluecloud_lf.jpg";
+        skyboxTextures[CubeFace::RIGHT] = TEXTURES_PATH + "skybox/bluecloud_rt.jpg";
+        skyboxTextures[CubeFace::TOP] = TEXTURES_PATH + "skybox/bluecloud_dn.jpg";
+        skyboxTextures[CubeFace::BOTTOM] = TEXTURES_PATH + "skybox/bluecloud_up.jpg";
+
+        auto environment = getScene().getEnvironment();
+        
+        environment->setSkybox(skyboxTextures);
+
 		std::random_device rd;
 		std::mt19937 gen(rd());
 

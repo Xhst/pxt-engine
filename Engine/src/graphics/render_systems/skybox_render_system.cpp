@@ -19,24 +19,14 @@ namespace PXTEngine {
     SkyboxRenderSystem::SkyboxRenderSystem(
         Context& context,
         Shared<DescriptorAllocatorGrowable> descriptorAllocator,
+		Shared<Environment> environment,
         DescriptorSetLayout& globalSetLayout,
         VkRenderPass renderPass)
         : m_context(context),
-        m_descriptorAllocator(descriptorAllocator) {
+        m_descriptorAllocator(descriptorAllocator)
+    {
 
-        // TODO: remove from here
-        std::array<std::string, 6> paths;
-        paths[CubeFace::BACK] = TEXTURES_PATH + "skybox/bluecloud_bk.jpg";
-        paths[CubeFace::FRONT] = TEXTURES_PATH + "skybox/bluecloud_ft.jpg";
-        paths[CubeFace::LEFT] = TEXTURES_PATH + "skybox/bluecloud_lf.jpg";
-        paths[CubeFace::RIGHT] = TEXTURES_PATH + "skybox/bluecloud_rt.jpg";
-        paths[CubeFace::TOP] = TEXTURES_PATH + "skybox/bluecloud_dn.jpg";
-        paths[CubeFace::BOTTOM] = TEXTURES_PATH + "skybox/bluecloud_up.jpg";
-
-        m_skybox = createUnique<Skybox>(
-            m_context,
-            paths
-        );
+		m_skybox = std::static_pointer_cast<VulkanSkybox>(environment->getSkybox());
 
         createDescriptorSets();
         createPipelineLayout(globalSetLayout);

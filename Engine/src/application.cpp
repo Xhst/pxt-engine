@@ -64,7 +64,8 @@ namespace PXTEngine {
             m_textureRegistry,
 			m_materialRegistry,
 			m_blasRegistry,
-            m_globalSetLayout
+            m_globalSetLayout,
+            m_scene.getEnvironment()
         );
 
         m_window.setEventCallback([this]<typename E>(E && event) {

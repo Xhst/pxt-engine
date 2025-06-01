@@ -1,6 +1,10 @@
 #pragma once
 
+#include "core/memory.hpp"
 #include "core/uuid.hpp"
+
+#include "scene/environment.hpp"
+
 #include <entt/entt.hpp>
 
 namespace PXTEngine {
@@ -68,11 +72,19 @@ namespace PXTEngine {
          */
         Entity getMainCameraEntity();
 
+        /**
+         * @brief Retrieves the environment settings for the scene.
+         * @return A shared pointer to the environment settings.
+		 */
+        Shared<Environment> getEnvironment() const { return m_environment; }
+
     private:
         std::unordered_map<UUID, entt::entity> m_entityMap;
         
         // The entity registry for managing components.
         entt::registry m_registry;
+
+		Shared<Environment> m_environment = createShared<Environment>();
 
         friend class Entity;
     };
