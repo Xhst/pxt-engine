@@ -1,13 +1,16 @@
 #pragma once
 
 #include "graphics/resources/cube_map.hpp"
+#include "scene/skybox.hpp"
 
 namespace PXTEngine {
 
-	class Skybox {
+	class VulkanSkybox : public Skybox {
 	public:
-		Skybox(Context& context, const std::array<std::string, 6>& paths);
-		~Skybox() = default;
+		static Unique<VulkanSkybox> create(const std::array<std::string, 6>& paths);
+
+		VulkanSkybox(Context& context, const std::array<std::string, 6>& paths);
+		~VulkanSkybox() override = default;
 
 		VkDescriptorImageInfo getDescriptorImageInfo() const;
 

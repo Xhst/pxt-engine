@@ -1,16 +1,24 @@
 #include "graphics/resources/skybox.hpp"
 
+#include "application.hpp"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stdexcept>
 
 namespace PXTEngine {
-	Skybox::Skybox(Context& context, const std::array<std::string, 6>& paths)
+    Unique<VulkanSkybox> VulkanSkybox::create(const std::array<std::string, 6>& paths) {
+        Context& context = Application::get().getContext();
+
+		return createUnique<VulkanSkybox>(context, paths);
+    }
+
+	VulkanSkybox::VulkanSkybox(Context& context, const std::array<std::string, 6>& paths)
 		: m_context(context) {
 		// Load the skybox textures from the provided faces
 		loadTextures(paths);
 	}
-	void Skybox::loadTextures(const std::array<std::string, 6>& paths) {
+	void VulkanSkybox::loadTextures(const std::array<std::string, 6>& paths) {
         VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 		int width, height, channels;
 		uint8_t* pixels[6] = { nullptr };
@@ -110,7 +118,7 @@ namespace PXTEngine {
         );
 	}
 
-    VkDescriptorImageInfo Skybox::getDescriptorImageInfo() const {
+    VkDescriptorImageInfo VulkanSkybox::getDescriptorImageInfo() const {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = m_cubeMap->getImageSampler();
         imageInfo.imageView = m_cubeMap->getImageView();
