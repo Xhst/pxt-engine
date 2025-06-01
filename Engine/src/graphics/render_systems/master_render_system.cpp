@@ -318,6 +318,7 @@ namespace PXTEngine {
 			m_textureRegistry,
 			m_materialRegistry,
 			m_blasRegistry,
+			m_environment,
 			*m_globalSetLayout,
 			m_sceneImage
 		);
