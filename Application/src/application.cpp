@@ -23,6 +23,7 @@ public:
 
         auto environment = getScene().getEnvironment();
         
+        environment->setAmbientLight({ 0.67f, 0.85f, 0.9f, 0.25f });
         environment->setSkybox(skyboxTextures);
 
 		std::random_device rd;

@@ -215,6 +215,7 @@ namespace PXTEngine {
                 };
 
                 GlobalUbo ubo{};
+                ubo.ambientLightColor = m_scene.getEnvironment()->getAmbientLight();
 
 				m_masterRenderSystem->onUpdate(frameInfo, ubo);
 
