@@ -67,4 +67,5 @@ void main() {
     // The output texture coordinate is simply the vertex position,
     // which will be used as the cubemap lookup vector in the fragment shader.
     outTexCoord = pos;
+    outTexCoord.y *= -1;
 }
