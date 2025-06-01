@@ -18,8 +18,8 @@ public:
         skyboxTextures[CubeFace::FRONT] = TEXTURES_PATH + "skybox/bluecloud_ft.jpg";
         skyboxTextures[CubeFace::LEFT] = TEXTURES_PATH + "skybox/bluecloud_lf.jpg";
         skyboxTextures[CubeFace::RIGHT] = TEXTURES_PATH + "skybox/bluecloud_rt.jpg";
-        skyboxTextures[CubeFace::TOP] = TEXTURES_PATH + "skybox/bluecloud_dn.jpg";
-        skyboxTextures[CubeFace::BOTTOM] = TEXTURES_PATH + "skybox/bluecloud_up.jpg";
+        skyboxTextures[CubeFace::TOP] = TEXTURES_PATH + "skybox/bluecloud_up.jpg";
+        skyboxTextures[CubeFace::BOTTOM] = TEXTURES_PATH + "skybox/bluecloud_dn.jpg";
 
         auto environment = getScene().getEnvironment();
         
