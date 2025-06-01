@@ -1,6 +1,6 @@
 #include "scene/environment.hpp"
 
-#include "graphics/resources/skybox.hpp"
+#include "graphics/resources/vk_skybox.hpp"
 
 namespace PXTEngine {
 

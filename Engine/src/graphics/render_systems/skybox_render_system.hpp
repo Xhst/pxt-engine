@@ -2,7 +2,7 @@
 
 #include "graphics/context/context.hpp"
 #include "graphics/pipeline.hpp"
-#include "graphics/resources/skybox.hpp"
+#include "graphics/resources/vk_skybox.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/frame_info.hpp"
 
