@@ -6,15 +6,6 @@
 
 namespace PXTEngine {
 
-	namespace CubeFace {
-		constexpr uint32_t RIGHT  = 0;
-		constexpr uint32_t LEFT   = 1;
-		constexpr uint32_t TOP    = 2;
-		constexpr uint32_t BOTTOM = 3;
-		constexpr uint32_t BACK   = 4;
-		constexpr uint32_t FRONT  = 5;
-	}
-
 	class CubeMap : public VulkanImage {
 	public:
 		CubeMap(Context& context, 

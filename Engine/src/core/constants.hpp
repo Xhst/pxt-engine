@@ -15,3 +15,12 @@ const std::string BLACK_PIXEL_LINEAR = "pixel_0xFF000000_RGBA8_LINEAR";
 const std::string NORMAL_PIXEL_LINEAR = "pixel_0xFFFF8080_RGBA8_LINEAR";
 
 const std::string DEFAULT_MATERIAL = "default_material";
+
+namespace CubeFace {
+	constexpr uint32_t RIGHT = 0;
+	constexpr uint32_t LEFT = 1;
+	constexpr uint32_t TOP = 2;
+	constexpr uint32_t BOTTOM = 3;
+	constexpr uint32_t BACK = 4;
+	constexpr uint32_t FRONT = 5;
+}
