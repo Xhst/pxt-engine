@@ -5,14 +5,16 @@ namespace PXTEngine {
 			Shared<DescriptorAllocatorGrowable> descriptorAllocator, 
 			TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, 
 			BLASRegistry& blasRegistry,
-			Shared<DescriptorSetLayout> globalSetLayout)
+			Shared<DescriptorSetLayout> globalSetLayout,
+			Shared<Environment> environment)
 		:	m_context(context), 
 			m_renderer(renderer),
 			m_descriptorAllocator(std::move(descriptorAllocator)),
 			m_textureRegistry(textureRegistry),
 		    m_materialRegistry(materialRegistry),
 			m_blasRegistry(blasRegistry),
-			m_globalSetLayout(std::move(globalSetLayout))
+			m_globalSetLayout(std::move(globalSetLayout)),
+			m_environment(std::move(environment))
 	{
 		m_offscreenColorFormat = m_context.findSupportedFormat(
 			{ VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM },
@@ -303,12 +305,20 @@ namespace PXTEngine {
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 
+		m_skyboxRenderSystem = createUnique<SkyboxRenderSystem>(
+			m_context,
+			m_environment,
+			*m_globalSetLayout,
+			m_offscreenRenderPass
+		);
+
 		m_rayTracingRenderSystem = createUnique<RayTracingRenderSystem>(
 			m_context,
 			m_descriptorAllocator,
 			m_textureRegistry,
 			m_materialRegistry,
 			m_blasRegistry,
+			m_environment,
 			*m_globalSetLayout,
 			m_sceneImage
 		);
@@ -364,6 +374,8 @@ namespace PXTEngine {
 			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
 				m_offscreenFb, m_renderer.getSwapChainExtent());
 
+			m_skyboxRenderSystem->render(frameInfo);
+
 			// choose if debug or not
 			if (m_isDebugEnabled) {
 				m_debugRenderSystem->render(frameInfo);
@@ -371,7 +383,7 @@ namespace PXTEngine {
 			else {
 				m_materialRenderSystem->render(frameInfo);
 			}
-			
+
 			m_pointLightSystem->render(frameInfo);
 
 			m_renderer.endRenderPass(frameInfo.commandBuffer);

@@ -7,15 +7,17 @@
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/resources/texture_registry.hpp"
 #include "graphics/resources/material_registry.hpp"
+#include "graphics/resources/vk_skybox.hpp"
 #include "graphics/render_systems/tlas_build_system.hpp"
 #include "graphics/renderer.hpp"
 #include "scene/scene.hpp"
+#include "scene/environment.hpp"
 
 namespace PXTEngine {
 
     class RayTracingRenderSystem {
     public:
-        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, BLASRegistry& blasRegistry, DescriptorSetLayout& globalSetLayout, Shared<VulkanImage> sceneImage);
+        RayTracingRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, MaterialRegistry& materialRegistry, BLASRegistry& blasRegistry, Shared<Environment> environment, DescriptorSetLayout& globalSetLayout, Shared<VulkanImage> sceneImage);
         ~RayTracingRenderSystem();
 
         RayTracingRenderSystem(const RayTracingRenderSystem&) = delete;
@@ -38,6 +40,8 @@ namespace PXTEngine {
         TextureRegistry& m_textureRegistry;
 		MaterialRegistry& m_materialRegistry;
 		BLASRegistry& m_blasRegistry; // used only to initialize tlasBuildSystem
+		Shared<Environment> m_environment = nullptr;
+		Shared<VulkanSkybox> m_skybox = nullptr;
         
         Shared<DescriptorAllocatorGrowable> m_descriptorAllocator = nullptr;
         

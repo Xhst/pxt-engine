@@ -29,6 +29,7 @@ layout(set = 4, binding = 0) readonly buffer materials {
 layout(location = 0) rayPayloadInEXT struct RayPayload {
     vec4 color; // The color accumulated along the ray
     float t;    // The hit distance (t-value)
+    vec3 rayDir; // The direction of the ray
 } payload;
 
 

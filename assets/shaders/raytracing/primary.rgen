@@ -11,6 +11,7 @@
 layout(location = 0) rayPayloadEXT struct RayPayload {
     vec4 color; // The color accumulated along the ray
     float t;    // The hit distance (t-value)
+    vec3 rayDir; // The direction of the ray
 } payload;
 
 // Declare the top-level acceleration structure (TLAS)
@@ -44,6 +45,7 @@ void main()
     // Initialize payload
     payload.color = vec4(0.0, 0.0, 0.0, 1.0); // Default to black
     payload.t = -1.0;
+    payload.rayDir = rayDirWorld; // Store the ray direction in the payload
 
     // Ray parameters
     uint rayFlags = gl_RayFlagsOpaqueEXT; // Assume opaque geometry for now

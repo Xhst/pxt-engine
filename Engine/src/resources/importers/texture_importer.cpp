@@ -3,7 +3,6 @@
 #include "core/buffer.hpp"
 #include "graphics/resources/texture2d.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stdexcept>
 

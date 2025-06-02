@@ -139,7 +139,12 @@ namespace PXTEngine {
 		// For shadow mapping here we need 6 framebuffers, one for each face of the cube map
 		// The class will handle this for us. It will create image views for each face, which
 		// we can use to then create the framebuffers for this class
-		m_shadowCubeMap = createUnique<ShadowCubeMap>(m_context, m_shadowMapSize, m_offscreenColorFormat);
+		m_shadowCubeMap = createUnique<CubeMap>(
+			m_context, 
+			m_shadowMapSize, 
+			m_offscreenColorFormat,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+		);
 
 		// ------------- Create framebuffers for each face of the cube map -------------
 
@@ -349,24 +354,24 @@ namespace PXTEngine {
 		glm::mat4 viewMatrix = glm::mat4(1.0f);
 		switch (faceIndex)
 		{
-		case 0: // POSITIVE_X
+		case CubeFace::RIGHT: // POSITIVE_X
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			break;
-		case 1:	// NEGATIVE_X
+		case CubeFace::LEFT: // NEGATIVE_X
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			break;
-		case 2:	// POSITIVE_Y
+		case CubeFace::TOP:	// POSITIVE_Y
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			break;
-		case 3:	// NEGATIVE_Y
+		case CubeFace::BOTTOM: // NEGATIVE_Y
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			break;
-		case 4:	// POSITIVE_Z
+		case CubeFace::BACK: // POSITIVE_Z
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			break;
-		case 5:	// NEGATIVE_Z
+		case CubeFace::FRONT: // NEGATIVE_Z
 			viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 			break;
 		}

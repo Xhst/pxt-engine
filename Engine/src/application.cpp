@@ -20,6 +20,8 @@
 #include <iostream>
 #include <chrono>
 
+#define STB_IMAGE_IMPLEMENTATION
+
 namespace PXTEngine {
 
     Application* Application::m_instance = nullptr;
@@ -41,10 +43,10 @@ namespace PXTEngine {
         }
         registerResources();
 
-		// create the pool manager, ubo buffers, and global descriptor sets
-		createDescriptorPoolAllocator();
-		createUboBuffers();
-		createGlobalDescriptorSet();
+        // create the pool manager, ubo buffers, and global descriptor sets
+        createDescriptorPoolAllocator();
+        createUboBuffers();
+        createGlobalDescriptorSet();
 
 		// create the descriptor sets for the textures
         m_textureRegistry.setDescriptorAllocator(m_descriptorAllocator);
@@ -54,6 +56,12 @@ namespace PXTEngine {
 		m_materialRegistry.setDescriptorAllocator(m_descriptorAllocator);
 		m_materialRegistry.createDescriptorSet();
 
+		// create descriptor set for skybox
+        if (m_scene.getEnvironment()->getSkybox()) {
+			auto skybox = std::static_pointer_cast<VulkanSkybox>(m_scene.getEnvironment()->getSkybox());
+            skybox->createDescriptorSet(m_descriptorAllocator);
+        }
+
 		// create the render systems
         m_masterRenderSystem = createUnique<MasterRenderSystem>(
             m_context,
@@ -62,10 +70,11 @@ namespace PXTEngine {
             m_textureRegistry,
 			m_materialRegistry,
 			m_blasRegistry,
-            m_globalSetLayout
+            m_globalSetLayout,
+            m_scene.getEnvironment()
         );
 
-        m_window.setEventCallback([this]<typename E>(E && event) {
+        m_window.setEventCallback([this]<typename E>(E&& event) {
             onEvent(std::forward<E>(event));
         });
     }
@@ -75,6 +84,7 @@ namespace PXTEngine {
 		std::vector<PoolSizeRatio> ratios = {
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<float>(m_textureRegistry.getTextureCount())},
+            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1.0f},
 		};
 
 		m_descriptorAllocator = createShared<DescriptorAllocatorGrowable>(m_context, SwapChain::MAX_FRAMES_IN_FLIGHT, ratios);
@@ -177,8 +187,6 @@ namespace PXTEngine {
         });
     }
 
-
-
     void Application::run() {
 
         Camera camera;
@@ -211,6 +219,7 @@ namespace PXTEngine {
                 };
 
                 GlobalUbo ubo{};
+                ubo.ambientLightColor = m_scene.getEnvironment()->getAmbientLight();
 
 				m_masterRenderSystem->onUpdate(frameInfo, ubo);
 
@@ -255,15 +264,6 @@ namespace PXTEngine {
         }
 	}
 
-    Entity Application::createPointLight(float intensity, float radius, glm::vec3 color) {
-        Entity entity = m_scene.createEntity("point_light")
-            .add<PointLightComponent>(intensity)
-            .add<TransformComponent>(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{radius, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<ColorComponent>(color);
-
-        return entity;
-    }
-    
 }
 
 int main() {

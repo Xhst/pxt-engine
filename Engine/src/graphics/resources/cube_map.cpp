@@ -1,26 +1,26 @@
-#include "graphics/resources/shadow_cube_map.hpp"
+#include "graphics/resources/cube_map.hpp"
 
 
 namespace PXTEngine {
-	ShadowCubeMap::ShadowCubeMap(Context& context, const uint32_t size, const VkFormat format)
-		: VulkanImage(context, {}, Buffer()), m_imageFormat(format),
+	CubeMap::CubeMap(Context& context, const uint32_t size, const VkFormat format, const VkImageUsageFlags usageFlags)
+		: VulkanImage(context, {}, Buffer()), m_imageFormat(format), m_usageFlags(usageFlags),
 		  m_size(size) {
 		for (int i = 0; i < 6; i++) {
 			m_cubeFaceViews[i] = VK_NULL_HANDLE;
 		}
 
-		createSCMImage();
-		createSCMImageViews();
-		createSCMSampler();
+		createImage();
+		createImageViews();
+		createSampler();
 	}
 
-	ShadowCubeMap::~ShadowCubeMap() {
+	CubeMap::~CubeMap() {
 		for (auto& imageView : m_cubeFaceViews) {
 			vkDestroyImageView(m_context.getDevice(), imageView, nullptr);
 		}
 	}
 
-	void ShadowCubeMap::createSCMImage() {
+	void CubeMap::createImage() {
 		// Cube map image description
 		VkImageCreateInfo imageCreateInfo = {};
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -31,7 +31,7 @@ namespace PXTEngine {
 		imageCreateInfo.arrayLayers = 6;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		imageCreateInfo.usage = m_usageFlags;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageCreateInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
@@ -40,14 +40,18 @@ namespace PXTEngine {
 		m_context.createImageWithInfo(imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkImage, m_imageMemory);
 	}
 
-	void ShadowCubeMap::createSCMImageViews() {
+	void CubeMap::createImageViews() {
 		// Create image view
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
 		viewInfo.format = m_imageFormat;
-		viewInfo.components = { VK_COMPONENT_SWIZZLE_R };
-		viewInfo.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+		viewInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
+								VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1.0; 
+		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 6;
 		viewInfo.image = m_vkImage;
 		
@@ -66,7 +70,7 @@ namespace PXTEngine {
 		}
 	}
 
-	void ShadowCubeMap::createSCMSampler() {
+	void CubeMap::createSampler() {
 		VkSamplerCreateInfo sampler = {};
 		sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		sampler.magFilter = VK_FILTER_LINEAR;
@@ -81,7 +85,7 @@ namespace PXTEngine {
 		sampler.minLod = 0.0f;
 		sampler.maxLod = 1.0f;
 		sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		
+
 		m_sampler = m_context.createSampler(sampler);
 	}
 
