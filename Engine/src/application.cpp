@@ -74,7 +74,7 @@ namespace PXTEngine {
             m_scene.getEnvironment()
         );
 
-        m_window.setEventCallback([this]<typename E>(E && event) {
+        m_window.setEventCallback([this]<typename E>(E&& event) {
             onEvent(std::forward<E>(event));
         });
     }
@@ -187,8 +187,6 @@ namespace PXTEngine {
         });
     }
 
-
-
     void Application::run() {
 
         Camera camera;
@@ -266,15 +264,6 @@ namespace PXTEngine {
         }
 	}
 
-    Entity Application::createPointLight(float intensity, float radius, glm::vec3 color) {
-        Entity entity = m_scene.createEntity("point_light")
-            .add<PointLightComponent>(intensity)
-            .add<TransformComponent>(glm::vec3{0.f, 0.f, 0.f}, glm::vec3{radius, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<ColorComponent>(color);
-
-        return entity;
-    }
-    
 }
 
 int main() {

@@ -50,8 +50,6 @@ namespace PXTEngine {
 			return m_descriptorAllocator;
 		}
 
-        Entity createPointLight(const float intensity = 1.0f, const float radius = 0.1f, const glm::vec3 color = glm::vec3(1.f));
-
     protected:
         virtual void loadScene() {}
     private:
