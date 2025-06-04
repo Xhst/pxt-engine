@@ -30,10 +30,10 @@ void main() {
 	vec4 positionWorld = push.modelMatrix * position;
 	gl_Position = ubo.projectionMatrix * ubo.viewMatrix * positionWorld;
 
-	vec3 norm = vec3(push.normalMatrix * normal);
+	vec3 norm = normalize(vec3(normal));
 
-	// Gram–Schmidt processA
-	vec3 tang = (tangent.xyz - dot(normal.xyz, tangent.xyz) * normal.xyz);
+	// Gram–Schmidt process
+	vec3 tang = normalize(tangent.xyz - dot(normal.xyz, tangent.xyz) * normal.xyz);
 
 	// tangent.w is the handedness
 	vec3 bitang = cross(norm, tang) * tangent.w;
