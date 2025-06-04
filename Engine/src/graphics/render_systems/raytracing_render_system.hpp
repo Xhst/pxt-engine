@@ -8,7 +8,7 @@
 #include "graphics/resources/texture_registry.hpp"
 #include "graphics/resources/material_registry.hpp"
 #include "graphics/resources/vk_skybox.hpp"
-#include "graphics/render_systems/tlas_build_system.hpp"
+#include "graphics/render_systems/raytracing_scene_manager_system.hpp"
 #include "graphics/renderer.hpp"
 #include "scene/scene.hpp"
 #include "scene/environment.hpp"
@@ -45,7 +45,7 @@ namespace PXTEngine {
         
         Shared<DescriptorAllocatorGrowable> m_descriptorAllocator = nullptr;
         
-        TLASBuildSystem m_tlasBuildSystem{m_context, m_materialRegistry, m_blasRegistry, m_descriptorAllocator};
+        RayTracingSceneManagerSystem m_rtSceneManager{m_context, m_materialRegistry, m_blasRegistry, m_descriptorAllocator};
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;

@@ -357,19 +357,18 @@ namespace PXTEngine {
 
 		this->updateUi();
 
-		// render shadow cube map
-		// the render function of the shadow map render system will
-		// do how many passes it needs to do (6 in this case - 1 point light)
-		m_shadowMapRenderSystem->render(frameInfo, m_renderer);
-		m_shadowMapRenderSystem->updateUi();
-
 		// render to offscreen main render pass
 		if (m_isRaytracingEnabled) {
 			m_rayTracingRenderSystem->render(frameInfo, m_renderer);
 			// this for now just transitions the scene image back to shader_read_only_optimal
 			m_rayTracingRenderSystem->updateUi(frameInfo);
-		}
-		else {
+		} else {
+			// render shadow cube map
+			// the render function of the shadow map render system will
+			// do how many passes it needs to do (6 in this case - 1 point light)
+			m_shadowMapRenderSystem->render(frameInfo, m_renderer);
+			m_shadowMapRenderSystem->updateUi();
+
 			//begin offscreen render pass
 			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
 				m_offscreenFb, m_renderer.getSwapChainExtent());

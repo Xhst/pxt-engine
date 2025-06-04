@@ -1,30 +1,35 @@
-#include "graphics/render_systems/tlas_build_system.hpp"
+#include "graphics/render_systems/raytracing_scene_manager_system.hpp"
 
 #include "scene/ecs/component.hpp"
 
 namespace PXTEngine {
-	TLASBuildSystem::TLASBuildSystem(Context& context, MaterialRegistry& materialRegistry, 
+	RayTracingSceneManagerSystem::RayTracingSceneManagerSystem(Context& context, MaterialRegistry& materialRegistry, 
 		BLASRegistry& blasRegistry, Shared<DescriptorAllocatorGrowable> allocator)
 		: m_context(context), 
 		m_materialRegistry(materialRegistry),
 		m_blasRegistry(blasRegistry), 
 		m_descriptorAllocator(allocator) {
-		createDescriptorSet();
+		createTLASDescriptorSet();
+		createMeshInstanceDescriptorSet();
 	}
 
-	TLASBuildSystem::~TLASBuildSystem() {
+	RayTracingSceneManagerSystem::~RayTracingSceneManagerSystem() {
 		destroyTLAS();
 	}
 
-	void TLASBuildSystem::createTLAS(FrameInfo& frameInfo) {
+
+	void RayTracingSceneManagerSystem::createTLAS(FrameInfo& frameInfo) {
+		if (m_tlas != VK_NULL_HANDLE) return;
+
 		VkAccelerationStructureKHR newTlas = VK_NULL_HANDLE;
 
 		//  Create a acceleration structure instance vector 
 		std::vector<VkAccelerationStructureInstanceKHR> instances;
-
+	
 		//  Get all BLAS and components from entities that have transform & mesh components 
 		auto view = frameInfo.scene.getEntitiesWith<TransformComponent, MeshComponent, MaterialComponent>();
 
+		int instanceIndex = 0;
 		for (auto entity : view) {
 			const auto& [transformComponent, meshComponent, materialComponent] = view.get<TransformComponent, MeshComponent, MaterialComponent>(entity);
 			
@@ -45,8 +50,19 @@ namespace PXTEngine {
 			VkAccelerationStructureInstanceKHR instance{};
 			instance.transform = transformMatrix;
 
+			auto vkMesh = static_pointer_cast<VulkanMesh>(mesh);
+
+			MeshInstanceData meshInstanceData{};
+			meshInstanceData.vertexBufferAddress = vkMesh->getVertexBufferDeviceAddress();
+			meshInstanceData.indexBufferAddress = vkMesh->getIndexBufferDeviceAddress();
+			meshInstanceData.materialIndex = m_materialRegistry.getIndex(material->id);
+			meshInstanceData.textureTintColor = glm::vec4(materialComponent.tint, 1.0f);
+			meshInstanceData.textureTilingFactor = materialComponent.tilingFactor;
+
+			m_meshInstanceData.push_back(meshInstanceData);
+
 			// we can get it in the shader via InstanceCustomIndexKHR
-			instance.instanceCustomIndex = m_materialRegistry.getIndex(material->id);
+			instance.instanceCustomIndex = instanceIndex++; // Unique index for each instance
 
 
 			instance.mask = 0xFF; // Visible to all rays initially
@@ -58,6 +74,9 @@ namespace PXTEngine {
 
 			instances.push_back(instance);
 		}
+
+		//TODO: remove
+		updateMeshInstanceDescriptorSet();
 
 		// Upload Instance Data 
 		uint32_t instanceCount = static_cast<uint32_t>(instances.size());
@@ -203,7 +222,7 @@ namespace PXTEngine {
 		// Buffers will be deleted after end of this function cause they are Unique.
 
 		// Update descriptor set for TLAS
-		updateDescriptorSet(newTlas);
+		updateTLASDescriptorSet(newTlas);
 
 		// Then destroy old one and assign the new one
 		destroyTLAS();
@@ -215,7 +234,7 @@ namespace PXTEngine {
 		m_tlas = newTlas;
 	}
 
-	VkTransformMatrixKHR TLASBuildSystem::glmToVkTransformMatrix(const glm::mat4& glmMatrix) {
+	VkTransformMatrixKHR RayTracingSceneManagerSystem::glmToVkTransformMatrix(const glm::mat4& glmMatrix) {
 		VkTransformMatrixKHR vkMatrix;
 
 		// GLM matrices are column-major, VkTransformMatrixKHR is row-major.
@@ -234,7 +253,7 @@ namespace PXTEngine {
 		return vkMatrix;
 	}
 
-	void TLASBuildSystem::createDescriptorSet() {
+	void RayTracingSceneManagerSystem::createTLASDescriptorSet() {
 		// TLAS DESCRIPTOR SET LAYOUT
 		// needed for raytracing pipeline layout
 		m_tlasDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
@@ -244,7 +263,7 @@ namespace PXTEngine {
 		m_descriptorAllocator->allocate(m_tlasDescriptorSetLayout->getDescriptorSetLayout(), m_tlasDescriptorSet);
 	}
 
-	void TLASBuildSystem::updateDescriptorSet(VkAccelerationStructureKHR& newTlas) {
+	void RayTracingSceneManagerSystem::updateTLASDescriptorSet(VkAccelerationStructureKHR& newTlas) {
 		VkWriteDescriptorSetAccelerationStructureKHR tlasInfo{};
 		tlasInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 		tlasInfo.accelerationStructureCount = 1;
@@ -255,10 +274,57 @@ namespace PXTEngine {
 			.updateSet(m_tlasDescriptorSet);
 	}
 
-	void TLASBuildSystem::destroyTLAS() {
+	void RayTracingSceneManagerSystem::destroyTLAS() {
 		if (m_tlas != VK_NULL_HANDLE) {
 			vkDestroyAccelerationStructureKHR(m_context.getDevice(), m_tlas, nullptr);
 			m_tlas = VK_NULL_HANDLE;
 		}
+	}
+
+
+	void RayTracingSceneManagerSystem::createMeshInstanceDescriptorSet() {
+		m_meshInstanceDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, 1)
+			.build();
+
+		m_descriptorAllocator->allocate(
+			m_meshInstanceDescriptorSetLayout->getDescriptorSetLayout(),
+			m_meshInstanceDescriptorSet
+		);
+	}
+
+	void RayTracingSceneManagerSystem::updateMeshInstanceDescriptorSet() {
+		if (m_meshInstanceBuffer != nullptr) {
+			return;
+		}
+
+		VkDeviceSize bufferSize = sizeof(MeshInstanceData) * m_meshInstanceData.size();
+
+		Unique<VulkanBuffer> stagingBuffer = createUnique<VulkanBuffer>(
+			m_context,
+			bufferSize,
+			1,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		);
+		stagingBuffer->map();
+		stagingBuffer->writeToBuffer(m_meshInstanceData.data(), bufferSize);
+		stagingBuffer->unmap();
+
+		m_meshInstanceBuffer = createUnique<VulkanBuffer>(
+			m_context,
+			bufferSize,
+			1,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		);
+
+		m_context.copyBuffer(stagingBuffer->getBuffer(), m_meshInstanceBuffer->getBuffer(), bufferSize);
+
+		auto bufferInfo = m_meshInstanceBuffer->descriptorInfo();
+
+		DescriptorWriter(m_context, *m_meshInstanceDescriptorSetLayout)
+			.writeBuffer(0, &bufferInfo)
+			.updateSet(m_meshInstanceDescriptorSet);
 	}
 }

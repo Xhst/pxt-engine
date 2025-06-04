@@ -106,11 +106,12 @@ namespace PXTEngine {
 
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
 			setLayout.getDescriptorSetLayout(),
-			m_tlasBuildSystem.getTLASDescriptorSetLayout(),
+			m_rtSceneManager.getTLASDescriptorSetLayout(),
 			m_textureRegistry.getDescriptorSetLayout(),
 			m_storageImageDescriptorSetLayout->getDescriptorSetLayout(),
 			m_materialRegistry.getDescriptorSetLayout(),
-			m_skybox->getDescriptorSetLayout()
+			m_skybox->getDescriptorSetLayout(),
+			m_rtSceneManager.getMeshInstanceDescriptorSetLayout()
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -306,7 +307,7 @@ namespace PXTEngine {
 	}
 	
 	void RayTracingRenderSystem::update(FrameInfo& frameInfo) {
-		m_tlasBuildSystem.createTLAS(frameInfo);
+		m_rtSceneManager.createTLAS(frameInfo);
 
 		if (m_isFirstFrame) {
 			m_isFirstFrame = false; // first frame is done, next times we have to transition from shader read only optimal
@@ -338,13 +339,14 @@ namespace PXTEngine {
 	void RayTracingRenderSystem::render(FrameInfo& frameInfo, Renderer& renderer) {
 		m_pipeline->bind(frameInfo.commandBuffer);
 
-		std::array<VkDescriptorSet, 6> descriptorSets = { 
+		std::array<VkDescriptorSet, 7> descriptorSets = { 
 			frameInfo.globalDescriptorSet, 
-			m_tlasBuildSystem.getTLASDescriptorSet(), 
+			m_rtSceneManager.getTLASDescriptorSet(), 
 			m_textureRegistry.getDescriptorSet(),
 			m_storageImageDescriptorSet,
 			m_materialRegistry.getDescriptorSet(),
-			m_skybox->getDescriptorSet()
+			m_skybox->getDescriptorSet(),
+			m_rtSceneManager.getMeshInstanceDescriptorSet()
 		};
 	
 		vkCmdBindDescriptorSets(
