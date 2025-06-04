@@ -47,7 +47,8 @@ void main() {
     vec3 surfaceNormal = normalize(fragNormalWorld);
 
     if (push.normalMapIndex != -1) {
-        surfaceNormal = calculateSurfaceNormal(textures[push.normalMapIndex], texCoords, fragTBN);
+        surfaceNormal = calculateSurfaceNormal(textures[push.normalMapIndex], 
+        texCoords, fragTBN, mat3(push.normalMatrix));
     }
 
     if (push.enableNormalsColor == 1) {
