@@ -67,11 +67,11 @@ layout(location = 0) rayPayloadInEXT struct RayPayload {
 // For triangles, this implicitly receives barycentric coordinates.
 hitAttributeEXT vec2 HitAttribs;
 
-vec2 BaryLerp(vec2 a, vec2 b, vec2 c, vec3 barycentrics) {
+vec2 barycentricLerp(vec2 a, vec2 b, vec2 c, vec3 barycentrics) {
     return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
 }
 
-vec3 BaryLerp(vec3 a, vec3 b, vec3 c, vec3 barycentrics) {
+vec3 barycentricLerp(vec3 a, vec3 b, vec3 c, vec3 barycentrics) {
     return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
 }
 
@@ -97,8 +97,8 @@ void main()
     Vertex v2 = vertices.v[i2];
 
     const vec3 barycentrics = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
-    //const vec3 normal = normalize(BaryLerp(v0.normal.xyz, v1.normal.xyz, v2.normal.xyz, barycentrics));
-    vec2 uv = BaryLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
+    //const vec3 normal = normalize(barycentricLerp(v0.normal.xyz, v1.normal.xyz, v2.normal.xyz, barycentrics));
+    vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
 
     vec4 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv) * instance.textureTintColor;
     
