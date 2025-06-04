@@ -118,11 +118,10 @@ namespace PXTEngine {
     std::vector<VkVertexInputAttributeDescription> VulkanMesh::getVertexAttributeDescriptions() {
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
         
-        attributeDescriptions.push_back({0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Mesh::Vertex, position)});
-        attributeDescriptions.push_back({1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Mesh::Vertex, color)});
-        attributeDescriptions.push_back({2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Mesh::Vertex, normal)});
-        attributeDescriptions.push_back({3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Mesh::Vertex, tangent) });
-        attributeDescriptions.push_back({4, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Mesh::Vertex, uv)});
+        attributeDescriptions.emplace_back(0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Mesh::Vertex, position));
+        attributeDescriptions.emplace_back(1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Mesh::Vertex, normal));
+        attributeDescriptions.emplace_back(2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Mesh::Vertex, tangent));
+        attributeDescriptions.emplace_back(3, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Mesh::Vertex, uv));
 
         return attributeDescriptions;
     }
