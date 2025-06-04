@@ -42,7 +42,7 @@ void applyAmbientOcclusion(inout vec3 color, vec2 texCoords) {
 void main() {
     vec2 texCoords = fragUV * push.tilingFactor;
 
-    vec3  surfaceNormal = calculateSurfaceNormal(textures[push.normalMapIndex], texCoords, fragTBN, mat3(push.normalMatrix));
+    vec3 surfaceNormal = calculateSurfaceNormal(textures[push.normalMapIndex], texCoords, fragTBN);
 
     vec3 cameraPosWorld = ubo.inverseViewMatrix[3].xyz;
     vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);

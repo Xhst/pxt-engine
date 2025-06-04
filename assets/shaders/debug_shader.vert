@@ -2,6 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 
 #include "ubo/global_ubo.glsl"
+#include "material/surface_normal.glsl"
 
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 normal;
@@ -29,17 +30,11 @@ layout(push_constant) uniform Push {
 void main() {
 	vec4 positionWorld = push.modelMatrix * position;
 	gl_Position = ubo.projectionMatrix * ubo.viewMatrix * positionWorld;
-
-	vec3 norm = normalize(vec3(normal));
-
-	// Gram–Schmidt process
-	vec3 tang = normalize(tangent.xyz - dot(normal.xyz, tangent.xyz) * normal.xyz);
-
-	// tangent.w is the handedness
-	vec3 bitang = cross(norm, tang) * tangent.w;
  
+	mat3 TBN = calculateTBN(normal, tangent, mat3(push.normalMatrix));
+
 	fragPosWorld = positionWorld.xyz;
-	fragNormalWorld = norm;
+	fragNormalWorld = vec3(normal);
 	fragUV = uv.xy;
-	fragTBN = mat3(tang, bitang, norm);
+	fragTBN = TBN;
 }
