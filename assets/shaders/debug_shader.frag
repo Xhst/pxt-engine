@@ -6,11 +6,10 @@
 #include "material/surface_normal.glsl"
 #include "lighting/blinn_phong_lighting.glsl"
 
-layout(location = 0) in vec3 fragColor;
-layout(location = 1) in vec3 fragPosWorld;
-layout(location = 2) in vec3 fragNormalWorld;
-layout(location = 3) in vec2 fragUV;
-layout(location = 4) in mat3 fragTBN;
+layout(location = 0) in vec3 fragPosWorld;
+layout(location = 1) in vec3 fragNormalWorld;
+layout(location = 2) in vec2 fragUV;
+layout(location = 3) in mat3 fragTBN;
 
 layout(location = 0) out vec4 outColor;
 
@@ -72,7 +71,7 @@ void main() {
 
     // we need to add control coefficients to regulate both terms (diffuse/specular)
     // for now we use fragColor for both which is ideal for metallic objects
-    vec3 baseColor = (diffuseLight * fragColor + specularLight * fragColor) * imageColor;
+    vec3 baseColor = (diffuseLight * push.color.rgb + specularLight * push.color.rgb) * imageColor;
 
     if (push.ambientOcclusionMapIndex != -1) {
         applyAmbientOcclusion(baseColor, texCoords);
