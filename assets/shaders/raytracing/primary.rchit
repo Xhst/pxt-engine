@@ -7,8 +7,8 @@
 #extension GL_EXT_buffer_reference : require
 #extension GL_ARB_gpu_shader_int64 : require
 
-// Include the global UBO definition
 #include "../ubo/global_ubo.glsl"
+#include "../material/surface_normal.glsl"
 
 struct Vertex {
     vec4 position;  // Position of the vertex.
@@ -17,16 +17,23 @@ struct Vertex {
     vec4 uv;        // Texture coordinates for the vertex.
 };
 
+/**
+ * References of the vertex buffers.
+ * It can be used to access vertex data using the buffer address (uint64_t)
+ */
 layout(buffer_reference, buffer_reference_align = 16, std430) readonly buffer VertexBuffer {
     Vertex v[];
 };
 
-layout(buffer_reference, buffer_reference_align = 16, scalar) readonly buffer IndexBuffer {
+/**
+ * References of the index buffers.
+ * It can be used to access index data using the buffer address (uint64_t)
+ * The indices are stored as uint32 values, and each triangle is represented by 3 indices.
+ */
+layout(buffer_reference, buffer_reference_align = 16, std430) readonly buffer IndexBuffer {
     uint i[]; 
 };
 
-// Declare the textures binding.
-// The descriptor_indexing extension allows using arrays of textures with a runtime-sized descriptor array.
 layout(set = 2, binding = 0) uniform sampler2D textures[];
 
 struct Material {
@@ -51,7 +58,7 @@ struct MeshInstanceDescription {
 };
 
 layout(set = 6, binding = 0, std430) readonly buffer meshInstances {
-    MeshInstanceDescription instances[]; // Array of mesh instances.
+    MeshInstanceDescription instances[]; 
 } meshInstancesSSBO;
 
 
@@ -75,32 +82,47 @@ vec3 barycentricLerp(vec3 a, vec3 b, vec3 c, vec3 barycentrics) {
     return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
 }
 
+vec4 barycentricLerp(vec4 a, vec4 b, vec4 c, vec3 barycentrics) {
+    return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
+}
+
+
 void main()
 {
-    // This shader is executed when a ray hits the closest geometry.
-
-    // Store the hit distance in the payload
-    payload.t = gl_HitTEXT;
-
     MeshInstanceDescription instance = meshInstancesSSBO.instances[gl_InstanceCustomIndexEXT];
-    Material material = materialsSSBO.materials[instance.materialIndex];
 
     IndexBuffer indices = IndexBuffer(instance.indexAddress);
     VertexBuffer vertices = VertexBuffer(instance.vertexAddress);
+    Material material = materialsSSBO.materials[instance.materialIndex];
 
+    // Retrieve the indices of the triangle being hit.
     uint i0 = indices.i[gl_PrimitiveID * 3 + 0];
     uint i1 = indices.i[gl_PrimitiveID * 3 + 1];
     uint i2 = indices.i[gl_PrimitiveID * 3 + 2];
 
+    // Retrieve the vertices of the triangle using the indices.
     Vertex v0 = vertices.v[i0];
     Vertex v1 = vertices.v[i1];
     Vertex v2 = vertices.v[i2];
 
+    // Calculate barycentric coordinates from the hit attributes.
     const vec3 barycentrics = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
-    //const vec3 normal = normalize(barycentricLerp(v0.normal.xyz, v1.normal.xyz, v2.normal.xyz, barycentrics));
+    
+    // Interpolate the vertex attributes using barycentric coordinates.
+    vec4 position = barycentricLerp(v0.position, v1.position, v2.position, barycentrics);
+    vec4 objectNormal = barycentricLerp(v0.normal, v1.normal, v2.normal, barycentrics);
+    vec4 objectTangent = barycentricLerp(v0.tangent, v1.tangent, v2.tangent, barycentrics);
     vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
+
+    // Normal Matrix (or Model-View Matrix) used to trasform from object space to world space.
+    mat3 normalMatrix = transpose(inverse(mat3(gl_ObjectToWorldEXT)));
+
+    // Calculate the Tangent-Bitangent-Normal (TBN) matrix and the surface normal in world space.
+    mat3 TBN = calculateTBN(objectNormal, objectTangent, normalMatrix);
+    vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, TBN);
 
     vec4 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv) * instance.textureTintColor;
     
-    payload.color = vec4(albedo.rgb, 1.0);
+    payload.color = vec4(surfaceNormal * 0.5 + 0.5, 1.0);
+    payload.t = gl_HitTEXT;
 }
