@@ -193,8 +193,8 @@ namespace PXTEngine {
 		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerInfo.anisotropyEnable = VK_FALSE;
-		samplerInfo.maxAnisotropy = 1.0f; // Ignored if anisotropyEnable is VK_FALSE
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = m_context.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
 		// Unnormalized coordinates: Use normalized UVs (0.0 to 1.0)
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;
 		// Comparison: Not for texture sampling, leave disabled
