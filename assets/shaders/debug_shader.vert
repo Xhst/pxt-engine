@@ -33,8 +33,10 @@ void main() {
  
 	mat3 TBN = calculateTBN(normal, tangent, mat3(push.normalMatrix));
 
+	vec3 worldNormal = normalize(vec3(push.normalMatrix * normal));
+
 	fragPosWorld = positionWorld.xyz;
-	fragNormalWorld = vec3(normal);
+	fragNormalWorld = worldNormal;
 	fragUV = uv.xy;
 	fragTBN = TBN;
 }
