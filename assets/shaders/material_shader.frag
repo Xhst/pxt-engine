@@ -14,6 +14,9 @@ layout(location = 3) in mat3 fragTBN;
 
 layout(location = 0) out vec4 outColor;
 
+// TODO: Separate layout semantics from type definitions inside includes
+// #include "ubo/global_ubo.glsl"
+// layout(set = 0, binding = 0) uniform _ubo { GlobalUbo ubo; };
 layout(set = 1, binding = 0) uniform sampler2D textures[];
 layout(set = 2, binding = 0) uniform samplerCube shadowCubeMap;
 

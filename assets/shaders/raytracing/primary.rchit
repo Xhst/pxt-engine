@@ -5,10 +5,12 @@
 #extension GL_GOOGLE_include_directive : require
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_buffer_reference : require
-#extension GL_ARB_gpu_shader_int64 : require
+//#extension GL_ARB_gpu_shader_int64 : require
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 
 #include "../ubo/global_ubo.glsl"
 #include "../material/surface_normal.glsl"
+#include "../lighting/blinn_phong_lighting.glsl"
 
 struct Vertex {
     vec4 position;  // Position of the vertex.
@@ -115,14 +117,25 @@ void main()
     vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
 
     // Normal Matrix (or Model-View Matrix) used to trasform from object space to world space.
-    mat3 normalMatrix = transpose(inverse(mat3(gl_ObjectToWorldEXT)));
+    // its just the inverse of the gl_ObjectToWorld3x4EXT
+    mat3 normalMatrix = mat3(gl_WorldToObject3x4EXT);
 
     // Calculate the Tangent-Bitangent-Normal (TBN) matrix and the surface normal in world space.
     mat3 TBN = calculateTBN(objectNormal, objectTangent, normalMatrix);
     vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, TBN);
 
+    // calculate world position
+    const vec3 worldPosition = vec3(gl_ObjectToWorldEXT * position);
+
+    // compute diffuse and specular
+    vec3 specularLight, diffuseLight;
+    vec3 viewDirection = gl_WorldRayDirectionEXT;
+
+    computeBlinnPhongLighting(surfaceNormal, viewDirection, worldPosition,
+	1.0, 0.0, diffuseLight, specularLight);
+
     vec4 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv) * instance.textureTintColor;
     
-    payload.color = vec4(surfaceNormal * 0.5 + 0.5, 1.0);
+    payload.color = vec4(albedo.rgb * (specularLight + diffuseLight), 1.0);
     payload.t = gl_HitTEXT;
 }
