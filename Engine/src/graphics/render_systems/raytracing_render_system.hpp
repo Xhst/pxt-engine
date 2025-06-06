@@ -25,7 +25,7 @@ namespace PXTEngine {
 
         void update(FrameInfo& frameInfo);
         void render(FrameInfo& frameInfo, Renderer& renderer);
-		void updateUi(FrameInfo& frameInfo);
+		void transitionImageToShaderReadOnlyOptimal(FrameInfo& frameInfo);
 
         void updateSceneImage(Shared<VulkanImage> sceneImage);
 
@@ -60,7 +60,5 @@ namespace PXTEngine {
         Shared<VulkanImage> m_sceneImage = nullptr;
 		VkDescriptorSet m_storageImageDescriptorSet = VK_NULL_HANDLE;
 		Unique<DescriptorSetLayout> m_storageImageDescriptorSetLayout = nullptr;
-
-		bool m_isFirstFrame = false;
     };
 }

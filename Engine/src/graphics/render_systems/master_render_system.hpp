@@ -54,6 +54,7 @@ namespace PXTEngine {
 		void updateImguiDescriptorSet();
 
 		ImVec2 getImageSizeWithAspectRatioForImGuiWindow(ImVec2 windowSize, float aspectRatio);
+		void updateSceneUi();
 		void updateUi();
 
 		Context& m_context;

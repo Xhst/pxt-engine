@@ -309,22 +309,6 @@ namespace PXTEngine {
 	void RayTracingRenderSystem::update(FrameInfo& frameInfo) {
 		m_rtSceneManager.createTLAS(frameInfo);
 
-		if (m_isFirstFrame) {
-			m_isFirstFrame = false; // first frame is done, next times we have to transition from shader read only optimal
-			
-			m_context.transitionImageLayout(
-				frameInfo.commandBuffer,
-				m_sceneImage->getVkImage(),
-				m_sceneImage->getImageFormat(),
-				VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_GENERAL,
-				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-				VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
-			);
-
-			return;
-		}
-
 		m_context.transitionImageLayout(
 			frameInfo.commandBuffer,
 			m_sceneImage->getVkImage(),
@@ -372,7 +356,7 @@ namespace PXTEngine {
 		);
 	}
 
-	void RayTracingRenderSystem::updateUi(FrameInfo& frameInfo) {
+	void RayTracingRenderSystem::transitionImageToShaderReadOnlyOptimal(FrameInfo& frameInfo) {
 		// transition output image to shader read only layout for imgui
 		m_context.transitionImageLayout(
 			frameInfo.commandBuffer,

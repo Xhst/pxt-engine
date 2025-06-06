@@ -82,11 +82,11 @@ namespace PXTEngine {
 		VkAttachmentDescription colorAttachment = {};
 		colorAttachment.format = m_offscreenColorFormat;
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference colorAttachmentRef = {};
@@ -160,7 +160,7 @@ namespace PXTEngine {
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 		);
 
-		// transition once to SHADER_READ_ONLY_OPTIMAL layout
+		// transition once to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL layout
 		m_context.transitionImageLayoutSingleTimeCmd(
 			m_sceneImage->getVkImage(),
 			m_sceneImage->getImageFormat(),
@@ -348,26 +348,34 @@ namespace PXTEngine {
 		m_shadowMapRenderSystem->update(frameInfo, ubo);
 
 		// update raytracing scene
-		m_rayTracingRenderSystem->update(frameInfo);
+		if (m_isRaytracingEnabled) {
+			m_rayTracingRenderSystem->update(frameInfo);
+		}
 	}
 
 	void MasterRenderSystem::doRenderPasses(FrameInfo& frameInfo) {
 		// begin new frame imgui
 		m_uiRenderSystem->beginBuildingUi();
 
-		this->updateUi();
-
 		// render to offscreen main render pass
 		if (m_isRaytracingEnabled) {
 			m_rayTracingRenderSystem->render(frameInfo, m_renderer);
-			// this for now just transitions the scene image back to shader_read_only_optimal
-			m_rayTracingRenderSystem->updateUi(frameInfo);
+			// this transitions the scene image back to shader_read_only_optimal for the next
+			// renderpass (for now only point light billboards)
+			m_rayTracingRenderSystem->transitionImageToShaderReadOnlyOptimal(frameInfo);
+
+			//begin offscreen render pass for point light billboards
+			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
+				m_offscreenFb, m_renderer.getSwapChainExtent());
+
+			m_pointLightSystem->render(frameInfo);
+
+			m_renderer.endRenderPass(frameInfo.commandBuffer);
 		} else {
 			// render shadow cube map
 			// the render function of the shadow map render system will
 			// do how many passes it needs to do (6 in this case - 1 point light)
 			m_shadowMapRenderSystem->render(frameInfo, m_renderer);
-			m_shadowMapRenderSystem->updateUi();
 
 			//begin offscreen render pass
 			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
@@ -387,6 +395,9 @@ namespace PXTEngine {
 
 			m_renderer.endRenderPass(frameInfo.commandBuffer);
 		}
+
+		// update scene ui
+		this->updateUi();
 
 		// render imgui and present
 		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
@@ -448,8 +459,8 @@ namespace PXTEngine {
 		return ratioedExtent;
 	}
 
-	void MasterRenderSystem::updateUi() {
-		ImTextureID scene = (ImTextureID)m_sceneDescriptorSet;
+	void MasterRenderSystem::updateSceneUi() {
+		ImTextureID scene = (ImTextureID) m_sceneDescriptorSet;
 
 		// we push a style var to remove the viewpoer window padding
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -481,14 +492,19 @@ namespace PXTEngine {
 
 		ImGui::Begin("Debug Renderer");
 		ImGui::Checkbox("Enable Debug", &m_isDebugEnabled);
-		
+
 		if (m_isDebugEnabled) {
 			ImGui::Text("Debug Renderer is enabled");
 			m_debugRenderSystem->updateUi();
-		}
-		else {
+		} else {
 			ImGui::Text("Debug Renderer is disabled");
 		}
 		ImGui::End();
+	}
+
+	void MasterRenderSystem::updateUi() {
+		updateSceneUi();
+
+		m_shadowMapRenderSystem->updateUi();
 	}
 }
