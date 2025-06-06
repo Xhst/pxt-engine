@@ -5,7 +5,6 @@
 #extension GL_GOOGLE_include_directive : require
 #extension GL_EXT_scalar_block_layout : require
 #extension GL_EXT_buffer_reference : require
-//#extension GL_ARB_gpu_shader_int64 : require
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 
 #include "../ubo/global_ubo.glsl"
@@ -88,7 +87,6 @@ vec4 barycentricLerp(vec4 a, vec4 b, vec4 c, vec3 barycentrics) {
     return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
 }
 
-
 void main()
 {
     MeshInstanceDescription instance = meshInstancesSSBO.instances[gl_InstanceCustomIndexEXT];
@@ -111,31 +109,36 @@ void main()
     const vec3 barycentrics = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
     
     // Interpolate the vertex attributes using barycentric coordinates.
-    vec4 position = barycentricLerp(v0.position, v1.position, v2.position, barycentrics);
-    vec4 objectNormal = barycentricLerp(v0.normal, v1.normal, v2.normal, barycentrics);
-    vec4 objectTangent = barycentricLerp(v0.tangent, v1.tangent, v2.tangent, barycentrics);
-    vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
+    const vec4 position = barycentricLerp(v0.position, v1.position, v2.position, barycentrics);
+    const vec4 objectNormal = barycentricLerp(v0.normal, v1.normal, v2.normal, barycentrics);
+    const vec4 objectTangent = barycentricLerp(v0.tangent, v1.tangent, v2.tangent, barycentrics);
+    const vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
 
     // Normal Matrix (or Model-View Matrix) used to trasform from object space to world space.
     // its just the inverse of the gl_ObjectToWorld3x4EXT
-    mat3 normalMatrix = mat3(gl_WorldToObject3x4EXT);
+    const mat3 normalMatrix = mat3(gl_WorldToObject3x4EXT);
 
     // Calculate the Tangent-Bitangent-Normal (TBN) matrix and the surface normal in world space.
-    mat3 TBN = calculateTBN(objectNormal, objectTangent, normalMatrix);
-    vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, TBN);
+    const mat3 TBN = calculateTBN(objectNormal, objectTangent, normalMatrix);
+    const vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, TBN);
 
     // calculate world position
     const vec3 worldPosition = vec3(gl_ObjectToWorldEXT * position);
 
     // compute diffuse and specular
     vec3 specularLight, diffuseLight;
-    vec3 viewDirection = gl_WorldRayDirectionEXT;
+    const vec3 viewDirection = gl_WorldRayDirectionEXT;
+    computeBlinnPhongLighting(surfaceNormal, viewDirection, worldPosition, 1.0, 0.0, diffuseLight, specularLight);
 
-    computeBlinnPhongLighting(surfaceNormal, viewDirection, worldPosition,
-	1.0, 0.0, diffuseLight, specularLight);
+    vec4 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv);
 
-    vec4 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv) * instance.textureTintColor;
+    // Base Color
+    vec3 finalColor = albedo.rgb * instance.textureTintColor.rgb;
+
+    // Apply lighting
+    finalColor = (diffuseLight + specularLight) * finalColor;
     
-    payload.color = vec4(albedo.rgb * (specularLight + diffuseLight), 1.0);
+    
+    payload.color = vec4(finalColor, 1.0);
     payload.t = gl_HitTEXT;
 }
