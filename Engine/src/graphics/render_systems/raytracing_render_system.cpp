@@ -64,6 +64,7 @@ namespace PXTEngine {
 	}
 
 	void RayTracingRenderSystem::defineShaderGroups() {
+		// for rgen e miss there can be one shader per group
 		m_shaderGroups = {
 			// General RayGen Group
 			{
@@ -80,8 +81,16 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here we can have multiple miss shaders
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "primary.rmiss.spv"},
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "shadow.rmiss.spv"},
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "primary.rmiss.spv"}
+				}
+			},
+			// Shadow Miss Group
+			{
+				VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
+				{
+					// Shader stages + filepaths
+					// here we can have multiple miss shaders
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "shadow.rmiss.spv"}
 				}
 			},
 			// Closest Hit Group (Triangle Hit Group)
@@ -199,7 +208,7 @@ namespace PXTEngine {
 		for (const auto& group : m_shaderGroups) {
 			switch (group.stages[0].first) {
 				case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
-					rayGenGroupsCount++; // Only one raygen group is allowed probably
+					rayGenGroupsCount++; // Only one raygen group
 					break;
 				case VK_SHADER_STAGE_MISS_BIT_KHR:
 					missGroupsCount++;
