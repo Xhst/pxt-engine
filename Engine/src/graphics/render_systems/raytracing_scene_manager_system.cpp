@@ -257,7 +257,7 @@ namespace PXTEngine {
 		// TLAS DESCRIPTOR SET LAYOUT
 		// needed for raytracing pipeline layout
 		m_tlasDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
-			.addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR)
 			.build();
 
 		m_descriptorAllocator->allocate(m_tlasDescriptorSetLayout->getDescriptorSetLayout(), m_tlasDescriptorSet);

@@ -371,6 +371,7 @@ namespace PXTEngine {
         // This is usually the preferred format for standard monitors, providing correct
         // sRGB gamma correction for visually accurate output. B8G8R8A8 is more common
         // on Windows, R8G8B8A8 on other platforms, but both are widely supported.
+        
         for (const auto& availableFormat : availableFormats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
@@ -385,7 +386,7 @@ namespace PXTEngine {
                 return availableFormat;
             }
         }
-
+        
         // Good Fallback: Linear 8-bit per channel (B8G8R8A8_UNORM or R8G8B8A8_UNORM).
         // If sRGB isn't available, UNORM is a common fallback. It doesn't apply sRGB
         // gamma correction automatically, so your rendering might appear too dark.

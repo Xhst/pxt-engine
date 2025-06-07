@@ -80,7 +80,8 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here we can have multiple miss shaders
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "primary.rmiss.spv"}
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "primary.rmiss.spv"},
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "shadow.rmiss.spv"},
 				}
 			},
 			// Closest Hit Group (Triangle Hit Group)
@@ -130,7 +131,7 @@ namespace PXTEngine {
 		RayTracingPipelineConfigInfo pipelineConfig{};
 		pipelineConfig.shaderGroups = m_shaderGroups;
 		pipelineConfig.pipelineLayout = m_pipelineLayout;
-		pipelineConfig.maxPipelineRayRecursionDepth = 1; // for now
+		pipelineConfig.maxPipelineRayRecursionDepth = 2; // for now
 		m_pipeline = createUnique<Pipeline>(
 			m_context,
 			pipelineConfig

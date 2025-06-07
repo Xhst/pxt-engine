@@ -35,6 +35,8 @@ layout(buffer_reference, buffer_reference_align = 16, std430) readonly buffer In
     uint i[]; 
 };
 
+layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS; // Used for shadows
+
 layout(set = 2, binding = 0) uniform sampler2D textures[];
 
 struct Material {
@@ -68,6 +70,9 @@ layout(location = 0) rayPayloadInEXT struct RayPayload {
     vec4 color; // The color accumulated along the ray
     float t;    // The hit distance (t-value)
 } payload;
+
+// payload used for shadow calculations
+layout(location = 1) rayPayloadEXT bool isShadowed;
 
 
 // Define the ray attributes structure.
@@ -132,11 +137,45 @@ void main()
 
     vec4 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv);
 
+    // shadow
+    isShadowed = true; // assume its true and set to false if the ray misses
+    float attenuation = 1.0;
+
+    // Tracing shadow ray only if the light is visible from the surface
+    vec3 lightPosition = ubo.pointLights[0].position.xyz;
+    vec3 vecToLight = lightPosition - worldPosition;
+    float lightDistance = length(vecToLight);
+    vec3 dirToLight = normalize(vecToLight);
+    if(dot(surfaceNormal, dirToLight) > 0) {
+        float tMin   = 0.001;
+        float tMax   = lightDistance;
+        vec3  origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT;
+        vec3  rayDir = dirToLight;
+        uint  flags  = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
+        isShadowed   = true;
+        traceRayEXT(TLAS,        // acceleration structure
+                    flags,       // rayFlags
+                    0xFF,        // cullMask
+                    0,           // sbtRecordOffset
+                    0,           // sbtRecordStride
+                    1,           // missIndex
+                    origin,      // ray origin
+                    tMin,        // ray min range
+                    rayDir,      // ray direction
+                    tMax,        // ray max range
+                    1            // payload (location = 1)
+        );
+
+        if(isShadowed) {
+            attenuation = 0.4;
+        }
+    }
+
     // Base Color
     vec3 finalColor = albedo.rgb * instance.textureTintColor.rgb;
 
     // Apply lighting
-    finalColor = (diffuseLight + specularLight) * finalColor;
+    finalColor = (diffuseLight + specularLight) * finalColor * attenuation;
     
     
     payload.color = vec4(finalColor, 1.0);
