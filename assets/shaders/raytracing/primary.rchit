@@ -138,7 +138,6 @@ void main()
     vec4 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv);
 
     // shadow
-    isShadowed = true; // assume its true and set to false if the ray misses
     float attenuation = 1.0;
 
     // Tracing shadow ray only if the light is visible from the surface
@@ -152,7 +151,7 @@ void main()
         vec3  origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT;
         vec3  rayDir = dirToLight;
         uint  flags  = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
-        isShadowed   = true;
+        isShadowed   = true; // we assume is in shadow and will be set to false if the ray misses
         traceRayEXT(TLAS,        // acceleration structure
                     flags,       // rayFlags
                     0xFF,        // cullMask
