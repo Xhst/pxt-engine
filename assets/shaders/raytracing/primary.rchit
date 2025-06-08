@@ -113,6 +113,7 @@ void main()
     // Normal Matrix (or Model-View Matrix) used to trasform from object space to world space.
     // its just the inverse of the gl_ObjectToWorld3x4EXT
     const mat3 normalMatrix = mat3(gl_WorldToObject3x4EXT);
+    vec3 worldNormal = normalize(normalMatrix * objectNormal.xyz);
 
     // Calculate the Tangent-Bitangent-Normal (TBN) matrix and the surface normal in world space.
     const mat3 TBN = calculateTBN(objectNormal, objectTangent, normalMatrix);
@@ -137,16 +138,16 @@ void main()
     float lightDistance = length(vecToLight);
     vec3 dirToLight = normalize(vecToLight);
 
-    if(dot(surfaceNormal, dirToLight) > 0) {
-        // We assume by default that everything is in shadow
-        // then we cast a ray and set to false if the ray misses
-        isShadowed   = true; 
+    // We assume by default that everything is in shadow
+    // then we cast a ray and set to false if the ray misses
+    isShadowed = true; 
 
+    if(dot(worldNormal, dirToLight) > 0) {
         // A small bias to avoid the shadow terminator problem
-        const float bias = 0.005;
+        const float bias = 0.007;
 
         Ray shadowRay;
-        shadowRay.origin = worldPosition + surfaceNormal * bias;
+        shadowRay.origin = worldPosition + worldNormal * bias;
         shadowRay.direction = dirToLight;
         float tMin   = 0.001;
         float tMax   = lightDistance;
@@ -164,10 +165,10 @@ void main()
                     tMax,        // ray max range
                     1            // payload (location = 1)
         );
+    }
 
-        if(isShadowed) {
-            attenuation = 0.4;
-        }
+    if(isShadowed) {
+        attenuation = 0.4;
     }
 
     // Base Color
