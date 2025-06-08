@@ -145,13 +145,21 @@ void main()
     vec3 vecToLight = lightPosition - worldPosition;
     float lightDistance = length(vecToLight);
     vec3 dirToLight = normalize(vecToLight);
+
     if(dot(surfaceNormal, dirToLight) > 0) {
+        // We assume by default that everything is in shadow
+        // then we cast a ray and set to false if the ray misses
+        isShadowed   = true; 
+
+        // A small bias to avoid the shadow terminator problem
+        const float bias = 0.005;
+
         float tMin   = 0.001;
         float tMax   = lightDistance;
-        vec3  origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT;
+        vec3  origin = worldPosition + surfaceNormal * bias;
         vec3  rayDir = dirToLight;
         uint  flags  = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
-        isShadowed   = true; // we assume is in shadow and will be set to false if the ray misses
+        
         traceRayEXT(TLAS,        // acceleration structure
                     flags,       // rayFlags
                     0xFF,        // cullMask
