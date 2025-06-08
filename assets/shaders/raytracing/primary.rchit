@@ -7,10 +7,12 @@
 #extension GL_EXT_buffer_reference : require
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 
+#include "../common/math.glsl"
+#include "../common/ray.glsl"
 #include "../ubo/global_ubo.glsl"
 #include "../material/surface_normal.glsl"
 #include "../lighting/blinn_phong_lighting.glsl"
-#include "../common/ray.glsl"
+
 
 struct Vertex {
     vec4 position;  // Position of the vertex.
@@ -80,18 +82,6 @@ layout(location = 1) rayPayloadEXT bool isShadowed;
 // layout(location = 0) hitAttributeEXT is used to receive attributes from the intersection.
 // For triangles, this implicitly receives barycentric coordinates.
 hitAttributeEXT vec2 HitAttribs;
-
-vec2 barycentricLerp(vec2 a, vec2 b, vec2 c, vec3 barycentrics) {
-    return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
-}
-
-vec3 barycentricLerp(vec3 a, vec3 b, vec3 c, vec3 barycentrics) {
-    return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
-}
-
-vec4 barycentricLerp(vec4 a, vec4 b, vec4 c, vec3 barycentrics) {
-    return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
-}
 
 void main()
 {
