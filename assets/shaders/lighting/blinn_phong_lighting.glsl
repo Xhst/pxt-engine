@@ -1,6 +1,7 @@
 #ifndef _BLINN_PHONG_LIGHTING_
 #define _BLINN_PHONG_LIGHTING_
 
+#include "../common/math.glsl"
 #include "../ubo/global_ubo.glsl"
 
 /*
@@ -28,7 +29,7 @@ void computeBlinnPhongLighting(vec3 surfaceNormal, vec3 viewDirection, vec3 frag
 
         // Specular component (Blinn-Phong)
         vec3 halfAngle = normalize(directionToLight + viewDirection);
-        float blinnTerm = clamp(dot(surfaceNormal, halfAngle), 0.0, 1.0);
+        float blinnTerm = saturate(dot(surfaceNormal, halfAngle));
         blinnTerm = pow(blinnTerm, shininess);
 
         specularLight += lightColor * blinnTerm * specularIntensity;
