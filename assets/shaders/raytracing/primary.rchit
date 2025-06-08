@@ -10,6 +10,7 @@
 #include "../ubo/global_ubo.glsl"
 #include "../material/surface_normal.glsl"
 #include "../lighting/blinn_phong_lighting.glsl"
+#include "../common/ray.glsl"
 
 struct Vertex {
     vec4 position;  // Position of the vertex.
@@ -154,10 +155,11 @@ void main()
         // A small bias to avoid the shadow terminator problem
         const float bias = 0.005;
 
+        Ray shadowRay;
+        shadowRay.origin = worldPosition + surfaceNormal * bias;
+        shadowRay.direction = dirToLight;
         float tMin   = 0.001;
         float tMax   = lightDistance;
-        vec3  origin = worldPosition + surfaceNormal * bias;
-        vec3  rayDir = dirToLight;
         uint  flags  = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
         
         traceRayEXT(TLAS,        // acceleration structure
@@ -166,9 +168,9 @@ void main()
                     0,           // sbtRecordOffset
                     0,           // sbtRecordStride
                     1,           // missIndex
-                    origin,      // ray origin
+                    shadowRay.origin,      
                     tMin,        // ray min range
-                    rayDir,      // ray direction
+                    shadowRay.direction,      
                     tMax,        // ray max range
                     1            // payload (location = 1)
         );
@@ -183,7 +185,6 @@ void main()
 
     // Apply lighting
     finalColor = (diffuseLight + specularLight) * finalColor * attenuation;
-    
     
     payload.color = vec4(finalColor, 1.0);
     payload.t = gl_HitTEXT;

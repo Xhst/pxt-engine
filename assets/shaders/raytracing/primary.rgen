@@ -5,6 +5,7 @@
 
 // Include the global UBO definition
 #include "../ubo/global_ubo.glsl"
+#include "../common/ray.glsl"
 
 // Define the ray payload structure. This struct is passed between shader stages.
 // The layout(location = 0) specifies the location for the payload.
@@ -38,8 +39,11 @@ void main()
     vec4 rayTargetView = /*ubo.inverseProjectionMatrix*/ inverse(ubo.projectionMatrix) * vec4(ndc.x, ndc.y, 1.0, 1.0); // Point on far plane
 
     // Transform ray to world space
-    vec3 rayOriginWorld = (ubo.inverseViewMatrix * rayOriginView).xyz;
-    vec3 rayDirWorld    = normalize((ubo.inverseViewMatrix * vec4(normalize(rayTargetView.xyz / rayTargetView.w), 0.0)).xyz);
+    Ray worldRay;
+    // Camera position in world space
+    worldRay.origin = (ubo.inverseViewMatrix * rayOriginView).xyz; 
+
+    worldRay.direction = normalize((ubo.inverseViewMatrix * vec4(normalize(rayTargetView.xyz / rayTargetView.w), 0.0)).xyz);
     
     // Initialize payload
     payload.color = vec4(0.0, 0.0, 0.0, 1.0); // Default to black
@@ -52,17 +56,17 @@ void main()
     float tMax    = 10000.0;              // Maximum intersection distance
 
     traceRayEXT(
-        TLAS,             // Top-level acceleration structure
-        rayFlags,         // Ray flags
-        cullMask,         // Cull mask
-        0,                // SBT record offset for raygen shader (usually 0)
-        0,                // SBT record stride for raygen shader (usually 0)
-        0,                // Miss shader index (which miss shader in the SBT to use)
-        rayOriginWorld,   // Ray origin
-        tMin,             // Ray min distance
-        rayDirWorld,      // Ray direction
-        tMax,             // Ray max distance
-        0                 // Payload location (must match the rayPayloadEXT layout location)
+        TLAS,               // Top-level acceleration structure
+        rayFlags,           // Ray flags
+        cullMask,           // Cull mask
+        0,                  // SBT record offset for raygen shader (usually 0)
+        0,                  // SBT record stride for raygen shader (usually 0)
+        0,                  // Miss shader index (which miss shader in the SBT to use)
+        worldRay.origin,    // Ray origin
+        tMin,               // Ray min distance
+        worldRay.direction, // Ray direction
+        tMax,               // Ray max distance
+        0                   // Payload location (must match the rayPayloadEXT layout location)
     );
 
     // The traceRayEXT call is blocking. When it returns, the payload contains
