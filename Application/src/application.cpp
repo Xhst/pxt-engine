@@ -92,6 +92,16 @@ public:
         }
 	}
 
+    void createBigCube() {
+		auto& rm = getResourceManager();
+
+        // add a cube
+        Entity cubeEntity = getScene().createEntity("Cube")
+            .add<TransformComponent>(glm::vec3{ 1.2f, 0.5f, 1.2f }, glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
+            .add<MeshComponent>(rm.get<Mesh>(MODELS_PATH + "cube.obj"));
+        cubeEntity.addAndGet<MaterialComponent>().tint = glm::vec3(0.1f, 0.3f, 0.9f);
+    }
+
     void createLights() {
         //entity = createPointLightEntity(0.25f, 0.02f, glm::vec3{1.f, 1.f, 1.f});
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
@@ -116,6 +126,7 @@ public:
         createCameraEntity();
         createFloor();
         createVasesWithRandomTransforms(5);
+        createBigCube();
         createLights();
 
         auto& rm = getResourceManager();
