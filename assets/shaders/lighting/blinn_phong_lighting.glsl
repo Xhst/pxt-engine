@@ -10,7 +10,7 @@
  * Calculates the total diffuse and specular contributions from all active point lights.
  * Uses Blinn-Phong reflection for specular highlights.
  */
-void computeBlinnPhongLighting(vec3 surfaceNormal, vec3 viewDirection, vec3 fragPosWorld,
+void computeBlinnPhongLighting(vec3 surfaceNormal, vec3 viewDirection, vec3 worldPosition,
 	float shininess, float specularIntensity, out vec3 diffuseLight, out vec3 specularLight) {
 
     diffuseLight = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
@@ -18,7 +18,7 @@ void computeBlinnPhongLighting(vec3 surfaceNormal, vec3 viewDirection, vec3 frag
 
     for (int i = 0; i < ubo.numLights; i++) {
         PointLight light = ubo.pointLights[i];
-        vec3 vectorToLight = light.position.xyz - fragPosWorld;
+        vec3 vectorToLight = light.position.xyz - worldPosition;
         float attenuation = 1.0 / dot(vectorToLight, vectorToLight);
         vec3 directionToLight = normalize(vectorToLight);
         float cosAngleIncidence = max(dot(surfaceNormal, directionToLight), 0.0);
