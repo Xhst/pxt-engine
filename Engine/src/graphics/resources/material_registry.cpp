@@ -81,11 +81,13 @@ namespace PXTEngine {
 	MaterialData MaterialRegistry::getMaterialData(Shared<Material> material) {
 		MaterialData data;
 		data.albedoColor = material->getAlbedoColor();
+		data.emissiveColor = material->getEmissiveColor();
 		data.albedoMapIndex = m_textureRegistry.getIndex(material->getAlbedoMap()->id);
 		data.normalMapIndex = m_textureRegistry.getIndex(material->getNormalMap()->id);
 		data.ambientOcclusionMapIndex = m_textureRegistry.getIndex(material->getAmbientOcclusionMap()->id);
 		data.metallicMapIndex = m_textureRegistry.getIndex(material->getMetallicMap()->id);
 		data.roughnessMapIndex = m_textureRegistry.getIndex(material->getRoughnessMap()->id);
+		data.emissiveMapIndex = m_textureRegistry.getIndex(material->getEmissiveMap()->id);
 		return data;
 	}
 }

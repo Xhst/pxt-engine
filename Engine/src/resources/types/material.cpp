@@ -10,7 +10,7 @@ namespace PXTEngine {
         const Shared<Image>& metallicMap,
         const Shared<Image>& roughnessMap,
         const Shared<Image>& ambientOcclusionMap,
-        const glm::vec3& emissiveFactor,
+        const glm::vec4& emissiveColor,
         const Shared<Image>& emissiveMap)
         : m_albedoColor(albedoColor),
         m_albedoMap(albedoMap),
@@ -18,7 +18,7 @@ namespace PXTEngine {
         m_metallicMap(metallicMap),
         m_roughnessMap(roughnessMap),
         m_ambientOcclusionMap(ambientOcclusionMap),
-        m_emissiveFactor(emissiveFactor),
+        m_emissiveColor(emissiveColor),
         m_emissiveMap(emissiveMap) {}
 
     Material::Type Material::getStaticType() {
@@ -35,7 +35,7 @@ namespace PXTEngine {
     Shared<Image> Material::getRoughnessMap() const { return m_roughnessMap; }
     Shared<Image> Material::getNormalMap() const { return m_normalMap; }
     Shared<Image> Material::getAmbientOcclusionMap() const { return m_ambientOcclusionMap; }
-    const glm::vec3& Material::getEmissiveFactor() const { return m_emissiveFactor; }
+    const glm::vec4& Material::getEmissiveColor() const { return m_emissiveColor; }
     Shared<Image> Material::getEmissiveMap() const { return m_emissiveMap; }
 
     // -------- Builder Implementation --------
@@ -70,8 +70,8 @@ namespace PXTEngine {
         return *this;
     }
 
-    Material::Builder& Material::Builder::setEmissiveFactor(const glm::vec3& factor) {
-        m_emissiveFactor = factor;
+    Material::Builder& Material::Builder::setEmissiveColor(const glm::vec4& color) {
+        m_emissiveColor = color;
         return *this;
     }
 
@@ -95,7 +95,7 @@ namespace PXTEngine {
             m_metallicMap,
             m_roughnessMap,
             m_ambientOcclusionMap,
-            m_emissiveFactor,
+            m_emissiveColor,
             m_emissiveMap
         );
     }

@@ -29,7 +29,7 @@ namespace PXTEngine {
             Builder& setRoughnessMap(Shared<Image> map);
             Builder& setNormalMap(Shared<Image> map);
             Builder& setAmbientOcclusionMap(Shared<Image> map);
-            Builder& setEmissiveFactor(const glm::vec3& factor);
+            Builder& setEmissiveColor(const glm::vec4& color);
             Builder& setEmissiveMap(Shared<Image> map);
             Shared<Material> build();
 
@@ -40,7 +40,7 @@ namespace PXTEngine {
             Shared<Image> m_metallicMap{ nullptr };
             Shared<Image> m_roughnessMap{ nullptr };
             Shared<Image> m_ambientOcclusionMap{ nullptr };
-            glm::vec3 m_emissiveFactor{ 0.0f };
+            glm::vec4 m_emissiveColor{ 0.0f };
             Shared<Image> m_emissiveMap{ nullptr };
         };
 
@@ -51,7 +51,7 @@ namespace PXTEngine {
             const Shared<Image>& metallicMap,
             const Shared<Image>& roughnessMap,
             const Shared<Image>& ambientOcclusionMap,
-            const glm::vec3& emissiveFactor,
+            const glm::vec4& emissiveColor,
             const Shared<Image>& emissiveMap
         );
 
@@ -64,7 +64,7 @@ namespace PXTEngine {
         Shared<Image> getRoughnessMap() const;
         Shared<Image> getNormalMap() const;
         Shared<Image> getAmbientOcclusionMap() const;
-        const glm::vec3& getEmissiveFactor() const;
+        const glm::vec4& getEmissiveColor() const;
         Shared<Image> getEmissiveMap() const;
 
     protected:
@@ -74,7 +74,7 @@ namespace PXTEngine {
         Shared<Image> m_metallicMap{ nullptr };
         Shared<Image> m_roughnessMap{ nullptr };
         Shared<Image> m_ambientOcclusionMap{ nullptr };
-        glm::vec3 m_emissiveFactor{ 0.0f };
+        glm::vec4 m_emissiveColor{ 0.0f };
         Shared<Image> m_emissiveMap{ nullptr };
     };
 }

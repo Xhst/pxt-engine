@@ -44,11 +44,13 @@ layout(set = 2, binding = 0) uniform sampler2D textures[];
 
 struct Material {
 	vec4 albedoColor;
+    vec4 emissiveColor;
 	int albedoMapIndex;
 	int normalMapIndex;
 	int ambientOcclusionMapIndex;
 	int metallicMapIndex;
 	int roughnessMapIndex;
+    int emissiveMapIndex;
 };
 
 layout(set = 4, binding = 0) readonly buffer materials {
