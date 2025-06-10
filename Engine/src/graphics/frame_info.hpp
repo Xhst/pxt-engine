@@ -21,6 +21,7 @@ namespace PXTEngine {
         glm::vec4 ambientLightColor{0.67f, 0.85f, 0.9f, .02f};
         PointLight pointLights[MAX_LIGHTS];
         int numLights;
+        uint32_t frameCount;
     };
 
     struct FrameInfo {

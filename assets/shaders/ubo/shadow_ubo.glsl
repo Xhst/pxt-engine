@@ -11,6 +11,7 @@ layout(set = 0, binding = 0) uniform ShadowUbo {
 	mat4 lightOriginModel; // we could consider passing this as push constants in the future? (i think no, because we will have too many lights :(  )
 	PointLight pointLights[MAX_LIGHTS];
 	int numLights;
+	uint time;
 } ubo;
 
 #endif

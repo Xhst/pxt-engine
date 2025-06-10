@@ -195,7 +195,7 @@ namespace PXTEngine {
         auto currentTime = std::chrono::high_resolution_clock::now();
     
         m_scene.onStart();
-        
+        uint32_t frameCount = 0;
         while (isRunning()) {
             glfwPollEvents();
 
@@ -221,6 +221,7 @@ namespace PXTEngine {
 
                 GlobalUbo ubo{};
                 ubo.ambientLightColor = m_scene.getEnvironment()->getAmbientLight();
+                ubo.frameCount = frameCount++;
 
 				m_masterRenderSystem->onUpdate(frameInfo, ubo);
 
