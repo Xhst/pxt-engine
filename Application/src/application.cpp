@@ -79,7 +79,19 @@ public:
         auto& rm = getResourceManager();
         auto vaseMesh = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
 
-        for (int i = 0; i < count; ++i) {
+        ImageInfo albedoInfo{};
+        albedoInfo.format = RGBA8_SRGB;
+
+        auto normalMap = rm.get<Image>(NORMAL_PIXEL_LINEAR);
+
+        auto material = Material::Builder()
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png", &albedoInfo))
+            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "black_pixel.png"))
+            .setMetallicMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
+            .build();
+        rm.add(material, "vase_material");
+
+        /*for (int i = 0; i < count; ++i) {
             glm::vec3 pos = { posDist(gen), posDist(gen), posDist(gen) };
             float uniformScale = scaleDist(gen);
             glm::vec3 scale = { uniformScale, uniformScale, uniformScale };
@@ -88,18 +100,47 @@ public:
             Entity entity = getScene().createEntity("vase" + std::to_string(i))
                 .add<TransformComponent>(pos, scale, rotation)
                 .add<MeshComponent>(vaseMesh);
-            entity.addAndGet<MaterialComponent>().tint = glm::vec3(0.1f, 0.3f, 0.9f);
-        }
+            entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(material).build()).tint = glm::vec3(0.1f, 0.3f, 0.9f);
+        }*/
+
+        Entity entity = getScene().createEntity("vase")
+            .add<TransformComponent>(glm::vec3{ 0.4f, 1.0f, 0.4f }, glm::vec3{ 1.0f, 1.0f, 1.0f }, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<MeshComponent>(vaseMesh);
+        entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
+            .setMaterial(material).build()).tint = glm::vec3(0.1f, 0.3f, 0.9f);
+
+        entity = getScene().createEntity("vase")
+            .add<TransformComponent>(glm::vec3{ -0.4f, 1.0f, 0.4f }, glm::vec3{ 2.0f, 2.0f, 2.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
+            .add<MeshComponent>(vaseMesh);
+        entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
+            .setMaterial(material).build()).tint = glm::vec3(0.4f, 0.15f, 0.73f);
 	}
 
     void createBigCube() {
 		auto& rm = getResourceManager();
 
+        ImageInfo albedoInfo{};
+        albedoInfo.format = RGBA8_SRGB;
+
+        auto material = Material::Builder()
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png", &albedoInfo))
+            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
+            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
+            .setEmissiveColor({0.9, 0.4, 0.3, 10.0})
+            .build();
+        rm.add(material, "wall_stone_material");
+
         // add a cube
         Entity cubeEntity = getScene().createEntity("Cube")
-            .add<TransformComponent>(glm::vec3{ 1.2f, 0.5f, 1.2f }, glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
-            .add<MeshComponent>(rm.get<Mesh>(MODELS_PATH + "cube.obj"));
-        cubeEntity.addAndGet<MaterialComponent>().tint = glm::vec3(0.1f, 0.3f, 0.9f);
+            .add<TransformComponent>(glm::vec3{ 1.0f, 0.5f, 1.0f }, glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
+            .add<MeshComponent>(rm.get<Mesh>(MODELS_PATH + "cube.obj"))
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(material)
+                .setTilingFactor(8.0f)
+                .build());
+
+        cubeEntity.get<MaterialComponent>().tint = glm::vec4{ 0.9, 0.4, 0.3, 1.0 };
     }
 
     void createLights() {
@@ -107,7 +148,7 @@ public:
         //entity.get<TransformComponent>().translation = glm::vec3{0.0f, 0.0f, 0.0f};
 
         // Three rotating lights (white, green, blue)
-        Entity entity = createPointLightEntity(0.1f, 0.025f, glm::vec3{ 1.f, 1.f, 1.f });
+        Entity entity = createPointLightEntity(1.0f, 0.025f, glm::vec3{ 1.f, 1.f, 1.f });
         entity.get<TransformComponent>().translation = glm::vec3{ 1.0f / (float) sqrt(3), 0.5f, 0.2f };
         entity.addAndGet<ScriptComponent>().bind<RotatingLightController>();
 #if 0
@@ -137,8 +178,7 @@ public:
         auto bunny = rm.get<Mesh>(MODELS_PATH + "bunny/bunny.obj");
         auto bunnyMaterial = Material::Builder()
             .setAlbedoMap(rm.get<Image>(MODELS_PATH + "bunny/terracotta.jpg", &albedoInfo))
-            .setNormalMap(rm.get<Image>(NORMAL_PIXEL_LINEAR))
-			.setAmbientOcclusionMap(rm.get<Image>(WHITE_PIXEL_LINEAR))
+            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
             .build();
 		rm.add(bunnyMaterial, "bunny_material");
 
