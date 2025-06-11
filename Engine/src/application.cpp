@@ -22,6 +22,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
+#include "tracy/Tracy.hpp"
+
 namespace PXTEngine {
 
     Application* Application::m_instance = nullptr;
@@ -232,6 +234,9 @@ namespace PXTEngine {
 
                 m_renderer.endFrame();
             }
+
+            // tracy end frame mark
+            FrameMark;
         }
 
         vkDeviceWaitIdle(m_context.getDevice());
