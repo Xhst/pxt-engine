@@ -17,3 +17,7 @@
 [submodule "Engine/vendor/stb"]
 	path = Engine/vendor/stb
 	url = https://github.com/nothings/stb
+[submodule "Engine/vendor/tracy"]
+	path = Engine/vendor/tracy
+	url = https://github.com/wolfpld/tracy
+	branch = main
