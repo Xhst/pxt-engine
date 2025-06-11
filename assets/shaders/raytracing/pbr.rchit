@@ -88,19 +88,13 @@ layout(location = 1) rayPayloadEXT bool isShadowed;
 // For triangles, this implicitly receives barycentric coordinates.
 hitAttributeEXT vec2 HitAttribs;
 
-vec3 sampleCosineWeightedHemisphere(mat3 TBN, inout uint seed)
+vec3 sampleCosineWeightedHemisphere(vec2 xi, mat3 TBN)
 {
-    // Generate two independent random numbers in [0, 1]
-    float r1 = randomFloat(seed);
-    seed++; // Advance seed
-    float r2 = randomFloat(seed + 1337);
-    seed++; // Advance seed
-
     // Use Malley's method to map uniform random numbers to a cosine-weighted distribution.
     // The direction is initially calculated in a local tangent space where N = (0, 0, 1).
-    float phi = 2.0 * PI * r1;
-    float cosTheta = sqrt(1.0 - r2);
-    float sinTheta = sqrt(r2);
+    float phi = 2.0 * PI * xi.x;
+    float cosTheta = sqrt(1.0 - xi.y);
+    float sinTheta = sqrt(xi.y);
     
     vec3 localDir;
     localDir.x = cos(phi) * sinTheta;
@@ -123,47 +117,6 @@ vec3 importanceSampleGGX(vec2 xi, mat3 TBN, float roughness) {
     vec3 T, B;
 
     return normalize(TBN * H);
-}
-
-vec3 calculatePBRLighting(vec3 worldPosition, vec3 albedo, float metallic, float perceptualRoughness, vec3 N, vec3 V, mat3 TBN, vec3 light, uint seed) {
-    // f0 -> Base reflectance at normal incidence
-    // For dielectrics, f0 is typically vec3(0.04)
-    // For metals, f0 is equal to the albedo
-    // Metalness interpolates between these two cases
-    vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, albedo, metallic);
-
-    float a = perceptualRoughness * perceptualRoughness;
-    float phi = 2.0 * PI * randomFloat(seed);
-    float cosTheta = sqrt((1.0 - randomFloat(seed * 17)) / (1.0 + (a * a - 1.0) * randomFloat(seed + 1337)));
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-    vec3 H = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
-    H = normalize(TBN * H);
-
-    float NoV = max(dot(N,V), 0.0);
-	           
-    vec3 reflectance = vec3(0.0);
-    
-    vec3 L = reflect(-V, H);
-        
-    float NoL = max(dot(N,L), 0.0);
-    float NoH = max(dot(N,H), 0.0);
-    float LoH = max(dot(L,H), 0.0);
-        
-    float NDF = brdf_distribution(a, NoH, H);        
-    float G = brdf_visibility(a, NoV, NoL);    
-    vec3 F = brdf_fresnel(F0, LoH);       
-        
-    // kS = F, kS + kD = 1
-    vec3 kD = vec3(1.0) - F;
-    kD *= 1.0 - metallic;	  
-        
-    vec3 specular = NDF * G * F; 
-    vec3 diffusion = kD * albedo * brdf_diffuse(a, NoV, NoL, LoH);
-                            
-    reflectance += (diffusion + specular) * NoL;  
-  
-    return reflectance;
 }
 
 void main()
@@ -233,15 +186,17 @@ void main()
     // Also factor in metallic property
     specularProbability = mix(specularProbability, 1.0, metallic);
         
-    if (randomFloat(seed) < specularProbability) {
-        vec3 H = importanceSampleGGX(vec2(randomFloat(seed + 1), randomFloat(seed + 2)), TBN, roughness);
+    vec2 rand2 = vec2(randomFloat(seed), randomFloat(seed + 1337));
+
+    if (rand2.x < specularProbability) {
+        vec3 H = importanceSampleGGX(rand2, TBN, roughness);
         vec3 L = reflect(-V, H); // This is our new direction
 
         if (dot(N, L) > 0.0) {
             float NoV = max(dot(N, V), FLT_EPSILON);
-            float NoL = max(dot(N, L), 0.0);
-            float NoH = max(dot(N, H), 0.0);
-            float LoH = max(dot(newDirection, H), 0.0);
+            float NoL = max(dot(N, L), FLT_EPSILON);
+            float NoH = max(dot(N, H), FLT_EPSILON);
+            float LoH = max(dot(L, H), FLT_EPSILON);
 
             float G = brdf_visibility(roughness, NoV, NoL);
 
@@ -258,7 +213,7 @@ void main()
         // --- Diffuse Path ---
         if (metallic < 1.0) {
             
-            newDirection = sampleCosineWeightedHemisphere(TBN, seed);
+            newDirection = sampleCosineWeightedHemisphere(rand2, TBN);
             
             if (dot(N, newDirection) > 0.0) {
                 // The diffuse color is scaled by (1.0 - metallic)
