@@ -22,10 +22,10 @@ mat3 calculateTBN(vec4 objectNormal, vec4 objectTangent, mat3 normalMatrix) {
     vec3 N = worldNormal;
 
     // Gram–Schmidt process
-    vec3 T = worldTanget - dot(worldNormal, worldTanget) * worldNormal;
+    vec3 T = normalize(worldTanget - dot(worldNormal, worldTanget) * worldNormal);
 
     // bitangent
-    vec3 B = cross(N, T) * handedness;
+    vec3 B = normalize(cross(N, T) * handedness);
 
     return mat3(T, B, N);
 }
