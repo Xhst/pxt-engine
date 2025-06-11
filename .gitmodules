@@ -20,4 +20,3 @@
 [submodule "Engine/vendor/tracy"]
 	path = Engine/vendor/tracy
 	url = https://github.com/wolfpld/tracy
-	branch = main

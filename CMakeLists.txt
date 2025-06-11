@@ -39,6 +39,10 @@ add_subdirectory(Engine/vendor/glm)
 add_subdirectory(Engine/vendor/tinyobjloader)  
 add_subdirectory(Engine/vendor/entt)
 
+# Tracy Profiler
+option(TRACY_ENABLE " " ON)
+add_subdirectory(Engine/vendor/tracy) # target : TracyClient or alias Tracy::TracyClient
+
 # STB IMAGE library
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE ${CMAKE_SOURCE_DIR}/Engine/vendor/stb)
@@ -101,7 +105,7 @@ if (WIN32)
     ${Vulkan_LIBRARIES}
   )
 
-  # Link with the Vulkan library file
+  # Link everything to the target executable
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw                     
     glm                      
@@ -109,6 +113,7 @@ if (WIN32)
     stb
     vulkan-1  # This is the name of the Vulkan library
     imgui
+    Tracy::TracyClient
   )
 
 
