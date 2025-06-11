@@ -365,12 +365,12 @@ namespace PXTEngine {
 			m_rayTracingRenderSystem->transitionImageToShaderReadOnlyOptimal(frameInfo);
 
 			//begin offscreen render pass for point light billboards
-			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
+			/*m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
 				m_offscreenFb, m_renderer.getSwapChainExtent());
 
 			m_pointLightSystem->render(frameInfo);
 
-			m_renderer.endRenderPass(frameInfo.commandBuffer);
+			m_renderer.endRenderPass(frameInfo.commandBuffer);*/
 		} else {
 			// render shadow cube map
 			// the render function of the shadow map render system will

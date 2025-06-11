@@ -127,7 +127,7 @@ public:
             .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png", &albedoInfo))
             .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
             .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
-            .setEmissiveColor({0.9, 0.4, 0.3, 10.0})
+            .setEmissiveColor({1.0, 1.0, 1.0, 15.0})
             .build();
         rm.add(material, "wall_stone_material");
 

@@ -77,6 +77,7 @@ layout(location = 0) rayPayloadInEXT struct RayPayload {
     vec3 color;
     vec3 normal;
     float t; // The hit distance (t-value)
+    uint seed;
 } payload;
 
 // payload used for shadow calculations
@@ -162,10 +163,10 @@ void main()
     vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb;
     vec3 emissive = texture(textures[nonuniformEXT(material.emissiveMapIndex)], uv).rgb * material.emissiveColor.rgb * material.emissiveColor.a;
     float metallic = texture(textures[nonuniformEXT(material.metallicMapIndex)], uv).r;
-    float perceptualRoughness = texture(textures[nonuniformEXT(material.roughnessMapIndex)], uv).r;
+    float perceptualRoughness = texture(textures[nonuniformEXT(material.roughnessMapIndex)], uv).r * 0.9;
 
     const float roughness = perceptualRoughness * perceptualRoughness;
-    uint seed = (gl_LaunchIDEXT.x * 1337 + gl_LaunchIDEXT.y) * ubo.frameCount;
+    uint seed = payload.seed;
 
     // Base Color
     vec3 finalColor = albedo * instance.textureTintColor.rgb;
