@@ -300,9 +300,7 @@ namespace PXTEngine {
 
 		m_uiRenderSystem = createUnique<UiRenderSystem>(
 			m_context,
-			m_renderer.getSwapChainRenderPass(),
-			// TODO: replace with scene image info
-			m_shadowMapRenderSystem->getShadowMapImageInfo()
+			m_renderer.getSwapChainRenderPass()
 		);
 
 		m_skyboxRenderSystem = createUnique<SkyboxRenderSystem>(

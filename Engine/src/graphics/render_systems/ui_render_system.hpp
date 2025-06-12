@@ -11,7 +11,7 @@ namespace PXTEngine {
 
 	class UiRenderSystem {
 	public:
-		UiRenderSystem(Context& context, VkRenderPass renderPass, VkDescriptorImageInfo sceneImageInfo);
+		UiRenderSystem(Context& context, VkRenderPass renderPass);
 		~UiRenderSystem();
 
 		UiRenderSystem(const UiRenderSystem&) = delete;
@@ -22,7 +22,6 @@ namespace PXTEngine {
 
 	private:
 		void initImGui(VkRenderPass& renderPass);
-		void createDescriptorSets(VkDescriptorImageInfo sceneImageInfo);
 		VkDescriptorSet addImGuiTexture(VkSampler sampler, VkImageView imageView, VkImageLayout layout);
 
 		void buildUi();
@@ -31,7 +30,5 @@ namespace PXTEngine {
 
 		Unique<DescriptorAllocatorGrowable> m_imguiDescriptorAllocator;
 		Unique<DescriptorPool> m_imGuiPool{};
-
-		VkDescriptorSet m_sceneDescriptorSet{};
 	};
 }
