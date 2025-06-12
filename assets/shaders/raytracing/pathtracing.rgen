@@ -12,10 +12,25 @@
 // Define the ray payload structure. This struct is passed between shader stages.
 // The layout(location = 0) specifies the location for the payload.
 layout(location = 0) rayPayloadEXT struct RayPayload {
-    vec3 light;
-    vec3 color;
-    vec3 normal;
-    float t; // The hit distance (t-value)
+    // Accumulated color and energy along the path.
+    vec3 radiance;
+
+    // The accumulated material reflectance/transmittance. It's multiplied at each bounce.
+    vec3 throughput;
+
+    // Current number of bounces. Used to limit path length and for Russian Roulette.
+    int depth;
+
+    // The origin of the ray in world space.
+    vec3 origin; 
+
+    // The direction of the ray in world space.
+    vec3 direction;
+
+    // A flag to signal that the path has been terminated (e.g., hit the sky, absorbed).
+    bool done;
+
+    // A seed for the random number generator, updated at each bounce.
     uint seed;
 } payload;
 
@@ -37,13 +52,11 @@ void main()
 
     vec3 finalColor = vec3(0.0);
 
-    const uint samplesPerPixel = 100;
-    const int maxBounces = 50;
+    const uint samplesPerPixel = 5;
+    const int maxBounces = 100;
 
     for (uint currentSample = 0; currentSample < samplesPerPixel; currentSample++) {
-        uint seed = gl_LaunchIDEXT.x * 1337 + gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + 
-                   currentSample * gl_LaunchSizeEXT.x * gl_LaunchSizeEXT.y + ubo.frameCount * 17;
-        
+        uint seed = tea(gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x, uint(ubo.frameCount));
 
         // Normalized device coordinates (NDC), converted to [-1, 1] range (NDC space)
         vec2 jitter = vec2(randomFloat(seed), randomFloat(seed)) - 0.5;
@@ -61,27 +74,23 @@ void main()
         Ray worldRay;
         // Camera position in world space
         worldRay.origin = (ubo.inverseViewMatrix * rayOriginView).xyz; 
-
         worldRay.direction = normalize((ubo.inverseViewMatrix * vec4(normalize(rayTargetView.xyz / rayTargetView.w), 0.0)).xyz);
     
-        vec3 light = vec3(0.0); // Initialize total light contribution
-        vec3 color = vec3(1.0); // Initialize final color
-
-        // Initialize payload
-    
-
         // Ray parameters
         uint rayFlags = gl_RayFlagsOpaqueEXT; // Assume opaque geometry for now
         uint cullMask = 0xFF;                 // Standard cull mask
         float tMin    = 0.001;                // Minimum intersection distance
         float tMax    = 10000.0;              // Maximum intersection distance
 
-        for (int bounce = 0; bounce < maxBounces; ++bounce) {
-        
-            payload.light = light; 
-            payload.color = color; 
-            payload.seed = seed + bounce * 1337;
-            payload.t = -1.0;
+        payload.radiance = vec3(0.0);
+        payload.throughput = vec3(1.0);
+        payload.origin = worldRay.origin;
+        payload.direction = worldRay.direction;
+        payload.depth = 0;
+        payload.done = false;
+        payload.seed = seed;
+
+        while (true) {
 
             traceRayEXT(
                 TLAS,               // Top-level acceleration structure
@@ -90,36 +99,28 @@ void main()
                 0,                  // SBT record offset for raygen shader (usually 0)
                 0,                  // SBT record stride for raygen shader (usually 0)
                 0,                  // Miss shader index (which miss shader in the SBT to use)
-                worldRay.origin,    // Ray origin
+                payload.origin,     // Ray origin
                 tMin,               // Ray min distance
-                worldRay.direction, // Ray direction
+                payload.direction,  // Ray direction
                 tMax,               // Ray max distance
                 0                   // Payload location (must match the rayPayloadEXT layout location)
             );
 
-            if (payload.t < 0.0) {
-                light += payload.light; // Accumulate light contribution from the sky
-                break;
+            if (payload.done) {
+                break; // Stop if the path is terminated
             }
-
-            light += payload.light; // Accumulate light contribution from the hit object
-            color *= payload.color; // Accumulate color contribution from the hit object
-
-            // Update the ray origin to the hit point for the next iteration
-            worldRay.origin += worldRay.direction * payload.t + payload.normal * 0.0001; // Move to the hit point
-            worldRay.direction = payload.normal; // Reflect the ray direction based on the hit normal
 
             
         }
 
-        finalColor += color * light;
+        finalColor += payload.radiance;
     }
 
     finalColor /= samplesPerPixel;
 
-    //vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-    //float weight = 1.0 / float(ubo.frameCount + 1);
-    //vec3 accumulatedColor = mix(previousColor, finalColor, weight);
+    vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
+    float weight = 1.0 / float(ubo.frameCount + 1);
+    vec3 accumulatedColor = mix(previousColor, finalColor, weight);
     
-    imageStore(outputImage, ivec2(gl_LaunchIDEXT.xy), vec4(finalColor, 1.0));
+    imageStore(outputImage, ivec2(gl_LaunchIDEXT.xy), vec4(accumulatedColor, 1.0));
 }

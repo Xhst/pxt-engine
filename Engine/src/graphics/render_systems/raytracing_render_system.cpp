@@ -72,7 +72,7 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// only one shader stage for raygen is permitted
-					{VK_SHADER_STAGE_RAYGEN_BIT_KHR, SPV_SHADERS_PATH + "pbr.rgen.spv"}
+					{VK_SHADER_STAGE_RAYGEN_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rgen.spv"}
 				}
 			},
 			// General Miss Group
@@ -81,7 +81,7 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here we can have multiple miss shaders
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "pbr.rmiss.spv"}
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rmiss.spv"}
 				}
 			},
 			// Shadow Miss Group
@@ -90,7 +90,7 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here we can have multiple miss shaders
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "pbr.rmiss.spv"}
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rmiss.spv"}
 				}
 			},
 			// Closest Hit Group (Triangle Hit Group)

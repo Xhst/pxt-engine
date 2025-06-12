@@ -73,10 +73,25 @@ layout(set = 6, binding = 0, std430) readonly buffer meshInstances {
 
 // Define the ray payload structure. Must match the raygen and miss shaders.
 layout(location = 0) rayPayloadInEXT struct RayPayload {
-    vec3 light;
-    vec3 color;
-    vec3 normal;
-    float t; // The hit distance (t-value)
+    // Accumulated color and energy along the path.
+    vec3 radiance;
+
+    // The accumulated material reflectance/transmittance. It's multiplied at each bounce.
+    vec3 throughput;
+
+    // Current number of bounces. Used to limit path length and for Russian Roulette.
+    int depth;
+
+    // The origin of the ray in world space.
+    vec3 origin; 
+
+    // The direction of the ray in world space.
+    vec3 direction;
+
+    // A flag to signal that the path has been terminated (e.g., hit the sky, absorbed).
+    bool done;
+
+    // A seed for the random number generator, updated at each bounce.
     uint seed;
 } payload;
 
@@ -89,40 +104,98 @@ layout(location = 1) rayPayloadEXT bool isShadowed;
 // For triangles, this implicitly receives barycentric coordinates.
 hitAttributeEXT vec2 HitAttribs;
 
-vec3 sampleCosineWeightedHemisphere(vec2 xi, mat3 TBN)
-{
-    // Use Malley's method to map uniform random numbers to a cosine-weighted distribution.
-    // The direction is initially calculated in a local tangent space where N = (0, 0, 1).
-    float phi = 2.0 * PI * xi.x;
-    float cosTheta = sqrt(1.0 - xi.y);
-    float sinTheta = sqrt(xi.y);
-    
-    vec3 localDir;
-    localDir.x = cos(phi) * sinTheta;
-    localDir.y = sin(phi) * sinTheta;
-    localDir.z = cosTheta;
-    
-    // Transform the local direction to world space.
-    return normalize(TBN * localDir);
+
+float D_GGX(float NdotH, float roughness) {
+    float a2 = roughness * roughness;
+    float d = NdotH * NdotH * (a2 - 1.0) + 1.0;
+    return a2 / (PI * d * d);
 }
 
-vec3 importanceSampleGGX(vec2 xi, mat3 TBN, float roughness) {
+// Geometry Function (Smith's method with Schlick-GGX)
+float G_Schlick_GGX(float NdotV, float roughness) {
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0; // k for direct lighting
+    return NdotV / (NdotV * (1.0 - k) + k);
+}
+
+float G_Smith(float NdotV, float NdotL, float roughness) {
+    return G_Schlick_GGX(NdotV, roughness) * G_Schlick_GGX(NdotL, roughness);
+}
+
+// Fresnel Function (Schlick's approximation)
+vec3 F_Schlick(float HdotV, vec3 F0) {
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - HdotV, 0.0, 1.0), 5.0);
+}
+
+// Generates a sample direction on a cosine-weighted hemisphere using the provided TBN matrix.
+vec3 sampleCosineWeightedHemisphere(inout uint seed, const mat3 TBN) {
+    float r1 = randomFloat(seed);
+    float r2 = randomFloat(seed);
+    float phi = 2.0 * PI * r1;
+    float cosTheta = sqrt(1.0 - r2);
+    float sinTheta = sqrt(r2);
+    vec3 sampleDir_local = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+    // Transform from local tangent space to world space using the TBN matrix.
+    return TBN * sampleDir_local;
+}
+
+// Generates an importance-sampled microfacet normal (H) for GGX using the TBN matrix.
+vec3 importanceSampleGGX(inout uint seed, const mat3 TBN, float roughness) {
+    float r1 = randomFloat(seed);
+    float r2 = randomFloat(seed);
     float a = roughness * roughness;
-    float phi = 2.0 * PI * xi.x;
-    float cosTheta = sqrt((1.0 - xi.y) / (1.0 + (a * a - 1.0 + FLT_EPSILON) * xi.y));
+    float phi = 2.0 * PI * r1;
+    float cosTheta = sqrt((1.0 - r2) / (1.0 + (a * a - 1.0 + FLT_EPSILON) * r2));
     float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-    vec3 H;
-    H.x = cos(phi) * sinTheta;
-    H.y = sin(phi) * sinTheta;
-    H.z = cosTheta;
-    vec3 T, B;
-
-    return normalize(TBN * H);
+    vec3 H_local = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+    // Transform from local tangent space to world space.
+    return normalize(TBN * H_local);
 }
+
+
+// The main sampleBSDF function now takes the TBN matrix instead of just the normal.
+vec3 sampleBSDF(vec3 V, vec3 surfaceNormal, mat3 TBN, vec3 albedo, float metallic, float roughness, inout uint seed, out vec3 L) {
+    vec3 N = surfaceNormal; // The normal is the Z-axis of the TBN matrix
+    vec3 Wo = -V;
+
+    const vec3 F0_dielectric = vec3(0.04);
+    vec3 F0 = mix(F0_dielectric, albedo, metallic);
+    
+    vec3 F = brdf_fresnel(F0, max(0.0, dot(N, Wo)));
+
+    float specularProbability = max(F.r, max(F.g, F.b));
+    specularProbability = mix(specularProbability, 1.0, metallic);
+
+    if (randomFloat(seed) < specularProbability) {
+        // --- Specular Lobe ---
+        vec3 H = importanceSampleGGX(seed, TBN, roughness);
+        L = reflect(Wo, H);
+
+        if (dot(N, L) <= 0.0) return vec3(0.0);
+
+        float NdotL = abs(dot(N, L));
+        float NdotWo = abs(dot(N, Wo));
+        float NdotH = abs(dot(N, H));
+        float HdotWo = abs(dot(H, Wo));
+
+        float G = G_Smith(NdotWo, NdotL, roughness);
+
+        vec3 brdf = F * G * HdotWo / (NdotH * NdotWo + FLT_EPSILON);
+
+        return albedo * brdf / specularProbability;
+    } else {
+        // --- Diffuse Lobe ---
+        L = sampleCosineWeightedHemisphere(seed, TBN);
+
+        if (dot(N, L) <= 0.0) return vec3(0.0);
+
+        return albedo * (1.0 - metallic) / (1.0 - specularProbability);
+    }
+}
+
 
 void main()
 {
-    payload.t = gl_HitTEXT;
     MeshInstanceDescription instance = meshInstancesSSBO.instances[gl_InstanceCustomIndexEXT];
 
     IndexBuffer indices = IndexBuffer(instance.indexAddress);
@@ -157,79 +230,52 @@ void main()
     const mat3 TBN = calculateTBN(objectNormal, objectTangent, normalMatrix);
     const vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, TBN);
 
+
     // calculate world position
     const vec3 worldPosition = vec3(gl_ObjectToWorldEXT * position);
 
-    vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb;
+    vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb * instance.textureTintColor.rgb;
     vec3 emissive = texture(textures[nonuniformEXT(material.emissiveMapIndex)], uv).rgb * material.emissiveColor.rgb * material.emissiveColor.a;
     float metallic = texture(textures[nonuniformEXT(material.metallicMapIndex)], uv).r;
-    float perceptualRoughness = texture(textures[nonuniformEXT(material.roughnessMapIndex)], uv).r * 0.9;
+    float perceptualRoughness = texture(textures[nonuniformEXT(material.roughnessMapIndex)], uv).r;
 
     const float roughness = perceptualRoughness * perceptualRoughness;
-    uint seed = payload.seed;
-
-    // Base Color
-    vec3 finalColor = albedo * instance.textureTintColor.rgb;
-
-    const vec3 F0_dielectric = vec3(0.04);
-    vec3 F0 = mix(F0_dielectric, albedo, metallic);
 
     const vec3 V = -gl_WorldRayDirectionEXT;
     const vec3 N = surfaceNormal;    
-        
-    vec3 F = brdf_fresnel(F0, max(0.0, dot(N, -V)));
-    // Use Russian Roulette to decide if we trace a specular or diffuse ray.
-    // The probability is based on the Fresnel reflectance.
-    // Metals will have high F, preferring specular paths.
-    float specularProbability = max(F.r, max(F.g, F.b));
-        
-    vec3 newDirection = N;
-    // Also factor in metallic property
-    specularProbability = mix(specularProbability, 1.0, metallic);
-        
-    vec2 rand2 = vec2(randomFloat(seed), randomFloat(seed + 1337));
+    
+    payload.depth++;
 
-    if (rand2.x < specularProbability) {
-        vec3 H = importanceSampleGGX(rand2, TBN, roughness);
-        vec3 L = reflect(-V, H); // This is our new direction
-
-        if (dot(N, L) > 0.0) {
-            float NoV = max(dot(N, V), FLT_EPSILON);
-            float NoL = max(dot(N, L), FLT_EPSILON);
-            float NoH = max(dot(N, H), FLT_EPSILON);
-            float LoH = max(dot(L, H), FLT_EPSILON);
-
-            float G = brdf_visibility(roughness, NoV, NoL);
-
-            vec3 specular_brdf = F * G * LoH / (NoH * NoV);
-
-            // The Fresnel term F is the color of the specular reflection.
-            // We divide by the probability to maintain energy conservation.
-            finalColor *= F / specularProbability;
-            newDirection = L;
-        } else {
-            payload.t = -1;
-        }
-    } else {
-        // --- Diffuse Path ---
-        if (metallic < 1.0) {
-            
-            newDirection = sampleCosineWeightedHemisphere(rand2, TBN);
-            
-            if (dot(N, newDirection) > 0.0) {
-                // The diffuse color is scaled by (1.0 - metallic)
-                vec3 diffuseColor = albedo * (1.0 - metallic);
-                
-                // Update throughput: BRDF is color/PI, PDF is NoL/PI. They cancel.
-                // We only need to divide by the probability of choosing this path.
-                finalColor *= diffuseColor / (1.0 - specularProbability);
-
-                payload.t = gl_HitTEXT; // Mark path as valid
-            }
-        }
+    // If the surface emits light, we add its contribution to the path's radiance and terminate.
+    if (dot(emissive, emissive) > 0.0) {
+        payload.radiance += emissive * payload.throughput;
+        payload.done = true;
+        return; 
     }
-    payload.light = emissive;
-    payload.color = finalColor;
-    payload.normal = normalize(newDirection);
+
+    float survivalProb = 1.0;
+    if (payload.depth > 3) {
+        survivalProb = max(payload.throughput.r, max(payload.throughput.g, payload.throughput.b));
+        if (randomFloat(payload.seed) > survivalProb) {
+            payload.done = true;
+            return; // Path is terminated/absorbed
+        }
+        // If the path survives, we must scale its throughput to compensate for the absorbed energy.
+        payload.throughput /= survivalProb;
+    }
+
+    vec3 L; // New direction
+    vec3 bsdfContribution = sampleBSDF(V, surfaceNormal, TBN, albedo, metallic, roughness, payload.seed, L);
+
+    payload.throughput *= bsdfContribution;
+
+    // If throughput is close to zero, no more light can be contributed, so we stop.
+    if (dot(payload.throughput, payload.throughput) < 0.0001) {
+        payload.done = true;
+        return;
+    }
+
+    payload.origin = worldPosition + worldNormal * 0.0001;
+    payload.direction = L;
     
 }
