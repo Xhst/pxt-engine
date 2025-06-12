@@ -90,7 +90,7 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here we can have multiple miss shaders
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rmiss.spv"}
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "shadow.rmiss.spv"}
 				}
 			},
 			// Closest Hit Group (Triangle Hit Group)
@@ -99,21 +99,13 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here there can be a chit, ahit or intersection shader (every combination of these)
-					{VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, SPV_SHADERS_PATH + "pbr.rchit.spv"}
+					{VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rchit.spv"}
 				}
 			}
 		};
 	}
 
 	void RayTracingRenderSystem::createPipelineLayout(DescriptorSetLayout& setLayout) {
-		// do we need push constants? (yes / no)
-		/*
-		VkPushConstantRange pushConstantRange{};
-		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-		pushConstantRange.offset = 0;
-		pushConstantRange.size = sizeof(MaterialPushConstantData);
-		*/
-
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
 			setLayout.getDescriptorSetLayout(),
 			m_rtSceneManager.getTLASDescriptorSetLayout(),
