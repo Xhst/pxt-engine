@@ -115,6 +115,12 @@ public:
             .add<MeshComponent>(vaseMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
             .setMaterial(material).build()).tint = glm::vec3(0.4f, 0.15f, 0.73f);
+
+        entity = getScene().createEntity("vase")
+            .add<TransformComponent>(glm::vec3{ 0.2f, 1.0f, 0.6f }, glm::vec3{ 1.5f, 1.5f, 1.5f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
+            .add<MeshComponent>(vaseMesh);
+        entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
+            .setMaterial(material).build()).tint = glm::vec3(0.4f, 0.73f, 0.15f);
 	}
 
     void createBigCube() {
