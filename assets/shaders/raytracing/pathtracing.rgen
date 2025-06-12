@@ -90,8 +90,8 @@ void main()
         payload.done = false;
         payload.seed = seed;
 
-        while (true) {
-
+        // while hangs some GPUs for some reason
+        for(; payload.depth < maxBounces;) {
             traceRayEXT(
                 TLAS,               // Top-level acceleration structure
                 rayFlags,           // Ray flags
@@ -109,8 +109,6 @@ void main()
             if (payload.done) {
                 break; // Stop if the path is terminated
             }
-
-            
         }
 
         finalColor += payload.radiance;
