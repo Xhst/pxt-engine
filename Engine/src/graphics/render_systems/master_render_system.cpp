@@ -366,7 +366,7 @@ namespace PXTEngine {
 			/*m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
 				m_offscreenFb, m_renderer.getSwapChainExtent());
 
-			m_pointLightSystem->render(frameInfo);
+			//m_pointLightSystem->render(frameInfo);
 
 			m_renderer.endRenderPass(frameInfo.commandBuffer);*/
 		} else {
@@ -503,6 +503,8 @@ namespace PXTEngine {
 	void MasterRenderSystem::updateUi() {
 		updateSceneUi();
 
-		m_shadowMapRenderSystem->updateUi();
+		if (!m_isRaytracingEnabled) {
+			m_shadowMapRenderSystem->updateUi();
+		}
 	}
 }

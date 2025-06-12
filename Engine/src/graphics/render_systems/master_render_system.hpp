@@ -93,6 +93,6 @@ namespace PXTEngine {
 		ImVec2 m_sceneImageExtentInWindow = { 960, 540 };
 
 		bool m_isDebugEnabled = false;
-		bool m_isRaytracingEnabled = false;
+		bool m_isRaytracingEnabled = true;
 	};
 }
