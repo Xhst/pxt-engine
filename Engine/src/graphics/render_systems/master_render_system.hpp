@@ -16,6 +16,7 @@
 #include "graphics/render_systems/debug_render_system.hpp"
 #include "graphics/render_systems/skybox_render_system.hpp"
 #include "graphics/render_systems/raytracing_render_system.hpp"
+#include "graphics/render_pass.hpp"
 
 #include "scene/environment.hpp"
 
@@ -79,7 +80,7 @@ namespace PXTEngine {
 		Unique<SkyboxRenderSystem> m_skyboxRenderSystem = nullptr;
 		Unique<RayTracingRenderSystem> m_rayTracingRenderSystem = nullptr;
 
-		VkRenderPass m_offscreenRenderPass;
+		Unique<RenderPass> m_offscreenRenderPass;
 		VkFramebuffer m_offscreenFb;
 
 		Shared<VulkanImage> m_sceneImage;

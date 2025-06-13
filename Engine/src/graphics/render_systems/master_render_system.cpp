@@ -45,7 +45,6 @@ namespace PXTEngine {
 
 	MasterRenderSystem::~MasterRenderSystem() {
 		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
-		vkDestroyRenderPass(m_context.getDevice(), m_offscreenRenderPass, nullptr);
 	};
 
 	void MasterRenderSystem::recreateViewportResources() {
@@ -129,9 +128,13 @@ namespace PXTEngine {
 		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
 
-		if (vkCreateRenderPass(m_context.getDevice(), &renderPassInfo, nullptr, &m_offscreenRenderPass) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create offscreen render pass for MasterRenderSystem!");
-		}
+		m_offscreenRenderPass = createUnique<RenderPass>(
+			m_context,
+			renderPassInfo,
+			colorAttachment,
+			depthAttachment,
+			"MasterRenderSystem Offscreen Render Pass"
+		);
 	}
 
 	void MasterRenderSystem::createSceneImage() {
@@ -254,7 +257,7 @@ namespace PXTEngine {
 
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = m_offscreenRenderPass;
+		framebufferInfo.renderPass = m_offscreenRenderPass->getVkRenderPass();
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = swapChainExtent.width;
@@ -269,7 +272,7 @@ namespace PXTEngine {
 	void MasterRenderSystem::createRenderSystems() {
 		m_pointLightSystem = createUnique<PointLightSystem>(
 			m_context,
-			m_offscreenRenderPass,
+			m_offscreenRenderPass->getVkRenderPass(),
 			m_globalSetLayout->getDescriptorSetLayout()
 		);
 
@@ -284,7 +287,7 @@ namespace PXTEngine {
 			m_descriptorAllocator,
 			m_textureRegistry,
 			*m_globalSetLayout,
-			m_offscreenRenderPass,
+			m_offscreenRenderPass->getVkRenderPass(),
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 
@@ -292,7 +295,7 @@ namespace PXTEngine {
 			m_context,
 			m_descriptorAllocator,
 			m_textureRegistry,
-			m_offscreenRenderPass,
+			m_offscreenRenderPass->getVkRenderPass(),
 			*m_globalSetLayout
 		);
 
@@ -305,7 +308,7 @@ namespace PXTEngine {
 			m_context,
 			m_environment,
 			*m_globalSetLayout,
-			m_offscreenRenderPass
+			m_offscreenRenderPass->getVkRenderPass()
 		);
 
 		m_rayTracingRenderSystem = createUnique<RayTracingRenderSystem>(
@@ -361,7 +364,7 @@ namespace PXTEngine {
 			m_rayTracingRenderSystem->transitionImageToShaderReadOnlyOptimal(frameInfo);
 
 			//begin offscreen render pass for point light billboards
-			/*m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
+			/*m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass->getVkRenderPass(),
 				m_offscreenFb, m_renderer.getSwapChainExtent());
 
 			//m_pointLightSystem->render(frameInfo);
@@ -374,7 +377,7 @@ namespace PXTEngine {
 			m_shadowMapRenderSystem->render(frameInfo, m_renderer);
 
 			//begin offscreen render pass
-			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
+			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass->getVkRenderPass(),
 				m_offscreenFb, m_renderer.getSwapChainExtent());
 
 			m_skyboxRenderSystem->render(frameInfo);
