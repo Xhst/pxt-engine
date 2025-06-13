@@ -53,7 +53,7 @@ void main()
     vec3 finalColor = vec3(0.0);
 
     const uint samplesPerPixel = 5;
-    const int maxBounces = 100;
+    const int maxBounces = 15;
 
     for (uint currentSample = 0; currentSample < samplesPerPixel; currentSample++) {
         uint seed = tea(gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x, uint(ubo.frameCount));
@@ -91,7 +91,7 @@ void main()
         payload.seed = seed;
 
         // while hangs some GPUs for some reason
-        for(; payload.depth < maxBounces;) {
+        while(!payload.done && payload.depth < maxBounces) {
             traceRayEXT(
                 TLAS,               // Top-level acceleration structure
                 rayFlags,           // Ray flags
@@ -105,10 +105,6 @@ void main()
                 tMax,               // Ray max distance
                 0                   // Payload location (must match the rayPayloadEXT layout location)
             );
-
-            if (payload.done) {
-                break; // Stop if the path is terminated
-            }
         }
 
         finalColor += payload.radiance;
@@ -118,7 +114,14 @@ void main()
 
     vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
     float weight = 1.0 / float(ubo.frameCount + 1);
-    vec3 accumulatedColor = mix(previousColor, finalColor, weight);
+
+    // Saturate is temporary
+    finalColor = saturate(mix(previousColor, finalColor, weight));
+
+    if (isnan(finalColor.r) || isnan(finalColor.g) || isnan(finalColor.b) ||
+        isinf(finalColor.r) || isinf(finalColor.g) || isinf(finalColor.b)) {
+        finalColor = vec3(1.0, 0.0, 1.0); // Magenta for error
+    }
     
-    imageStore(outputImage, ivec2(gl_LaunchIDEXT.xy), vec4(accumulatedColor, 1.0));
+    imageStore(outputImage, ivec2(gl_LaunchIDEXT.xy), vec4(finalColor, 1.0));
 }
