@@ -3,8 +3,14 @@
 #include <iostream>
 
 namespace PXTEngine {
-    RenderPass::RenderPass(Context& context, const VkRenderPassCreateInfo& createInfo, std::string name)
-        : m_context(context), m_createInfo(createInfo), m_name(name) {
+    RenderPass::RenderPass(Context& context, const VkRenderPassCreateInfo& createInfo,
+        const VkAttachmentDescription colorAttachmentDescription,
+        const VkAttachmentDescription depthAttachmentDescription,
+        std::string name)
+        : m_context(context), m_createInfo(createInfo),
+		m_colorAttachmentDescription(colorAttachmentDescription),
+		m_depthAttachmentDescription(depthAttachmentDescription),
+        m_name(name){
         std::cout << "[RenderPass] Creating VkRenderPass: " + m_name << std::endl;
         if (vkCreateRenderPass(m_context.getDevice(), &m_createInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
             throw std::runtime_error("[RenderPass] Failed to create VkRenderPass: " + m_name);

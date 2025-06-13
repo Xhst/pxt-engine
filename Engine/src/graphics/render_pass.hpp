@@ -8,7 +8,10 @@
 namespace PXTEngine {
     class RenderPass {
     public:
-        RenderPass(Context& context, const VkRenderPassCreateInfo& createInfo, std::string name);
+        RenderPass(Context& context, const VkRenderPassCreateInfo& createInfo,
+			const VkAttachmentDescription colorAttachmentDescription,
+			const VkAttachmentDescription depthAttachmentDescription,
+            std::string name);
         ~RenderPass();
 
         // Disable copy constructor and assignment operator for proper resource management
@@ -17,11 +20,16 @@ namespace PXTEngine {
 
         VkRenderPass getVkRenderPass() const { return m_renderPass; }
         const VkRenderPassCreateInfo& getCreateInfo() const { return m_createInfo; }
+		const std::string& getName() const { return m_name; }
+		const VkAttachmentDescription getColorAttachmentDescription() const { return m_colorAttachmentDescription; }
+		const VkAttachmentDescription getDepthAttachmentDescription() const { return m_depthAttachmentDescription; }
 
     private:
         Context& m_context;
         std::string m_name; // Name for logging
         VkRenderPassCreateInfo m_createInfo;
+        VkAttachmentDescription m_colorAttachmentDescription;
+		VkAttachmentDescription m_depthAttachmentDescription;
         VkRenderPass m_renderPass = VK_NULL_HANDLE; // renderPass Vulkan handle
     };
 }
