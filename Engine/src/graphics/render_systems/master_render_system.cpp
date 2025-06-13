@@ -161,9 +161,7 @@ namespace PXTEngine {
 		);
 
 		// transition once to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL layout
-		m_context.transitionImageLayoutSingleTimeCmd(
-			m_sceneImage->getVkImage(),
-			m_sceneImage->getImageFormat(),
+		m_sceneImage->transitionImageLayoutSingleTimeCmd(
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
