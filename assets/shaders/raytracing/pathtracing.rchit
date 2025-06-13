@@ -95,10 +95,6 @@ layout(location = 0) rayPayloadInEXT struct RayPayload {
     uint seed;
 } payload;
 
-// payload used for shadow calculations
-layout(location = 1) rayPayloadEXT bool isShadowed;
-
-
 // Define the ray attributes structure.
 // layout(location = 0) hitAttributeEXT is used to receive attributes from the intersection.
 // For triangles, this implicitly receives barycentric coordinates.
@@ -155,15 +151,13 @@ vec3 importanceSampleGGX(inout uint seed, const mat3 TBN, float roughness) {
 
 // The main sampleBSDF function now takes the TBN matrix instead of just the normal.
 vec3 sampleBSDF(vec3 V, vec3 surfaceNormal, mat3 TBN, vec3 albedo, float metallic, float roughness, inout uint seed, out vec3 L) {
-    vec3 N = surfaceNormal; // The normal is the Z-axis of the TBN matrix
+    vec3 N = surfaceNormal;
     vec3 Wo = -V;
 
     const vec3 F0_dielectric = vec3(0.04);
     vec3 F0 = mix(F0_dielectric, albedo, metallic);
-    
-    vec3 F = brdf_fresnel(F0, max(0.0, dot(N, Wo)));
 
-    float specularProbability = max(F.r, max(F.g, F.b));
+    float specularProbability = max(F0.r, max(F0.g, F0.b));
     specularProbability = mix(specularProbability, 1.0, metallic);
 
     if (randomFloat(seed) < specularProbability) {
@@ -173,16 +167,18 @@ vec3 sampleBSDF(vec3 V, vec3 surfaceNormal, mat3 TBN, vec3 albedo, float metalli
 
         if (dot(N, L) <= 0.0) return vec3(0.0);
 
-        float NdotL = abs(dot(N, L));
-        float NdotWo = abs(dot(N, Wo));
-        float NdotH = abs(dot(N, H));
-        float HdotWo = abs(dot(H, Wo));
+        float NdotL = max(abs(dot(N, L)), FLT_EPSILON);
+        float NdotWo = max(abs(dot(N, Wo)), FLT_EPSILON);
+        float NdotH = max(abs(dot(N, H)), FLT_EPSILON);
+        float HdotWo = max(abs(dot(H, Wo)), FLT_EPSILON);
 
+        vec3 F = brdf_fresnel(F0, HdotWo);
         float G = G_Smith(NdotWo, NdotL, roughness);
 
-        vec3 brdf = F * G * HdotWo / (NdotH * NdotWo + FLT_EPSILON);
+        float denominator = NdotWo * NdotH;
+        vec3 specular_brdf = F * G * HdotWo / denominator;
 
-        return albedo * brdf / specularProbability;
+        return specular_brdf / specularProbability;
     } else {
         // --- Diffuse Lobe ---
         L = sampleCosineWeightedHemisphere(seed, TBN);
