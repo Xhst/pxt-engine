@@ -62,8 +62,7 @@ namespace PXTEngine {
 		return *this;
 	}
 
-	void VulkanImage::transitionImageLayoutSingleTimeCmd(
-		VkImageLayout oldLayout, VkImageLayout newLayout,
+	void VulkanImage::transitionImageLayoutSingleTimeCmd(VkImageLayout newLayout,
 		VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage,
 		std::optional<VkImageSubresourceRange> subresourceRange) {
 
@@ -71,7 +70,7 @@ namespace PXTEngine {
 
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = oldLayout;
+		barrier.oldLayout = m_currentLayout;
 		barrier.newLayout = newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // If you are using the barrier to transfer queue family ownership, then these two fields should be the indices of the queue families. 
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // They must be set to VK_QUEUE_FAMILY_IGNORED if you don't want to do this (not the default value!).
@@ -90,7 +89,7 @@ namespace PXTEngine {
 		// Source layouts (old)
 		// Source access mask controls actions that have to be finished on the old layout
 		// before it will be transitioned to the new layout
-		switch (oldLayout) {
+		switch (m_currentLayout) {
 		case VK_IMAGE_LAYOUT_UNDEFINED:
 			// Image layout is undefined (or does not matter)
 			// Only valid as initial layout
@@ -202,11 +201,11 @@ namespace PXTEngine {
 		setImageLayout(newLayout);
 	}
 
-	void VulkanImage::transitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout, VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, std::optional<VkImageSubresourceRange> subresourceRange)
+	void VulkanImage::transitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout newLayout, VkPipelineStageFlags sourceStage, VkPipelineStageFlags destinationStage, std::optional<VkImageSubresourceRange> subresourceRange)
 	{
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.oldLayout = oldLayout;
+		barrier.oldLayout = m_currentLayout;
 		barrier.newLayout = newLayout;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // If you are using the barrier to transfer queue family ownership, then these two fields should be the indices of the queue families. 
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // They must be set to VK_QUEUE_FAMILY_IGNORED if you don't want to do this (not the default value!).
@@ -225,7 +224,7 @@ namespace PXTEngine {
 		// Source layouts (old)
 		// Source access mask controls actions that have to be finished on the old layout
 		// before it will be transitioned to the new layout
-		switch (oldLayout) {
+		switch (m_currentLayout) {
 		case VK_IMAGE_LAYOUT_UNDEFINED:
 			// Image layout is undefined (or does not matter)
 			// Only valid as initial layout
