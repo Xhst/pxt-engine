@@ -349,9 +349,12 @@ namespace PXTEngine {
 		// update raytracing scene
 		if (m_isRaytracingEnabled) {
 			if (m_isAccumulationEnabled) {
-				ubo.ptAccumulationCount++;
+				ubo.accumulationEnabled = true;
+				ubo.ptAccumulationCount = m_rayTracingRenderSystem->incrementAndGetPathTracingAccumulationFrameCount();
 			} else {
+				ubo.accumulationEnabled = false;
 				ubo.ptAccumulationCount = 0;
+				m_rayTracingRenderSystem->resetPathTracingAccumulationFrameCount();
 			}
 			m_rayTracingRenderSystem->update(frameInfo);
 		}

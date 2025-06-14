@@ -29,6 +29,9 @@ namespace PXTEngine {
 
         void updateSceneImage(Shared<VulkanImage> sceneImage);
 
+        void resetPathTracingAccumulationFrameCount() { m_ptAccumulationFrameCount = 0; }
+        uint32_t incrementAndGetPathTracingAccumulationFrameCount();
+
     private:
 		void createDescriptorSets();
 		void defineShaderGroups();
@@ -60,5 +63,7 @@ namespace PXTEngine {
         Shared<VulkanImage> m_sceneImage = nullptr;
 		VkDescriptorSet m_storageImageDescriptorSet = VK_NULL_HANDLE;
 		Unique<DescriptorSetLayout> m_storageImageDescriptorSetLayout = nullptr;
+
+        uint32_t m_ptAccumulationFrameCount = 0;
     };
 }

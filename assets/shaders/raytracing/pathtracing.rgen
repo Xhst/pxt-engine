@@ -112,12 +112,13 @@ void main()
 
     finalColor /= samplesPerPixel;
 
-    vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-    float weight = 1.0 / float(ubo.ptAccumulationCount + 1);
+    if (ubo.accumulationEnabled) {
+        vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
+        float weight = 1.0 / float(ubo.ptAccumulationCount);
+        finalColor = mix(previousColor, finalColor, weight);
+    }
 
-    // Saturate is temporary
-    finalColor = saturate(mix(previousColor, finalColor, weight));
-
+    finalColor = saturate(finalColor);
     if (isnan(finalColor.r) || isnan(finalColor.g) || isnan(finalColor.b) ||
         isinf(finalColor.r) || isinf(finalColor.g) || isinf(finalColor.b)) {
         finalColor = vec3(1.0, 0.0, 1.0); // Magenta for error

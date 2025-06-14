@@ -23,6 +23,7 @@ namespace PXTEngine {
         int numLights;
         uint32_t frameCount;
         uint32_t ptAccumulationCount;
+        bool accumulationEnabled;
     };
 
     struct FrameInfo {
