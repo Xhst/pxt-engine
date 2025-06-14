@@ -96,5 +96,6 @@ namespace PXTEngine {
 
 		bool m_isDebugEnabled = false;
 		bool m_isRaytracingEnabled = true;
+		bool m_isAccumulationEnabled = false;
 	};
 }

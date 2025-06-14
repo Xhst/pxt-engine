@@ -348,6 +348,11 @@ namespace PXTEngine {
 
 		// update raytracing scene
 		if (m_isRaytracingEnabled) {
+			if (m_isAccumulationEnabled) {
+				ubo.ptAccumulationCount++;
+			} else {
+				ubo.ptAccumulationCount = 0;
+			}
 			m_rayTracingRenderSystem->update(frameInfo);
 		}
 	}
@@ -487,6 +492,10 @@ namespace PXTEngine {
 
 		ImGui::Begin("Raytracing Renderer");
 		ImGui::Checkbox("Enable Raytracing", &m_isRaytracingEnabled);
+		if (m_isRaytracingEnabled) {
+			ImGui::Checkbox("Enable Accumulation", &m_isAccumulationEnabled);
+		}
+		
 		ImGui::End();
 
 		ImGui::Begin("Debug Renderer");

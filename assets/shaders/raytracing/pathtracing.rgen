@@ -113,7 +113,7 @@ void main()
     finalColor /= samplesPerPixel;
 
     vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-    float weight = 1.0 / float(ubo.frameCount + 1);
+    float weight = 1.0 / float(ubo.ptAccumulationCount + 1);
 
     // Saturate is temporary
     finalColor = saturate(mix(previousColor, finalColor, weight));

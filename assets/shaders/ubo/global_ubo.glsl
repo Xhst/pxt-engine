@@ -13,6 +13,7 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     PointLight pointLights[MAX_LIGHTS];
     int numLights;
     uint frameCount;
+    uint ptAccumulationCount;
 } ubo;
 
 #endif
