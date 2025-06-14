@@ -10,18 +10,16 @@ namespace PXTEngine {
     class FrameBuffer {
     public:
         FrameBuffer(Context& context,
-            const VkFramebufferCreateInfo& createInfo,
+            VkFramebufferCreateInfo& createInfo,
             std::string name,
             Shared<VulkanImage> colorAttachment,
             Shared<VulkanImage> depthAttachment = nullptr);
         ~FrameBuffer();
 
-        // Disable copy constructor and assignment operator
-        FrameBuffer(const FrameBuffer&) = delete;
-        FrameBuffer& operator=(const FrameBuffer&) = delete;
+      
 
-        VkFramebuffer getVkFrameBuffer() const { return m_FrameBuffer; }
-        const VkFramebufferCreateInfo& getCreateInfo() const { return m_createInfo; }
+        VkFramebuffer getHandle() const { return m_FrameBuffer; }
+        VkFramebufferCreateInfo& getCreateInfo() { return m_createInfo; }
         const Context& getContext() const { return m_context; }
         const Shared<VulkanImage>& getColorAttachment() const { return m_colorAttachment; }
         const Shared<VulkanImage>& getDepthAttachment() const { return m_depthAttachment; }

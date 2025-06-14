@@ -144,14 +144,14 @@ namespace PXTEngine {
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     }
 
-    void Renderer::beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent) {
+    void Renderer::beginRenderPass(VkCommandBuffer commandBuffer, RenderPass& renderPass, FrameBuffer& frameBuffer, VkExtent2D extent) {
         PXT_ASSERT(m_isFrameStarted, "Can't begin render pass when frame is not in progress.");
         PXT_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't begin render pass on command buffer from a different frame.");
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderPass;
-		renderPassInfo.framebuffer = frameBuffer;
+		renderPassInfo.renderPass = renderPass.getHandle();
+		renderPassInfo.framebuffer = frameBuffer.getHandle();
 
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
@@ -175,10 +175,31 @@ namespace PXTEngine {
         VkRect2D scissor{ {0, 0}, extent };
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+        // renderPass begins, so the image will be transitioned to the initial layout
+		frameBuffer.getColorAttachment()->setImageLayout(renderPass.getColorAttachmentInitialLayout());
+
+        if (frameBuffer.hasDepthAttachment()) {
+            frameBuffer.getDepthAttachment()->setImageLayout(renderPass.getDepthAttachmentInitialLayout());
+        }
     }
 
-    void Renderer::endRenderPass(VkCommandBuffer commandBuffer) {
+    void Renderer::endRenderPass(VkCommandBuffer commandBuffer, RenderPass& renderPass, FrameBuffer& frameBuffer) {
         PXT_ASSERT(m_isFrameStarted, "Can't call endRenderPass when frame is not in progress.");
+        PXT_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame.");
+
+        vkCmdEndRenderPass(commandBuffer);
+
+		// After the render pass ends, the image will be transitioned to the final layout
+        frameBuffer.getColorAttachment()->setImageLayout(renderPass.getColorAttachmentFinalLayout());
+
+        if (frameBuffer.hasDepthAttachment()) {
+            frameBuffer.getDepthAttachment()->setImageLayout(renderPass.getDepthAttachmentFinalLayout());
+        }
+    }
+
+    void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer) {
+        PXT_ASSERT(m_isFrameStarted, "Can't call endSwapChainRenderPass when frame is not in progress.");
         PXT_ASSERT(commandBuffer == getCurrentCommandBuffer(), "Can't end render pass on command buffer from a different frame.");
 
         vkCmdEndRenderPass(commandBuffer);

@@ -43,16 +43,13 @@ namespace PXTEngine {
 		createDescriptorSetsImGui();
 	}
 
-	MasterRenderSystem::~MasterRenderSystem() {
-		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
-	};
+	MasterRenderSystem::~MasterRenderSystem() {};
 
 	void MasterRenderSystem::recreateViewportResources() {
 		// wait for the device to be idle
 		vkDeviceWaitIdle(m_context.getDevice());
 
-		// destroy old resources
-		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
+		// destroy old resources: FrameBuffer will be destroyed by reassigning the unique_ptr
 
 		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
 
@@ -230,7 +227,7 @@ namespace PXTEngine {
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		m_offscreenDepthImage = createUnique<VulkanImage>(
+		m_offscreenDepthImage = createShared<VulkanImage>(
 			m_context,
 			imageInfo,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
@@ -257,22 +254,26 @@ namespace PXTEngine {
 
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = m_offscreenRenderPass->getVkRenderPass();
+		framebufferInfo.renderPass = m_offscreenRenderPass->getHandle();
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = swapChainExtent.width;
 		framebufferInfo.height = swapChainExtent.height;
 		framebufferInfo.layers = 1;
 
-		if (vkCreateFramebuffer(m_context.getDevice(), &framebufferInfo, nullptr, &m_offscreenFb) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create offscreen framebuffer for MasterRenderSystem!");
-		}
+		m_offscreenFb = createUnique<FrameBuffer>(
+			m_context,
+			framebufferInfo,
+			"MasterRenderSystem Offscreen Framebuffer",
+			m_sceneImage,
+			m_offscreenDepthImage
+		);
 	}
 
 	void MasterRenderSystem::createRenderSystems() {
 		m_pointLightSystem = createUnique<PointLightSystem>(
 			m_context,
-			m_offscreenRenderPass->getVkRenderPass(),
+			m_offscreenRenderPass->getHandle(),
 			m_globalSetLayout->getDescriptorSetLayout()
 		);
 
@@ -287,7 +288,7 @@ namespace PXTEngine {
 			m_descriptorAllocator,
 			m_textureRegistry,
 			*m_globalSetLayout,
-			m_offscreenRenderPass->getVkRenderPass(),
+			m_offscreenRenderPass->getHandle(),
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 
@@ -295,7 +296,7 @@ namespace PXTEngine {
 			m_context,
 			m_descriptorAllocator,
 			m_textureRegistry,
-			m_offscreenRenderPass->getVkRenderPass(),
+			m_offscreenRenderPass->getHandle(),
 			*m_globalSetLayout
 		);
 
@@ -308,7 +309,7 @@ namespace PXTEngine {
 			m_context,
 			m_environment,
 			*m_globalSetLayout,
-			m_offscreenRenderPass->getVkRenderPass()
+			m_offscreenRenderPass->getHandle()
 		);
 
 		m_rayTracingRenderSystem = createUnique<RayTracingRenderSystem>(
@@ -377,8 +378,8 @@ namespace PXTEngine {
 			m_shadowMapRenderSystem->render(frameInfo, m_renderer);
 
 			//begin offscreen render pass
-			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass->getVkRenderPass(),
-				m_offscreenFb, m_renderer.getSwapChainExtent());
+			m_renderer.beginRenderPass(frameInfo.commandBuffer, *m_offscreenRenderPass,
+				*m_offscreenFb, m_renderer.getSwapChainExtent());
 
 			m_skyboxRenderSystem->render(frameInfo);
 
@@ -392,7 +393,7 @@ namespace PXTEngine {
 
 			m_pointLightSystem->render(frameInfo);
 
-			m_renderer.endRenderPass(frameInfo.commandBuffer);
+			m_renderer.endRenderPass(frameInfo.commandBuffer, *m_offscreenRenderPass, *m_offscreenFb);
 		}
 
 		// update scene ui
@@ -404,7 +405,7 @@ namespace PXTEngine {
 		// render ui and end imgui frame
 		m_uiRenderSystem->render(frameInfo);
 
-		m_renderer.endRenderPass(frameInfo.commandBuffer);
+		m_renderer.endSwapChainRenderPass(frameInfo.commandBuffer);
 	}
 
 	void MasterRenderSystem::createDescriptorSetsImGui() {

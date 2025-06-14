@@ -4,7 +4,7 @@
 
 namespace PXTEngine {
     FrameBuffer::FrameBuffer(Context& context,
-        const VkFramebufferCreateInfo& createInfo,
+        VkFramebufferCreateInfo& createInfo,
         std::string name,
         Shared<VulkanImage> colorAttachment,
         Shared<VulkanImage> depthAttachment)
@@ -22,18 +22,6 @@ namespace PXTEngine {
 
         if (createInfo.pAttachments == nullptr || createInfo.attachmentCount == 0) {
             throw std::runtime_error("[FrameBuffer] No attachments specified for FrameBuffer: " + m_name);
-        }
-
-        // Ensure the color attachment is valid
-        if (createInfo.pAttachments[0] != m_colorAttachment->getImageView()) {
-            throw std::runtime_error("[FrameBuffer] Color attachment does not match the provided image view for FrameBuffer: " + m_name);
-        }
-
-        // If a depth attachment is provided, ensure it is valid
-        if (m_depthAttachment && createInfo.attachmentCount > 1) {
-            if (createInfo.pAttachments[1] != m_depthAttachment->getImageView()) {
-                throw std::runtime_error("[FrameBuffer] Depth attachment does not match the provided image view for FrameBuffer: " + m_name);
-            }
         }
 
         if (vkCreateFramebuffer(m_context.getDevice(), &m_createInfo, nullptr, &m_FrameBuffer) != VK_SUCCESS) {

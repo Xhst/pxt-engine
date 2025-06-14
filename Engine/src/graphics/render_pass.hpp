@@ -18,11 +18,27 @@ namespace PXTEngine {
         RenderPass(const RenderPass&) = delete;
         RenderPass& operator=(const RenderPass&) = delete;
 
-        VkRenderPass getVkRenderPass() const { return m_renderPass; }
+        VkRenderPass getHandle() const { return m_renderPass; }
         const VkRenderPassCreateInfo& getCreateInfo() const { return m_createInfo; }
 		const std::string& getName() const { return m_name; }
 		const VkAttachmentDescription getColorAttachmentDescription() const { return m_colorAttachmentDescription; }
 		const VkAttachmentDescription getDepthAttachmentDescription() const { return m_depthAttachmentDescription; }
+
+		const VkImageLayout getColorAttachmentInitialLayout() const {
+			return m_colorAttachmentDescription.initialLayout;
+		}
+
+		const VkImageLayout getColorAttachmentFinalLayout() const {
+			return m_colorAttachmentDescription.finalLayout;
+		}
+
+		const VkImageLayout getDepthAttachmentInitialLayout() const {
+			return m_depthAttachmentDescription.initialLayout;
+		}
+
+		const VkImageLayout getDepthAttachmentFinalLayout() const {
+			return m_depthAttachmentDescription.finalLayout;
+		}
 
     private:
         Context& m_context;
