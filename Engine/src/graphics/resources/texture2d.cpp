@@ -44,10 +44,7 @@ namespace PXTEngine {
 			m_vkImage, m_imageMemory);
 
 		// we now change the layout of the image for better destination copy performance (VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-		m_context.transitionImageLayoutSingleTimeCmd(
-			m_vkImage,
-			VK_FORMAT_R8G8B8A8_SRGB,
-			VK_IMAGE_LAYOUT_UNDEFINED,
+		transitionImageLayoutSingleTimeCmd(
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			VK_PIPELINE_STAGE_TRANSFER_BIT
@@ -62,10 +59,7 @@ namespace PXTEngine {
 		);
 
 		// finally, we change the image layout again to be accessed from the shaders (VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-		m_context.transitionImageLayoutSingleTimeCmd(
-			m_vkImage,
-			VK_FORMAT_R8G8B8A8_SRGB,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		transitionImageLayoutSingleTimeCmd(
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_PIPELINE_STAGE_TRANSFER_BIT,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT

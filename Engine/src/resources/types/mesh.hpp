@@ -37,16 +37,14 @@ namespace PXTEngine {
          *
          * @brief Represents a single vertex with position, color, normal, tangent, and texture coordinates.
          */
-        struct Vertex {
-            glm::vec3 position{};  // Position of the vertex.
-            glm::vec3 color{};     // Color of the vertex.
-            glm::vec3 normal{};    // Normal vector for lighting calculations.
+        struct alignas(16) Vertex {
+            glm::vec4 position{};  // Position of the vertex. (1 unused)
+            glm::vec4 normal{};    // Normal vector for lighting calculations. (1 unused)
             glm::vec4 tangent{};   // Tangent vector for lighting calculations.
-            glm::vec2 uv{};        // Texture coordinates.
+            glm::vec4 uv{};        // Texture coordinates. (2 unused)
 
             bool operator==(const Vertex& other) const {
                 return position == other.position
-                    && color == other.color
                     && normal == other.normal
                     && tangent == other.tangent
                     && uv == other.uv;
@@ -65,7 +63,7 @@ struct std::hash<PXTEngine::Mesh::Vertex> {
     size_t operator()(PXTEngine::Mesh::Vertex const& vertex) const noexcept {
         size_t seed = 0;
 
-        PXTEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.tangent, vertex.uv);
+        PXTEngine::hashCombine(seed, vertex.position, vertex.normal, vertex.tangent, vertex.uv);
         return seed;
     }
 };

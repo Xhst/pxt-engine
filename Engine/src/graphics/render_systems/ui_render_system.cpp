@@ -5,9 +5,8 @@
 
 namespace PXTEngine {
 
-	UiRenderSystem::UiRenderSystem(Context& context, VkRenderPass renderPass, VkDescriptorImageInfo sceneImageInfo) : m_context(context) {
+	UiRenderSystem::UiRenderSystem(Context& context, VkRenderPass renderPass) : m_context(context) {
 		initImGui(renderPass);
-		createDescriptorSets(sceneImageInfo);
 	}
 
 	UiRenderSystem::~UiRenderSystem() {
@@ -94,14 +93,6 @@ namespace PXTEngine {
 			.updateSet(descriptorSet);
 
 		return descriptorSet;
-	}
-
-	void UiRenderSystem::createDescriptorSets(VkDescriptorImageInfo sceneImageInfo) {
-		m_sceneDescriptorSet = addImGuiTexture(
-			sceneImageInfo.sampler,
-			sceneImageInfo.imageView,
-			sceneImageInfo.imageLayout
-		);
 	}
 
 	void UiRenderSystem::render(FrameInfo& frameInfo) {

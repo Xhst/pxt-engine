@@ -22,6 +22,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
+#include "tracy/Tracy.hpp"
+
 namespace PXTEngine {
 
     Application* Application::m_instance = nullptr;
@@ -85,6 +87,7 @@ namespace PXTEngine {
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<float>(m_textureRegistry.getTextureCount())},
             {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1.0f},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2.0f}
 		};
 
 		m_descriptorAllocator = createShared<DescriptorAllocatorGrowable>(m_context, SwapChain::MAX_FRAMES_IN_FLIGHT, ratios);
@@ -194,7 +197,7 @@ namespace PXTEngine {
         auto currentTime = std::chrono::high_resolution_clock::now();
     
         m_scene.onStart();
-        
+        uint32_t frameCount = 0;
         while (isRunning()) {
             glfwPollEvents();
 
@@ -220,6 +223,7 @@ namespace PXTEngine {
 
                 GlobalUbo ubo{};
                 ubo.ambientLightColor = m_scene.getEnvironment()->getAmbientLight();
+                ubo.frameCount = frameCount++;
 
 				m_masterRenderSystem->onUpdate(frameInfo, ubo);
 
@@ -230,6 +234,9 @@ namespace PXTEngine {
 
                 m_renderer.endFrame();
             }
+
+            // tracy end frame mark
+            FrameMark;
         }
 
         vkDeviceWaitIdle(m_context.getDevice());

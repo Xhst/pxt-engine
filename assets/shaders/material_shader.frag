@@ -7,14 +7,16 @@
 #include "lighting/blinn_phong_lighting.glsl"
 #include "lighting/shadow_map.glsl"
 
-layout(location = 0) in vec3 fragColor;
-layout(location = 1) in vec3 fragPosWorld;
-layout(location = 2) in vec3 fragNormalWorld;
-layout(location = 3) in vec2 fragUV;
-layout(location = 4) in mat3 fragTBN;
+layout(location = 0) in vec3 fragPosWorld;
+layout(location = 1) in vec3 fragNormalWorld;
+layout(location = 2) in vec2 fragUV;
+layout(location = 3) in mat3 fragTBN;
 
 layout(location = 0) out vec4 outColor;
 
+// TODO: Separate layout semantics from type definitions inside includes
+// #include "ubo/global_ubo.glsl"
+// layout(set = 0, binding = 0) uniform _ubo { GlobalUbo ubo; };
 layout(set = 1, binding = 0) uniform sampler2D textures[];
 layout(set = 2, binding = 0) uniform samplerCube shadowCubeMap;
 
@@ -43,7 +45,7 @@ void applyAmbientOcclusion(inout vec3 color, vec2 texCoords) {
 void main() {
     vec2 texCoords = fragUV * push.tilingFactor;
 
-    vec3  surfaceNormal = calculateSurfaceNormal(textures[push.normalMapIndex], texCoords, fragTBN);
+    vec3 surfaceNormal = calculateSurfaceNormal(textures[push.normalMapIndex], texCoords, fragTBN);
 
     vec3 cameraPosWorld = ubo.inverseViewMatrix[3].xyz;
     vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);
@@ -56,7 +58,7 @@ void main() {
 
     // we need to add control coefficients to regulate both terms (diffuse/specular)
     // for now we use fragColor for both which is ideal for metallic objects
-    vec3 baseColor = (diffuseLight * fragColor + specularLight * fragColor) * imageColor;
+    vec3 baseColor = (diffuseLight * push.color.rgb + specularLight * push.color.rgb) * imageColor;
 
     applyAmbientOcclusion(baseColor, texCoords);
 

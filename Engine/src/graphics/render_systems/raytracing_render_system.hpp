@@ -8,7 +8,7 @@
 #include "graphics/resources/texture_registry.hpp"
 #include "graphics/resources/material_registry.hpp"
 #include "graphics/resources/vk_skybox.hpp"
-#include "graphics/render_systems/tlas_build_system.hpp"
+#include "graphics/render_systems/raytracing_scene_manager_system.hpp"
 #include "graphics/renderer.hpp"
 #include "scene/scene.hpp"
 #include "scene/environment.hpp"
@@ -25,9 +25,12 @@ namespace PXTEngine {
 
         void update(FrameInfo& frameInfo);
         void render(FrameInfo& frameInfo, Renderer& renderer);
-		void updateUi(FrameInfo& frameInfo);
+		void transitionImageToShaderReadOnlyOptimal(FrameInfo& frameInfo);
 
         void updateSceneImage(Shared<VulkanImage> sceneImage);
+
+        void resetPathTracingAccumulationFrameCount() { m_ptAccumulationFrameCount = 0; }
+        uint32_t incrementAndGetPathTracingAccumulationFrameCount();
 
     private:
 		void createDescriptorSets();
@@ -45,7 +48,7 @@ namespace PXTEngine {
         
         Shared<DescriptorAllocatorGrowable> m_descriptorAllocator = nullptr;
         
-        TLASBuildSystem m_tlasBuildSystem{m_context, m_materialRegistry, m_blasRegistry, m_descriptorAllocator};
+        RayTracingSceneManagerSystem m_rtSceneManager{m_context, m_materialRegistry, m_blasRegistry, m_descriptorAllocator};
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
@@ -61,6 +64,6 @@ namespace PXTEngine {
 		VkDescriptorSet m_storageImageDescriptorSet = VK_NULL_HANDLE;
 		Unique<DescriptorSetLayout> m_storageImageDescriptorSetLayout = nullptr;
 
-		bool m_isFirstFrame = false;
+        uint32_t m_ptAccumulationFrameCount = 0;
     };
 }

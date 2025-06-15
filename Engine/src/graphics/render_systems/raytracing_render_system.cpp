@@ -63,7 +63,14 @@ namespace PXTEngine {
 		m_sceneImage = sceneImage;
 	}
 
+	uint32_t RayTracingRenderSystem::incrementAndGetPathTracingAccumulationFrameCount() {
+		m_ptAccumulationFrameCount++;
+		
+		return m_ptAccumulationFrameCount;
+	}
+
 	void RayTracingRenderSystem::defineShaderGroups() {
+		// for rgen e miss there can be one shader per group
 		m_shaderGroups = {
 			// General RayGen Group
 			{
@@ -71,7 +78,7 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// only one shader stage for raygen is permitted
-					{VK_SHADER_STAGE_RAYGEN_BIT_KHR, SPV_SHADERS_PATH + "primary.rgen.spv"}
+					{VK_SHADER_STAGE_RAYGEN_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rgen.spv"}
 				}
 			},
 			// General Miss Group
@@ -80,7 +87,16 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here we can have multiple miss shaders
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "primary.rmiss.spv"}
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rmiss.spv"}
+				}
+			},
+			// Shadow Miss Group
+			{
+				VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
+				{
+					// Shader stages + filepaths
+					// here we can have multiple miss shaders
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "shadow.rmiss.spv"}
 				}
 			},
 			// Closest Hit Group (Triangle Hit Group)
@@ -89,28 +105,21 @@ namespace PXTEngine {
 				{
 					// Shader stages + filepaths
 					// here there can be a chit, ahit or intersection shader (every combination of these)
-					{VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, SPV_SHADERS_PATH + "primary.rchit.spv"}
+					{VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rchit.spv"}
 				}
 			}
 		};
 	}
 
 	void RayTracingRenderSystem::createPipelineLayout(DescriptorSetLayout& setLayout) {
-		// do we need push constants? (yes / no)
-		/*
-		VkPushConstantRange pushConstantRange{};
-		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-		pushConstantRange.offset = 0;
-		pushConstantRange.size = sizeof(MaterialPushConstantData);
-		*/
-
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
 			setLayout.getDescriptorSetLayout(),
-			m_tlasBuildSystem.getTLASDescriptorSetLayout(),
+			m_rtSceneManager.getTLASDescriptorSetLayout(),
 			m_textureRegistry.getDescriptorSetLayout(),
 			m_storageImageDescriptorSetLayout->getDescriptorSetLayout(),
 			m_materialRegistry.getDescriptorSetLayout(),
-			m_skybox->getDescriptorSetLayout()
+			m_skybox->getDescriptorSetLayout(),
+			m_rtSceneManager.getMeshInstanceDescriptorSetLayout()
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -129,7 +138,7 @@ namespace PXTEngine {
 		RayTracingPipelineConfigInfo pipelineConfig{};
 		pipelineConfig.shaderGroups = m_shaderGroups;
 		pipelineConfig.pipelineLayout = m_pipelineLayout;
-		pipelineConfig.maxPipelineRayRecursionDepth = 1; // for now
+		pipelineConfig.maxPipelineRayRecursionDepth = 2; // for now
 		m_pipeline = createUnique<Pipeline>(
 			m_context,
 			pipelineConfig
@@ -197,7 +206,7 @@ namespace PXTEngine {
 		for (const auto& group : m_shaderGroups) {
 			switch (group.stages[0].first) {
 				case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
-					rayGenGroupsCount++; // Only one raygen group is allowed probably
+					rayGenGroupsCount++; // Only one raygen group
 					break;
 				case VK_SHADER_STAGE_MISS_BIT_KHR:
 					missGroupsCount++;
@@ -306,29 +315,10 @@ namespace PXTEngine {
 	}
 	
 	void RayTracingRenderSystem::update(FrameInfo& frameInfo) {
-		m_tlasBuildSystem.createTLAS(frameInfo);
+		m_rtSceneManager.createTLAS(frameInfo);
 
-		if (m_isFirstFrame) {
-			m_isFirstFrame = false; // first frame is done, next times we have to transition from shader read only optimal
-			
-			m_context.transitionImageLayout(
-				frameInfo.commandBuffer,
-				m_sceneImage->getVkImage(),
-				m_sceneImage->getImageFormat(),
-				VK_IMAGE_LAYOUT_UNDEFINED,
-				VK_IMAGE_LAYOUT_GENERAL,
-				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-				VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
-			);
-
-			return;
-		}
-
-		m_context.transitionImageLayout(
+		m_sceneImage->transitionImageLayout(
 			frameInfo.commandBuffer,
-			m_sceneImage->getVkImage(),
-			m_sceneImage->getImageFormat(),
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_IMAGE_LAYOUT_GENERAL,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR
@@ -338,13 +328,14 @@ namespace PXTEngine {
 	void RayTracingRenderSystem::render(FrameInfo& frameInfo, Renderer& renderer) {
 		m_pipeline->bind(frameInfo.commandBuffer);
 
-		std::array<VkDescriptorSet, 6> descriptorSets = { 
+		std::array<VkDescriptorSet, 7> descriptorSets = { 
 			frameInfo.globalDescriptorSet, 
-			m_tlasBuildSystem.getTLASDescriptorSet(), 
+			m_rtSceneManager.getTLASDescriptorSet(), 
 			m_textureRegistry.getDescriptorSet(),
 			m_storageImageDescriptorSet,
 			m_materialRegistry.getDescriptorSet(),
-			m_skybox->getDescriptorSet()
+			m_skybox->getDescriptorSet(),
+			m_rtSceneManager.getMeshInstanceDescriptorSet()
 		};
 	
 		vkCmdBindDescriptorSets(
@@ -370,13 +361,10 @@ namespace PXTEngine {
 		);
 	}
 
-	void RayTracingRenderSystem::updateUi(FrameInfo& frameInfo) {
+	void RayTracingRenderSystem::transitionImageToShaderReadOnlyOptimal(FrameInfo& frameInfo) {
 		// transition output image to shader read only layout for imgui
-		m_context.transitionImageLayout(
+		m_sceneImage->transitionImageLayout(
 			frameInfo.commandBuffer,
-			m_sceneImage->getVkImage(),
-			m_sceneImage->getImageFormat(),
-			VK_IMAGE_LAYOUT_GENERAL,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT

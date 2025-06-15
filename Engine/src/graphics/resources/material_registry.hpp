@@ -24,11 +24,13 @@ namespace PXTEngine {
 	 */
 	struct alignas(16) MaterialData {
 		glm::vec4 albedoColor;
+		glm::vec4 emissiveColor;
 		int albedoMapIndex;
 		int normalMapIndex;
 		int ambientOcclusionMapIndex;
 		int metallicMapIndex;
 		int roughnessMapIndex;
+		int emissiveMapIndex;
 	};
 
 	/**

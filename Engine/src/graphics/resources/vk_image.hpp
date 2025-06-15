@@ -1,12 +1,12 @@
 #pragma once
 
-#include "core/buffer.hpp"
-#include "graphics/resources/vk_buffer.hpp"
-#include "resources/types/image.hpp"
+#include <optional>
 
+#include "core/buffer.hpp"
+#include "resources/types/image.hpp"
+#include "graphics/context/context.hpp"
 
 namespace PXTEngine {
-
 	static VkFormat pxtToVulkanImageFormat(const ImageFormat format) {
 		switch (format) {
 		case RGB8_LINEAR:
@@ -91,8 +91,39 @@ namespace PXTEngine {
 		const VkSampler getImageSampler() { return m_sampler; }
 		const VkFormat getImageFormat() { return m_imageFormat; }
 
+		const VkImageLayout getCurrentLayout() const { return m_currentLayout; }
+		void setImageLayout(const VkImageLayout newLayout) { m_currentLayout = newLayout; }
+
 		VulkanImage& createImageView(const VkImageViewCreateInfo& viewInfo);
 		VulkanImage& createSampler(const VkSamplerCreateInfo& samplerInfo);
+
+		/**
+		 * @brief Transitions the layout of an image.
+		 *
+		 * This function transitions the layout of an image, which is required when changing the way the image is accessed.
+		 * 
+		 * @param oldLayout The old layout of the image.
+		 * @param newLayout The new layout of the image.
+		 * @param subresourceRange The subresource range of the image.
+		 * @param sourceStage The source pipeline stage. If not specified, it will be set to VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, which is less efficient.
+		 * @param destinationStage The destination pipeline stage. If not specified, it will be set to VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, which is less efficient.
+		 */
+		void transitionImageLayoutSingleTimeCmd(VkImageLayout newLayout, VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, std::optional<VkImageSubresourceRange> subresourceRange = std::nullopt);
+
+		/**
+		 * @brief Transitions the layout of an image.
+		 *
+		 * This function transitions the layout of an image, which is required when changing the way the image is accessed.
+		 *
+		 * @param commandBuffer The command buffer handle.
+		 * @param oldLayout The old layout of the image.
+		 * @param newLayout The new layout of the image.
+		 * @param subresourceRange The subresource range of the image.
+		 * @param sourceStage The source pipeline stage. If not specified, it will be set to VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, which is less efficient.
+		 * @param destinationStage The destination pipeline stage. If not specified, it will be set to VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, which is less efficient.
+		 */
+		void transitionImageLayout(VkCommandBuffer commandBuffer, VkImageLayout newLayout, VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, std::optional<VkImageSubresourceRange> subresourceRange = std::nullopt);
+
 
 	protected:
 		Context& m_context;
@@ -105,5 +136,7 @@ namespace PXTEngine {
 		VkImageView m_imageView; // an abstraction to view the same raw image in different "ways"
 		VkSampler m_sampler; // an abstraction (and tool) to help fragment shader pick the right color and
 									// apply useful transformations (e.g. bilinear filtering, anisotropic filtering etc.)
+
+		VkImageLayout m_currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	};
 }

@@ -16,6 +16,8 @@
 #include "graphics/render_systems/debug_render_system.hpp"
 #include "graphics/render_systems/skybox_render_system.hpp"
 #include "graphics/render_systems/raytracing_render_system.hpp"
+#include "graphics/render_pass.hpp"
+#include "graphics/frame_buffer.hpp"
 
 #include "scene/environment.hpp"
 
@@ -54,6 +56,7 @@ namespace PXTEngine {
 		void updateImguiDescriptorSet();
 
 		ImVec2 getImageSizeWithAspectRatioForImGuiWindow(ImVec2 windowSize, float aspectRatio);
+		void updateSceneUi();
 		void updateUi();
 
 		Context& m_context;
@@ -78,12 +81,12 @@ namespace PXTEngine {
 		Unique<SkyboxRenderSystem> m_skyboxRenderSystem = nullptr;
 		Unique<RayTracingRenderSystem> m_rayTracingRenderSystem = nullptr;
 
-		VkRenderPass m_offscreenRenderPass;
-		VkFramebuffer m_offscreenFb;
+		Unique<RenderPass> m_offscreenRenderPass;
+		Unique<FrameBuffer> m_offscreenFb;
 
 		Shared<VulkanImage> m_sceneImage;
 		VkFormat m_offscreenColorFormat;
-		Unique<VulkanImage> m_offscreenDepthImage;
+		Shared<VulkanImage> m_offscreenDepthImage;
 
 		VkDescriptorSet m_sceneDescriptorSet = VK_NULL_HANDLE;
 		Unique<DescriptorSetLayout> m_sceneDescriptorSetLayout = nullptr;
@@ -92,6 +95,7 @@ namespace PXTEngine {
 		ImVec2 m_sceneImageExtentInWindow = { 960, 540 };
 
 		bool m_isDebugEnabled = false;
-		bool m_isRaytracingEnabled = false;
+		bool m_isRaytracingEnabled = true;
+		bool m_isAccumulationEnabled = false;
 	};
 }

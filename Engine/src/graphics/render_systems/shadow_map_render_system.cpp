@@ -46,11 +46,6 @@ namespace PXTEngine {
 
     ShadowMapRenderSystem::~ShadowMapRenderSystem() {
         vkDestroyPipelineLayout(m_context.getDevice(), m_pipelineLayout, nullptr);
-		vkDestroyRenderPass(m_context.getDevice(), m_renderPass, nullptr);
-
-		for (auto& framebuffer : m_cubeFramebuffers) {
-			vkDestroyFramebuffer(m_context.getDevice(), framebuffer, nullptr);
-		}
     }
 
 	void ShadowMapRenderSystem::createUniformBuffers() {
@@ -130,16 +125,20 @@ namespace PXTEngine {
 		renderPassCreateInfo.subpassCount = 1;
 		renderPassCreateInfo.pSubpasses = &subpass;
 
-		if (vkCreateRenderPass(m_context.getDevice(), &renderPassCreateInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create offscreen render pass!");
-		}
+		m_renderPass = createUnique<RenderPass>(
+			m_context,
+			renderPassCreateInfo,
+			osAttachments[0],
+			osAttachments[1],
+			"ShadowMapRenderSystem Offscreen Render Pass"
+		);
     }
 
 	void ShadowMapRenderSystem::createOffscreenFrameBuffers() {
 		// For shadow mapping here we need 6 framebuffers, one for each face of the cube map
 		// The class will handle this for us. It will create image views for each face, which
 		// we can use to then create the framebuffers for this class
-		m_shadowCubeMap = createUnique<CubeMap>(
+		m_shadowCubeMap = createShared<CubeMap>(
 			m_context, 
 			m_shadowMapSize, 
 			m_offscreenColorFormat,
@@ -167,7 +166,7 @@ namespace PXTEngine {
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		m_depthStencilImageFb = createUnique<VulkanImage>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_depthStencilImageFb = createShared<VulkanImage>(m_context, imageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		VkImageSubresourceRange subresourceRange = {};
 		subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -176,10 +175,7 @@ namespace PXTEngine {
 		subresourceRange.layerCount = 1;
 
 		// TODO: verify source and destination access masks
-		m_context.transitionImageLayoutSingleTimeCmd(
-			m_depthStencilImageFb->getVkImage(),
-			m_depthStencilImageFb->getImageFormat(),
-			VK_IMAGE_LAYOUT_UNDEFINED,
+		m_depthStencilImageFb->transitionImageLayoutSingleTimeCmd(
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
@@ -209,7 +205,7 @@ namespace PXTEngine {
 
 		VkFramebufferCreateInfo fbufCreateInfo = {};
 		fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbufCreateInfo.renderPass = m_renderPass;
+		fbufCreateInfo.renderPass = m_renderPass->getHandle();
 		fbufCreateInfo.attachmentCount = 2;
 		fbufCreateInfo.pAttachments = attachments;
 		fbufCreateInfo.width = m_shadowMapSize;
@@ -219,9 +215,14 @@ namespace PXTEngine {
 		for (uint32_t i = 0; i < 6; i++)
 		{
 			attachments[0] = m_shadowCubeMap->getFaceImageView(i);
-			if (vkCreateFramebuffer(m_context.getDevice(), &fbufCreateInfo, nullptr, &m_cubeFramebuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create shadow map render system framebuffer (face " + std::to_string(i) + ")!");
-			}
+			
+			m_cubeFramebuffers[i] = createUnique<FrameBuffer>(
+				m_context,
+				fbufCreateInfo,
+				"ShadowMapRenderSystem Framebuffer for Cube Face " + std::to_string(i),
+				m_shadowCubeMap,
+				m_depthStencilImageFb
+			);
 		}
 
 		// -----------------------------------------------------------------------------
@@ -264,7 +265,7 @@ namespace PXTEngine {
 
         RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        pipelineConfig.renderPass = m_renderPass;
+        pipelineConfig.renderPass = m_renderPass->getHandle();
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
 		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
@@ -321,7 +322,7 @@ namespace PXTEngine {
 		// we need one render pass per face of the cube map, each time we modify the view matrix
 		for (uint32_t face = 0; face < 6; face++) {
 
-			renderer.beginRenderPass(frameInfo.commandBuffer, m_renderPass, this->getCubeFaceFramebuffer(face), this->getExtent());
+			renderer.beginRenderPass(frameInfo.commandBuffer, *m_renderPass, this->getCubeFaceFramebuffer(face), this->getExtent());
 
 			ShadowMapPushConstantData push{};
 			push.cubeFaceView = this->getFaceViewMatrix(face);
@@ -346,7 +347,7 @@ namespace PXTEngine {
 				vulkanModel->draw(frameInfo.commandBuffer);
 			}
 
-			renderer.endRenderPass(frameInfo.commandBuffer);
+			renderer.endRenderPass(frameInfo.commandBuffer, *m_renderPass, this->getCubeFaceFramebuffer(face));
 		}
     }
 

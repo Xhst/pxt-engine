@@ -9,6 +9,7 @@
 #include "graphics/resources/vk_buffer.hpp"
 #include "graphics/resources/cube_map.hpp"
 #include "graphics/descriptors/descriptors.hpp"
+#include "graphics/render_pass.hpp"
 
 namespace PXTEngine {
     class ShadowMapRenderSystem {
@@ -23,8 +24,7 @@ namespace PXTEngine {
         void render(FrameInfo& frameInfo, Renderer& renderer);
         void updateUi();
 
-		VkRenderPass getRenderPass() const { return m_renderPass; }
-		VkFramebuffer getCubeFaceFramebuffer(uint32_t face_index) const { return m_cubeFramebuffers[face_index]; }
+		FrameBuffer& getCubeFaceFramebuffer(uint32_t face_index) const { return *m_cubeFramebuffers[face_index]; }
 		VkExtent2D getExtent() const { return { m_shadowMapSize, m_shadowMapSize }; }
 		VkDescriptorImageInfo getShadowMapImageInfo() const { return m_shadowMapDescriptorInfo; }
         std::array<VkDescriptorImageInfo, 6> getDebugShadowMapImageInfos() const { return m_debugImageDescriptorInfos; }
@@ -56,16 +56,16 @@ namespace PXTEngine {
         std::array<Unique<VulkanBuffer>, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightUniformBuffers;
         std::array<VkDescriptorSet, SwapChain::MAX_FRAMES_IN_FLIGHT> m_lightDescriptorSets;
 
-        Unique<CubeMap> m_shadowCubeMap;
+        Shared<CubeMap> m_shadowCubeMap;
 		VkDescriptorImageInfo m_shadowMapDescriptorInfo{ VK_NULL_HANDLE };
 		std::array<VkDescriptorImageInfo, 6> m_debugImageDescriptorInfos;
 		std::array<VkDescriptorSet, 6> m_shadowMapDebugDescriptorSets;
 
-		VkRenderPass m_renderPass;
+		Unique<RenderPass> m_renderPass = nullptr;
 		// The framebuffer used for the offscreen render pass. They are created from the 
 		// shadowCubeMap image views (see createOffscreenFrameBuffers)
-        std::array<VkFramebuffer, 6> m_cubeFramebuffers;
-		Unique<VulkanImage> m_depthStencilImageFb;
+        std::array<Unique<FrameBuffer>, 6> m_cubeFramebuffers;
+		Shared<VulkanImage> m_depthStencilImageFb;
         VkFormat m_offscreenDepthFormat{ VK_FORMAT_UNDEFINED };
 		VkFormat m_offscreenColorFormat{ VK_FORMAT_R32_SFLOAT };
 

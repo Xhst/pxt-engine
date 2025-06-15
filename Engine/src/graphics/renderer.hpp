@@ -5,6 +5,8 @@
 #include "graphics/window.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"
+#include "graphics/render_pass.hpp"
+#include "graphics/frame_buffer.hpp"
 
 namespace PXTEngine {
 
@@ -128,7 +130,7 @@ namespace PXTEngine {
         *
         * @throws std::runtime_error if called when frame is not in progress or command buffer is from a different frame.
         */
-        void beginRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D extent);
+        void beginRenderPass(VkCommandBuffer commandBuffer, RenderPass& renderPass, FrameBuffer& frameBuffer, VkExtent2D extent);
 
         /**
          * @brief Ends the current render pass.
@@ -137,7 +139,19 @@ namespace PXTEngine {
          * 
          * @throws std::runtime_error if called when frame is not in progress or command buffer is from a different frame.
          */
-        void endRenderPass(VkCommandBuffer commandBuffer);
+        void endRenderPass(VkCommandBuffer commandBuffer, RenderPass& renderPass, FrameBuffer& frameBuffer);
+
+		/**
+		 * @brief Ends the swap chain render pass.
+		 * This function is just an overload of endRenderPass specifically for the swap chain render pass.
+         * Because we dont need for now to monitor the status of swapchain resources.
+		 *
+		 * @param commandBuffer The command buffer to record the end of the swap chain render pass into.
+		 *
+		 * @throws std::runtime_error if called when frame is not in progress or command buffer is from a different frame.
+         * 
+		 */
+        void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
     private:
         /**

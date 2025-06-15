@@ -91,10 +91,7 @@ namespace PXTEngine {
         cubemapSubresourceRange.baseArrayLayer = 0;
         cubemapSubresourceRange.layerCount = 6;
 
-        m_context.transitionImageLayoutSingleTimeCmd(
-            m_cubeMap->getVkImage(),
-            format,
-            VK_IMAGE_LAYOUT_UNDEFINED,
+        m_cubeMap->transitionImageLayoutSingleTimeCmd(
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -109,10 +106,7 @@ namespace PXTEngine {
             6
         );
 
-        m_context.transitionImageLayoutSingleTimeCmd(
-            m_cubeMap->getVkImage(),
-            format,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        m_cubeMap->transitionImageLayoutSingleTimeCmd(
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,

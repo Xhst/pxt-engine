@@ -43,17 +43,13 @@ namespace PXTEngine {
 		createDescriptorSetsImGui();
 	}
 
-	MasterRenderSystem::~MasterRenderSystem() {
-		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
-		vkDestroyRenderPass(m_context.getDevice(), m_offscreenRenderPass, nullptr);
-	};
+	MasterRenderSystem::~MasterRenderSystem() {};
 
 	void MasterRenderSystem::recreateViewportResources() {
 		// wait for the device to be idle
 		vkDeviceWaitIdle(m_context.getDevice());
 
-		// destroy old resources
-		vkDestroyFramebuffer(m_context.getDevice(), m_offscreenFb, nullptr);
+		// destroy old resources: FrameBuffer will be destroyed by reassigning the unique_ptr
 
 		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
 
@@ -82,11 +78,11 @@ namespace PXTEngine {
 		VkAttachmentDescription colorAttachment = {};
 		colorAttachment.format = m_offscreenColorFormat;
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference colorAttachmentRef = {};
@@ -129,9 +125,13 @@ namespace PXTEngine {
 		renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 		renderPassInfo.pDependencies = dependencies.data();
 
-		if (vkCreateRenderPass(m_context.getDevice(), &renderPassInfo, nullptr, &m_offscreenRenderPass) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create offscreen render pass for MasterRenderSystem!");
-		}
+		m_offscreenRenderPass = createUnique<RenderPass>(
+			m_context,
+			renderPassInfo,
+			colorAttachment,
+			depthAttachment,
+			"MasterRenderSystem Offscreen Render Pass"
+		);
 	}
 
 	void MasterRenderSystem::createSceneImage() {
@@ -160,11 +160,8 @@ namespace PXTEngine {
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 		);
 
-		// transition once to SHADER_READ_ONLY_OPTIMAL layout
-		m_context.transitionImageLayoutSingleTimeCmd(
-			m_sceneImage->getVkImage(),
-			m_sceneImage->getImageFormat(),
-			VK_IMAGE_LAYOUT_UNDEFINED,
+		// transition once to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL layout
+		m_sceneImage->transitionImageLayoutSingleTimeCmd(
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
@@ -193,8 +190,8 @@ namespace PXTEngine {
 		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerInfo.anisotropyEnable = VK_FALSE;
-		samplerInfo.maxAnisotropy = 1.0f; // Ignored if anisotropyEnable is VK_FALSE
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = m_context.getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
 		// Unnormalized coordinates: Use normalized UVs (0.0 to 1.0)
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;
 		// Comparison: Not for texture sampling, leave disabled
@@ -229,7 +226,7 @@ namespace PXTEngine {
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		m_offscreenDepthImage = createUnique<VulkanImage>(
+		m_offscreenDepthImage = createShared<VulkanImage>(
 			m_context,
 			imageInfo,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
@@ -256,22 +253,26 @@ namespace PXTEngine {
 
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = m_offscreenRenderPass;
+		framebufferInfo.renderPass = m_offscreenRenderPass->getHandle();
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = swapChainExtent.width;
 		framebufferInfo.height = swapChainExtent.height;
 		framebufferInfo.layers = 1;
 
-		if (vkCreateFramebuffer(m_context.getDevice(), &framebufferInfo, nullptr, &m_offscreenFb) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create offscreen framebuffer for MasterRenderSystem!");
-		}
+		m_offscreenFb = createUnique<FrameBuffer>(
+			m_context,
+			framebufferInfo,
+			"MasterRenderSystem Offscreen Framebuffer",
+			m_sceneImage,
+			m_offscreenDepthImage
+		);
 	}
 
 	void MasterRenderSystem::createRenderSystems() {
 		m_pointLightSystem = createUnique<PointLightSystem>(
 			m_context,
-			m_offscreenRenderPass,
+			m_offscreenRenderPass->getHandle(),
 			m_globalSetLayout->getDescriptorSetLayout()
 		);
 
@@ -286,7 +287,7 @@ namespace PXTEngine {
 			m_descriptorAllocator,
 			m_textureRegistry,
 			*m_globalSetLayout,
-			m_offscreenRenderPass,
+			m_offscreenRenderPass->getHandle(),
 			m_shadowMapRenderSystem->getShadowMapImageInfo()
 		);
 
@@ -294,22 +295,20 @@ namespace PXTEngine {
 			m_context,
 			m_descriptorAllocator,
 			m_textureRegistry,
-			m_offscreenRenderPass,
+			m_offscreenRenderPass->getHandle(),
 			*m_globalSetLayout
 		);
 
 		m_uiRenderSystem = createUnique<UiRenderSystem>(
 			m_context,
-			m_renderer.getSwapChainRenderPass(),
-			// TODO: replace with scene image info
-			m_shadowMapRenderSystem->getShadowMapImageInfo()
+			m_renderer.getSwapChainRenderPass()
 		);
 
 		m_skyboxRenderSystem = createUnique<SkyboxRenderSystem>(
 			m_context,
 			m_environment,
 			*m_globalSetLayout,
-			m_offscreenRenderPass
+			m_offscreenRenderPass->getHandle()
 		);
 
 		m_rayTracingRenderSystem = createUnique<RayTracingRenderSystem>(
@@ -348,31 +347,46 @@ namespace PXTEngine {
 		m_shadowMapRenderSystem->update(frameInfo, ubo);
 
 		// update raytracing scene
-		m_rayTracingRenderSystem->update(frameInfo);
+		if (m_isRaytracingEnabled) {
+			if (m_isAccumulationEnabled) {
+				ubo.accumulationEnabled = true;
+				ubo.ptAccumulationCount = m_rayTracingRenderSystem->incrementAndGetPathTracingAccumulationFrameCount();
+			} else {
+				ubo.accumulationEnabled = false;
+				ubo.ptAccumulationCount = 0;
+				m_rayTracingRenderSystem->resetPathTracingAccumulationFrameCount();
+			}
+			m_rayTracingRenderSystem->update(frameInfo);
+		}
 	}
 
 	void MasterRenderSystem::doRenderPasses(FrameInfo& frameInfo) {
 		// begin new frame imgui
 		m_uiRenderSystem->beginBuildingUi();
 
-		this->updateUi();
-
-		// render shadow cube map
-		// the render function of the shadow map render system will
-		// do how many passes it needs to do (6 in this case - 1 point light)
-		m_shadowMapRenderSystem->render(frameInfo, m_renderer);
-		m_shadowMapRenderSystem->updateUi();
-
 		// render to offscreen main render pass
 		if (m_isRaytracingEnabled) {
 			m_rayTracingRenderSystem->render(frameInfo, m_renderer);
-			// this for now just transitions the scene image back to shader_read_only_optimal
-			m_rayTracingRenderSystem->updateUi(frameInfo);
-		}
-		else {
-			//begin offscreen render pass
-			m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass,
+			// this transitions the scene image back to shader_read_only_optimal for the next
+			// renderpass (for now only point light billboards)
+			m_rayTracingRenderSystem->transitionImageToShaderReadOnlyOptimal(frameInfo);
+
+			//begin offscreen render pass for point light billboards
+			/*m_renderer.beginRenderPass(frameInfo.commandBuffer, m_offscreenRenderPass->getVkRenderPass(),
 				m_offscreenFb, m_renderer.getSwapChainExtent());
+
+			//m_pointLightSystem->render(frameInfo);
+
+			m_renderer.endRenderPass(frameInfo.commandBuffer);*/
+		} else {
+			// render shadow cube map
+			// the render function of the shadow map render system will
+			// do how many passes it needs to do (6 in this case - 1 point light)
+			m_shadowMapRenderSystem->render(frameInfo, m_renderer);
+
+			//begin offscreen render pass
+			m_renderer.beginRenderPass(frameInfo.commandBuffer, *m_offscreenRenderPass,
+				*m_offscreenFb, m_renderer.getSwapChainExtent());
 
 			m_skyboxRenderSystem->render(frameInfo);
 
@@ -386,8 +400,11 @@ namespace PXTEngine {
 
 			m_pointLightSystem->render(frameInfo);
 
-			m_renderer.endRenderPass(frameInfo.commandBuffer);
+			m_renderer.endRenderPass(frameInfo.commandBuffer, *m_offscreenRenderPass, *m_offscreenFb);
 		}
+
+		// update scene ui
+		this->updateUi();
 
 		// render imgui and present
 		m_renderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
@@ -395,7 +412,7 @@ namespace PXTEngine {
 		// render ui and end imgui frame
 		m_uiRenderSystem->render(frameInfo);
 
-		m_renderer.endRenderPass(frameInfo.commandBuffer);
+		m_renderer.endSwapChainRenderPass(frameInfo.commandBuffer);
 	}
 
 	void MasterRenderSystem::createDescriptorSetsImGui() {
@@ -449,8 +466,8 @@ namespace PXTEngine {
 		return ratioedExtent;
 	}
 
-	void MasterRenderSystem::updateUi() {
-		ImTextureID scene = (ImTextureID)m_sceneDescriptorSet;
+	void MasterRenderSystem::updateSceneUi() {
+		ImTextureID scene = (ImTextureID) m_sceneDescriptorSet;
 
 		// we push a style var to remove the viewpoer window padding
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -478,18 +495,29 @@ namespace PXTEngine {
 
 		ImGui::Begin("Raytracing Renderer");
 		ImGui::Checkbox("Enable Raytracing", &m_isRaytracingEnabled);
+		if (m_isRaytracingEnabled) {
+			ImGui::Checkbox("Enable Accumulation", &m_isAccumulationEnabled);
+		}
+		
 		ImGui::End();
 
 		ImGui::Begin("Debug Renderer");
 		ImGui::Checkbox("Enable Debug", &m_isDebugEnabled);
-		
+
 		if (m_isDebugEnabled) {
 			ImGui::Text("Debug Renderer is enabled");
 			m_debugRenderSystem->updateUi();
-		}
-		else {
+		} else {
 			ImGui::Text("Debug Renderer is disabled");
 		}
 		ImGui::End();
+	}
+
+	void MasterRenderSystem::updateUi() {
+		updateSceneUi();
+
+		if (!m_isRaytracingEnabled) {
+			m_shadowMapRenderSystem->updateUi();
+		}
 	}
 }

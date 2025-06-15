@@ -41,13 +41,14 @@ namespace PXTEngine {
                         attrib.vertices[3 * index.vertex_index + 0],
                         attrib.vertices[3 * index.vertex_index + 1],
                         attrib.vertices[3 * index.vertex_index + 2],
+                        1.0f // unused
                     };
 
-                    vertex.color = {
+                    /*vertex.color = {
                         attrib.colors[3 * index.vertex_index + 0],
                         attrib.colors[3 * index.vertex_index + 1],
                         attrib.colors[3 * index.vertex_index + 2],
-                    };
+                    };*/
                 }
 
                 if (index.normal_index >= 0) {
@@ -55,6 +56,7 @@ namespace PXTEngine {
                         attrib.normals[3 * index.normal_index + 0],
                         attrib.normals[3 * index.normal_index + 1],
                         attrib.normals[3 * index.normal_index + 2],
+                        1.0f // unused
                     };
                 }
 
@@ -62,7 +64,8 @@ namespace PXTEngine {
                     vertex.uv = {
 
 						attrib.texcoords[2 * index.texcoord_index + 0],
-	                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+	                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+                        1.0f, 1.0f // unused
                     };
                 }
 
@@ -96,7 +99,7 @@ namespace PXTEngine {
             tangent = glm::normalize(tangent);
 
             float handedness =
-                (glm::dot(glm::cross(v0.normal, v1.normal), tangent) < 0.0f) ? -1.0f : 1.0f;
+                (glm::dot(glm::cross(glm::vec3(v0.normal), glm::vec3(v1.normal)), tangent) < 0.0f) ? -1.0f : 1.0f;
 
             glm::vec4 tangent4 = glm::vec4(tangent, handedness);
 
