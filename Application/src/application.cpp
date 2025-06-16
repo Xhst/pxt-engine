@@ -79,6 +79,7 @@ public:
 
         auto& rm = getResourceManager();
         auto vaseMesh = rm.get<Mesh>(MODELS_PATH + "smooth_vase.obj");
+        auto teapotMesh = rm.get<Mesh>(MODELS_PATH + "utah_teapot.obj");
 
         ImageInfo albedoInfo{};
         albedoInfo.format = RGBA8_SRGB;
@@ -106,13 +107,13 @@ public:
             .setMaterial(graniteMaterial).build());
 
         entity = getScene().createEntity("vase")
-            .add<TransformComponent>(glm::vec3{ 0.1f, 1.0f, 0.55f }, glm::vec3{ 2.0f, 2.0f, 2.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
-            .add<MeshComponent>(vaseMesh);
+            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.7f }, glm::vec3{ 0.15f, 0.15f, 0.15f }, glm::vec3{ glm::pi<float>(), -glm::pi<float>()/1.6, 0.0f })
+            .add<MeshComponent>(teapotMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
             .setMaterial(metallicMaterial).build()).tint = glm::vec3(1.0f, 0.66f, 0.545f);
 
         entity = getScene().createEntity("vase")
-            .add<TransformComponent>(glm::vec3{ -0.5f, 1.0f, 0.4f }, glm::vec3{ 1.8f, 1.4f, 1.8f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
+            .add<TransformComponent>(glm::vec3{ -0.65f, 1.0f, 0.4f }, glm::vec3{ 1.8f, 1.4f, 1.8f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
             .add<MeshComponent>(vaseMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
             .setMaterial(graniteMaterial).build()).tint = glm::vec3(0.13f, 0.24f, 0.35f);
