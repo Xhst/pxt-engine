@@ -38,6 +38,7 @@ add_subdirectory(Engine/vendor/glfw)
 add_subdirectory(Engine/vendor/glm)          
 add_subdirectory(Engine/vendor/tinyobjloader)  
 add_subdirectory(Engine/vendor/entt)
+add_subdirectory(Engine/vendor/spdlog)
 
 # Tracy Profiler
 option(TRACY_ENABLE " " ON)
@@ -105,6 +106,9 @@ if (WIN32)
     ${Vulkan_LIBRARIES}
   )
 
+  # To enable correct logging
+  add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+
   # Link everything to the target executable
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw                     
@@ -114,6 +118,7 @@ if (WIN32)
     vulkan-1  # This is the name of the Vulkan library
     imgui
     Tracy::TracyClient
+    spdlog::spdlog_header_only
   )
 
 

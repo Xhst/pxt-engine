@@ -1,4 +1,5 @@
 #include "graphics/context/physical_device.hpp"
+#include "core/logger.hpp"
 
 #include <vector>
 #include <iostream>
@@ -46,7 +47,7 @@ namespace PXTEngine {
             throw std::runtime_error("Failed to find GPUs with Vulkan support!");
         }
 
-        std::cout << "Device count: " << deviceCount << '\n';
+        PXT_INFO("Device count: {}", deviceCount);
 
         std::vector<VkPhysicalDevice> devices(deviceCount);
 
@@ -62,13 +63,13 @@ namespace PXTEngine {
             vkGetPhysicalDeviceProperties(device, &currentDeviceProperties);
 
             if (!isDeviceSuitable(device)) {
-				std::cout << currentDeviceProperties.deviceName << " is not suitable.\n";
+				PXT_WARN("{} is not suitable.", currentDeviceProperties.deviceName);
 				continue;
             }
 
 			uint32_t currentScore = scoreDevice(device);
 
-            std::cout << currentDeviceProperties.deviceName << ", Score: " << currentScore << '\n';
+            PXT_INFO("{}, Score: {}", currentDeviceProperties.deviceName, currentScore);
 
             if (currentScore > bestDeviceScore.score) {
                 bestDeviceScore.device = device;
@@ -87,7 +88,7 @@ namespace PXTEngine {
         // including its name, vendor, and supported Vulkan version.
         vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
 
-        std::cout << "Selected physical device: " << properties.deviceName << '\n';
+        PXT_INFO("Selected physical device: {}", properties.deviceName);
     }
 
     uint32_t PhysicalDevice::scoreDevice(const VkPhysicalDevice device) {
@@ -162,7 +163,8 @@ namespace PXTEngine {
         // Flag to track if any essential (non-NV) required extension is missing
         bool allRequiredSupported = true;
 
-        std::cout << "Required extensions not supported are:\n" << '\n';
+        std::stringstream ss;
+        ss << "Required extensions not supported are:\n";
 
 		std::vector<const char*> extensionsToCheck = deviceExtensions;
 
@@ -180,12 +182,12 @@ namespace PXTEngine {
 
                         // Check if it's the NVIDIA-specific ray tracing validation extension
                         if (extNameStr.find("VK_NV") != std::string::npos) {
-                            std::cout << extNameStr << " (OPTIONAL - Nvidia ext not supported, removed)\n";
+                            ss << extNameStr << " (OPTIONAL - Nvidia ext not supported, removed)\n";
                             return true; // Return true to mark this element for removal
                         }
                         else {
                             // This is a REQUIRED extension that is not supported
-                            std::cout << extNameStr << " (REQUIRED - NOT SUPPORTED)\n";
+                            ss << extNameStr << " (REQUIRED - NOT SUPPORTED)\n";
                             allRequiredSupported = false; 
                             return false; // Keep this in the list so vkCreateDevice fails with its error
                         }
@@ -198,6 +200,8 @@ namespace PXTEngine {
         if (allRequiredSupported) {
             deviceExtensions = extensionsToCheck;
         }
+
+		PXT_WARN(ss.str());
 
         return allRequiredSupported;
     }

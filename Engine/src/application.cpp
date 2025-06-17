@@ -275,7 +275,10 @@ namespace PXTEngine {
 
 int main() {
 
+	PXTEngine::Logger::init();
+
     try {
+
         auto app = PXTEngine::initApplication();
 
         app->start();

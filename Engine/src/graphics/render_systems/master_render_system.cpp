@@ -1,4 +1,6 @@
 #include "graphics/render_systems/master_render_system.hpp"
+#include "core/logger.hpp"
+#include "utils/vk_enum_str.h"
 
 namespace PXTEngine {
 	MasterRenderSystem::MasterRenderSystem(Context& context, Renderer& renderer, 
@@ -24,7 +26,7 @@ namespace PXTEngine {
 			VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT
 		);
 
-		std::cout << "Offscreen color format: " << m_offscreenColorFormat << std::endl;
+		PXT_INFO("Offscreen color format: {}", STR_VK_FORMAT(m_offscreenColorFormat));
 
 		if (m_offscreenColorFormat == VK_FORMAT_UNDEFINED) {
 			throw std::runtime_error("Failed to find a suitable offscreen color format for MasterRenderSystem's render target!");
