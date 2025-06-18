@@ -63,10 +63,8 @@ namespace PXTEngine {
 		m_sceneImage = sceneImage;
 	}
 
-	uint32_t RayTracingRenderSystem::incrementAndGetPathTracingAccumulationFrameCount() {
-		m_ptAccumulationFrameCount++;
-		
-		return m_ptAccumulationFrameCount;
+	uint32_t RayTracingRenderSystem::getAndIncrementPathTracingAccumulationFrameCount() {		
+		return m_ptAccumulationFrameCount++;
 	}
 
 	void RayTracingRenderSystem::defineShaderGroups() {

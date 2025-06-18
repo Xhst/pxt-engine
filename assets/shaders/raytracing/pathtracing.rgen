@@ -114,7 +114,7 @@ void main()
 
     if (ubo.accumulationEnabled) {
         vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
-        float weight = 1.0 / float(ubo.ptAccumulationCount);
+        float weight = 1.0 / float(ubo.ptAccumulationCount + 1);
         finalColor = mix(previousColor, finalColor, weight);
     }
 

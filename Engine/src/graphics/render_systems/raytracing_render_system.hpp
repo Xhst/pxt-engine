@@ -30,7 +30,7 @@ namespace PXTEngine {
         void updateSceneImage(Shared<VulkanImage> sceneImage);
 
         void resetPathTracingAccumulationFrameCount() { m_ptAccumulationFrameCount = 0; }
-        uint32_t incrementAndGetPathTracingAccumulationFrameCount();
+        uint32_t getAndIncrementPathTracingAccumulationFrameCount();
 
     private:
 		void createDescriptorSets();

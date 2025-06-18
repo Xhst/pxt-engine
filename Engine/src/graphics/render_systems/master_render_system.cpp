@@ -352,7 +352,7 @@ namespace PXTEngine {
 		if (m_isRaytracingEnabled) {
 			if (m_isAccumulationEnabled) {
 				ubo.accumulationEnabled = true;
-				ubo.ptAccumulationCount = m_rayTracingRenderSystem->incrementAndGetPathTracingAccumulationFrameCount();
+				ubo.ptAccumulationCount = m_rayTracingRenderSystem->getAndIncrementPathTracingAccumulationFrameCount();
 			} else {
 				ubo.accumulationEnabled = false;
 				ubo.ptAccumulationCount = 0;
