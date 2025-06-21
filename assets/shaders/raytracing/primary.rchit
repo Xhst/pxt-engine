@@ -9,34 +9,10 @@
 
 #include "../common/math.glsl"
 #include "../common/ray.glsl"
+#include "../common/geometry.glsl"
 #include "../ubo/global_ubo.glsl"
 #include "../material/surface_normal.glsl"
 #include "../lighting/blinn_phong_lighting.glsl"
-
-
-struct Vertex {
-    vec4 position;  // Position of the vertex.
-    vec4 normal;    // Normal vector for lighting calculations.
-    vec4 tangent;   // Tangent vector for lighting calculations.
-    vec4 uv;        // Texture coordinates for the vertex.
-};
-
-/**
- * References of the vertex buffers.
- * It can be used to access vertex data using the buffer address (uint64_t)
- */
-layout(buffer_reference, buffer_reference_align = 16, std430) readonly buffer VertexBuffer {
-    Vertex v[];
-};
-
-/**
- * References of the index buffers.
- * It can be used to access index data using the buffer address (uint64_t)
- * The indices are stored as uint32 values, and each triangle is represented by 3 indices.
- */
-layout(buffer_reference, buffer_reference_align = 16, std430) readonly buffer IndexBuffer {
-    uint i[]; 
-};
 
 layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS; // Used for shadows
 
@@ -52,6 +28,8 @@ struct Material {
 	int roughnessMapIndex;
     int emissiveMapIndex;
 };
+
+layout(set = 2, binding = 0) uniform sampler2D textures[];
 
 layout(set = 4, binding = 0) readonly buffer materials {
     Material materials[];
@@ -101,16 +79,12 @@ void main()
     // Retrieve the vertices of the triangle using the indices.
     Vertex v0 = vertices.v[i0];
     Vertex v1 = vertices.v[i1];
-    Vertex v2 = vertices.v[i2];
-
-    // Calculate barycentric coordinates from the hit attributes.
-    const vec3 barycentrics = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
-    
+    Vertex v2 = vertices.v[i2]; 
     // Interpolate the vertex attributes using barycentric coordinates.
-    const vec4 position = barycentricLerp(v0.position, v1.position, v2.position, barycentrics);
-    const vec4 objectNormal = barycentricLerp(v0.normal, v1.normal, v2.normal, barycentrics);
-    const vec4 objectTangent = barycentricLerp(v0.tangent, v1.tangent, v2.tangent, barycentrics);
-    const vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
+    const vec4 position = barycentricLerp(v0.position, v1.position, v2.position, HitAttribs);
+    const vec4 objectNormal = barycentricLerp(v0.normal, v1.normal, v2.normal, HitAttribs);
+    const vec4 objectTangent = barycentricLerp(v0.tangent, v1.tangent, v2.tangent, HitAttribs);
+    const vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, HitAttribs) * instance.textureTilingFactor;
 
     // Normal Matrix (or Model-View Matrix) used to trasform from object space to world space.
     // its just the inverse of the gl_ObjectToWorld3x4EXT
