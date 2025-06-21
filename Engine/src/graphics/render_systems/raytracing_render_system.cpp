@@ -88,13 +88,13 @@ namespace PXTEngine {
 					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rmiss.spv"}
 				}
 			},
-			// Shadow Miss Group
+			// Visibility Miss Group
 			{
 				VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
 				{
 					// Shader stages + filepaths
 					// here we can have multiple miss shaders
-					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "shadow.rmiss.spv"}
+					{VK_SHADER_STAGE_MISS_BIT_KHR, SPV_SHADERS_PATH + "visibility.rmiss.spv"}
 				}
 			},
 			// Closest Hit Group (Triangle Hit Group)
@@ -105,7 +105,16 @@ namespace PXTEngine {
 					// here there can be a chit, ahit or intersection shader (every combination of these)
 					{VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, SPV_SHADERS_PATH + "pathtracing.rchit.spv"}
 				}
-			}
+			},
+			// Closest Hit Group (Visibility Hit Group)
+			{
+				VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
+				{
+					// Shader stages + filepaths
+					// here there can be a chit, ahit or intersection shader (every combination of these)
+					{VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, SPV_SHADERS_PATH + "visibility.rchit.spv"}
+				}
+			},
 		};
 	}
 
@@ -117,7 +126,8 @@ namespace PXTEngine {
 			m_storageImageDescriptorSetLayout->getDescriptorSetLayout(),
 			m_materialRegistry.getDescriptorSetLayout(),
 			m_skybox->getDescriptorSetLayout(),
-			m_rtSceneManager.getMeshInstanceDescriptorSetLayout()
+			m_rtSceneManager.getMeshInstanceDescriptorSetLayout(),
+			m_rtSceneManager.getEmittersDescriptorSetLayout()
 		};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -326,14 +336,15 @@ namespace PXTEngine {
 	void RayTracingRenderSystem::render(FrameInfo& frameInfo, Renderer& renderer) {
 		m_pipeline->bind(frameInfo.commandBuffer);
 
-		std::array<VkDescriptorSet, 7> descriptorSets = { 
+		std::array<VkDescriptorSet, 8> descriptorSets = { 
 			frameInfo.globalDescriptorSet, 
 			m_rtSceneManager.getTLASDescriptorSet(), 
 			m_textureRegistry.getDescriptorSet(),
 			m_storageImageDescriptorSet,
 			m_materialRegistry.getDescriptorSet(),
 			m_skybox->getDescriptorSet(),
-			m_rtSceneManager.getMeshInstanceDescriptorSet()
+			m_rtSceneManager.getMeshInstanceDescriptorSet(),
+			m_rtSceneManager.getEmittersDescriptorSet()
 		};
 	
 		vkCmdBindDescriptorSets(
