@@ -22,13 +22,13 @@ public:
 
         auto environment = getScene().getEnvironment();
 
-        environment->setAmbientLight({ 0.67f, 0.85f, 0.9f, 0.25f });
+        environment->setAmbientLight({ 1.0, 1.0, 1.0, 0.6f });
         environment->setSkybox(skyboxTextures);
     }
 
     void createCameraEntity() {
         Entity camera = getScene().createEntity("camera")
-            .add<TransformComponent>(glm::vec3{ -0.1f, -0.2f, -0.9f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec3{ -glm::pi<float>() / 4, 0.0f, 0.0f })
+            .add<TransformComponent>(glm::vec3{ -0.1f, -0.4f, -1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec3{ -glm::pi<float>() / 4, 0.0f, 0.0f })
             .add<CameraComponent>();
 
         camera.addAndGet<ScriptComponent>().bind<CameraController>();
@@ -101,12 +101,12 @@ public:
         rm.add(graniteMaterial, "brown_granite");
 
         Entity entity = getScene().createEntity("vase")
-            .add<TransformComponent>(glm::vec3{ 0.5f, 1.0f, 0.2f }, glm::vec3{ 1.0f, 1.0f, 1.0f }, glm::vec3{0.0f, glm::pi<float>()/4, 0.0f})
+            .add<TransformComponent>(glm::vec3{ -0.75f, 1.0f, 0.1f }, glm::vec3{ 1.0f, 1.0f, 1.0f }, glm::vec3{0.0f, glm::pi<float>()/4, 0.0f})
             .add<MeshComponent>(vaseMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
             .setMaterial(graniteMaterial).build());
 
-        entity = getScene().createEntity("vase")
+        entity = getScene().createEntity("teapot")
             .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.7f }, glm::vec3{ 0.15f, 0.15f, 0.15f }, glm::vec3{ glm::pi<float>(), -glm::pi<float>()/1.6, 0.0f })
             .add<MeshComponent>(teapotMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
@@ -127,7 +127,7 @@ public:
         albedoInfo.format = RGBA8_SRGB;
 
         auto rubikMaterial = Material::Builder()
-            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/rubik/albedo.jpg"))
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/rubik/albedo.jpg", &albedoInfo))
             .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/rubik/roughness.jpg"))
             .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/rubik/normal.jpg"))
             .setAmbientOcclusionMap(rm.get<Image>(TEXTURES_PATH + "/rubik/ao.jpg"))
@@ -135,37 +135,66 @@ public:
         rm.add(rubikMaterial, "rubik_material");
 
         Entity entity = getScene().createEntity("rubik")
-            .add<TransformComponent>(glm::vec3{ -0.75f, 0.9f, -0.1f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>()/2.5, 0.0f})
+            .add<TransformComponent>(glm::vec3{ -0.75f, 0.9f, -0.3f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>()/2.5, 0.0f})
             .add<MeshComponent>(rubikMesh)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setMaterial(rubikMaterial).build());
 
     }
 
-    void createBigCube() {
+    void createLamp() {
 		auto& rm = getResourceManager();
 
         ImageInfo albedoInfo{};
         albedoInfo.format = RGBA8_SRGB;
 
-        auto material = Material::Builder()
-            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png", &albedoInfo))
-            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
-            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
-            .setEmissiveColor({1.0, 1.0, 1.0, 15.0})
+        auto penMaterial = Material::Builder()
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/lamp/albedo.png", &albedoInfo))
+            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/lamp/roughness.png"))
+            .setMetallicMap(rm.get<Image>(TEXTURES_PATH + "/lamp/metallic.png"))
+            .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/lamp/normal.png"))
+            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "/lamp/emissive.png"))
+            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 17.0f })
             .build();
-        rm.add(material, "wall_stone_material");
+        rm.add(penMaterial, "lamp_material");
 
-        // add a cube
-        Entity cubeEntity = getScene().createEntity("Cube")
-            .add<TransformComponent>(glm::vec3{ 1.0f, 0.5f, 1.0f }, glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
-            .add<MeshComponent>(rm.get<Mesh>(MODELS_PATH + "cube.obj"))
+        auto penMesh = rm.get<Mesh>(MODELS_PATH + "lamp.obj");
+
+        Entity entity = getScene().createEntity("lamp")
+            .add<TransformComponent>(glm::vec3{ 0.6f, 1.0f, 0.6f }, glm::vec3{ 2.4f, 2.8f, 2.4f }, glm::vec3{ glm::pi<float>(), glm::pi<float>() / 4, 0.0f })
+            .add<MeshComponent>(penMesh)
             .add<MaterialComponent>(MaterialComponent::Builder()
-                .setMaterial(material)
-                .setTilingFactor(8.0f)
-                .build());
+                .setMaterial(penMaterial).build());
+    }
 
-        cubeEntity.get<MaterialComponent>().tint = glm::vec4{ 0.9, 0.4, 0.3, 1.0 };
+    void createPencilAndPen() {
+        auto& rm = getResourceManager();
+
+        ImageInfo albedoInfo{};
+        albedoInfo.format = RGBA8_SRGB;
+
+        auto pencilMaterial = Material::Builder()
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/pencil/albedo.png", &albedoInfo))
+            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/pencil/roughness.png"))
+			.setMetallicMap(rm.get<Image>(TEXTURES_PATH + "/pencil/metallic.png"))
+            .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/pencil/normal.png"))
+            .build();
+        rm.add(pencilMaterial, "pencil_material");
+
+        auto pencilMesh = rm.get<Mesh>(MODELS_PATH + "pencil.obj");
+
+        Entity entity = getScene().createEntity("pencil")
+            .add<TransformComponent>(glm::vec3{ 0.65f, 0.985f, -0.1f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>() / 10, 0.0f })
+            .add<MeshComponent>(pencilMesh)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(pencilMaterial).build());
+
+        entity = getScene().createEntity("pencil2")
+            .add<TransformComponent>(glm::vec3{ 0.55f, 0.985f, 0.0f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>() / 12, 0.0f })
+            .add<MeshComponent>(pencilMesh)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(pencilMaterial).build());
+        
     }
 
     void createLights() {
@@ -193,7 +222,8 @@ public:
         createFloor();
         createVasesWithRandomTransforms(5);
         createRubikCube();
-        createBigCube();
+        createLamp();
+        createPencilAndPen();
         createLights();
 
         auto& rm = getResourceManager();
