@@ -14,6 +14,7 @@
 #include "../ubo/global_ubo.glsl"
 #include "../material/surface_normal.glsl"
 #include "../material/pbr/bsdf.glsl"
+#include "sky.glsl"
 
 // Min depth for Russian Roulette termination
 #define MIN_DEPTH 3
@@ -50,11 +51,13 @@ layout(set = 4, binding = 0) readonly buffer materialsSSBO {
     Material m[];
 } materials;
 
-layout(set = 5, binding = 0) uniform samplerCube skyboxSampler;
-
 layout(set = 6, binding = 0, std430) readonly buffer meshInstancesSSBO {
     MeshInstanceDescription i[]; 
 } meshInstances;
+
+layout(set = 7, binding = 0, std430) readonly buffer emittersSSBO {
+    Emitter e[]; 
+} emitters;
 
 // --- Payloads ---
 layout(location = 0) rayPayloadInEXT PathTracePayload p_pathTrace;
@@ -131,19 +134,19 @@ void main() {
     vec3 worldNormal = tbn[2];
 
     SurfaceData surface;
+    surface.tbn = tbn;
     surface.normal = worldToTangent(tbn, surfaceNormal);
     surface.albedo = getAlbedo(material, uv, instance.textureTintColor);
     surface.metalness = getMetalness(material, uv);
     surface.roughness = getRoughness(material, uv);
     surface.reflectance = calculateReflectance(surface.albedo, surface.metalness);
     surface.specularProbability = calculateSpecularProbability(surface.albedo, surface.metalness, surface.reflectance);
-
+    
     vec3 emission = getEmission(material, uv);
     p_pathTrace.radiance += emission;
 
     if (maxComponent(emission) > 0.0) {
         p_pathTrace.done = true;
-        return;
     }
 
     const vec3 worldPosition = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_RayTmaxEXT;
