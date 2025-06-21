@@ -2,6 +2,9 @@
 #define _MATH_
 
 #define PI 3.14159265359
+#define TWO_PI 6.28318530718
+#define INV_PI 0.31830988618 
+#define INV_TWO_PI 0.15915494309
 
 #define INT_MAX 2147483647
 #define INT_MIN -2147483648
@@ -39,6 +42,11 @@ float pow2(float x) {
     return x * x;
 }
 
+float pow4(float x) {
+    float x2 = x * x;
+    return x2 * x2;
+}
+
 /**
  * Computes x^5 using only multiply operations.
  */
@@ -47,17 +55,25 @@ float pow5(float x) {
     return x2 * x2 * x;
 }
 
-vec2 barycentricLerp(vec2 a, vec2 b, vec2 c, vec3 barycentrics) {
-    return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
+float maxComponent(vec3 v) {
+    return max(max(v.r, v.g), v.b);
 }
 
-vec3 barycentricLerp(vec3 a, vec3 b, vec3 c, vec3 barycentrics) {
-    return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
+vec2 barycentricLerp(vec2 a, vec2 b, vec2 c, vec2 barycentrics) {
+    const float bZ = (1.0 - barycentrics.x - barycentrics.y);
+    return bZ * a + barycentrics.x * b + barycentrics.y * c;
 }
 
-vec4 barycentricLerp(vec4 a, vec4 b, vec4 c, vec3 barycentrics) {
-    return a * barycentrics.x + b * barycentrics.y + c * barycentrics.z;
+vec3 barycentricLerp(vec3 a, vec3 b, vec3 c, vec2 barycentrics) {
+    const float bZ = (1.0 - barycentrics.x - barycentrics.y);
+    return bZ * a + barycentrics.x * b + barycentrics.y * c;
 }
+
+vec4 barycentricLerp(vec4 a, vec4 b, vec4 c, vec2 barycentrics) {
+    const float bZ = (1.0 - barycentrics.x - barycentrics.y);
+    return bZ * a + barycentrics.x * b + barycentrics.y * c;
+}
+
 
 
 
