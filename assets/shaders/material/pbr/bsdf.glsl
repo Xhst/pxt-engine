@@ -4,6 +4,7 @@
 #include "../../common/math.glsl"
 
 struct SurfaceData {
+    mat3 tbn;
     vec3 normal;
     vec3 albedo;
     vec3 reflectance;
