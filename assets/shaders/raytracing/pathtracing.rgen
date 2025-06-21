@@ -6,33 +6,10 @@
 // Include the global UBO definition
 #include "../ubo/global_ubo.glsl"
 #include "../common/ray.glsl"
+#include "../common/payload.glsl"
 #include "../common/random.glsl"
 
-
-// Define the ray payload structure. This struct is passed between shader stages.
-// The layout(location = 0) specifies the location for the payload.
-layout(location = 0) rayPayloadEXT struct RayPayload {
-    // Accumulated color and energy along the path.
-    vec3 radiance;
-
-    // The accumulated material reflectance/transmittance. It's multiplied at each bounce.
-    vec3 throughput;
-
-    // Current number of bounces. Used to limit path length and for Russian Roulette.
-    int depth;
-
-    // The origin of the ray in world space.
-    vec3 origin; 
-
-    // The direction of the ray in world space.
-    vec3 direction;
-
-    // A flag to signal that the path has been terminated (e.g., hit the sky, absorbed).
-    bool done;
-
-    // A seed for the random number generator, updated at each bounce.
-    uint seed;
-} payload;
+layout(location = 0) rayPayloadEXT PathTracePayload p_pathTrace;
 
 // Declare the top-level acceleration structure (TLAS)
 layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
@@ -52,8 +29,8 @@ void main()
 
     vec3 finalColor = vec3(0.0);
 
-    const uint samplesPerPixel = 5;
-    const int maxBounces = 15;
+    const uint samplesPerPixel = 1;
+    const int maxBounces = 8;
 
     for (uint currentSample = 0; currentSample < samplesPerPixel; currentSample++) {
         uint seed = tea(gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x, uint(ubo.frameCount));
@@ -82,32 +59,32 @@ void main()
         float tMin    = 0.001;                // Minimum intersection distance
         float tMax    = 10000.0;              // Maximum intersection distance
 
-        payload.radiance = vec3(0.0);
-        payload.throughput = vec3(1.0);
-        payload.origin = worldRay.origin;
-        payload.direction = worldRay.direction;
-        payload.depth = 0;
-        payload.done = false;
-        payload.seed = seed;
+        p_pathTrace.radiance = vec3(0.0);
+        p_pathTrace.throughput = vec3(1.0);
+        p_pathTrace.origin = worldRay.origin;
+        p_pathTrace.direction = worldRay.direction;
+        p_pathTrace.depth = 0;
+        p_pathTrace.done = false;
+        p_pathTrace.seed = seed;
 
         // while hangs some GPUs for some reason
-        while(!payload.done && payload.depth < maxBounces) {
+        while(!p_pathTrace.done && p_pathTrace.depth < maxBounces) {
             traceRayEXT(
-                TLAS,               // Top-level acceleration structure
-                rayFlags,           // Ray flags
-                cullMask,           // Cull mask
-                0,                  // SBT record offset for raygen shader (usually 0)
-                0,                  // SBT record stride for raygen shader (usually 0)
-                0,                  // Miss shader index (which miss shader in the SBT to use)
-                payload.origin,     // Ray origin
-                tMin,               // Ray min distance
-                payload.direction,  // Ray direction
-                tMax,               // Ray max distance
-                0                   // Payload location (must match the rayPayloadEXT layout location)
+                TLAS,               
+                rayFlags,           
+                cullMask,           
+                0,                  
+                0,                  
+                0,                  
+                p_pathTrace.origin,     
+                tMin,               
+                p_pathTrace.direction,  
+                tMax,               
+                0                   
             );
         }
 
-        finalColor += payload.radiance;
+        finalColor += p_pathTrace.radiance * p_pathTrace.throughput;
     }
 
     finalColor /= samplesPerPixel;
@@ -116,7 +93,7 @@ void main()
         vec3 previousColor = imageLoad(outputImage, ivec2(gl_LaunchIDEXT.xy)).rgb;
         float weight = 1.0 / float(ubo.ptAccumulationCount + 1);
         finalColor = mix(previousColor, finalColor, weight);
-    }
+    } 
 
     finalColor = saturate(finalColor);
     if (isnan(finalColor.r) || isnan(finalColor.g) || isnan(finalColor.b) ||
