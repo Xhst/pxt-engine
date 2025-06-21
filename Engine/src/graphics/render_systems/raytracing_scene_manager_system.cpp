@@ -11,6 +11,7 @@ namespace PXTEngine {
 		m_descriptorAllocator(allocator) {
 		createTLASDescriptorSet();
 		createMeshInstanceDescriptorSet();
+		createEmittersDescriptorSet();
 	}
 
 	RayTracingSceneManagerSystem::~RayTracingSceneManagerSystem() {
@@ -19,7 +20,6 @@ namespace PXTEngine {
 
 
 	void RayTracingSceneManagerSystem::createTLAS(FrameInfo& frameInfo) {
-		if (m_tlas != VK_NULL_HANDLE) return;
 
 		VkAccelerationStructureKHR newTlas = VK_NULL_HANDLE;
 
@@ -61,6 +61,15 @@ namespace PXTEngine {
 
 			m_meshInstanceData.push_back(meshInstanceData);
 
+			// register entities with emissive materials
+			if (materialComponent.material->isEmissive()) {
+				EmitterData emitterData{};
+				emitterData.instanceIndex = instanceIndex;
+				emitterData.numberOfFaces = vkMesh->getIndexCount() / 3; 
+				m_emitters.push_back(emitterData);
+			}
+
+
 			// we can get it in the shader via InstanceCustomIndexKHR
 			instance.instanceCustomIndex = instanceIndex++; // Unique index for each instance
 
@@ -75,8 +84,9 @@ namespace PXTEngine {
 			instances.push_back(instance);
 		}
 
-		//TODO: remove
+		//TODO: maybe move from here?
 		updateMeshInstanceDescriptorSet();
+		updateEmittersDescriptorSet();
 
 		// Upload Instance Data 
 		uint32_t instanceCount = static_cast<uint32_t>(instances.size());
@@ -326,5 +336,50 @@ namespace PXTEngine {
 		DescriptorWriter(m_context, *m_meshInstanceDescriptorSetLayout)
 			.writeBuffer(0, &bufferInfo)
 			.updateSet(m_meshInstanceDescriptorSet);
+	}
+
+	void RayTracingSceneManagerSystem::createEmittersDescriptorSet() {
+		m_emittersDescriptorSetLayout = DescriptorSetLayout::Builder(m_context)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, 1)
+			.build();
+		m_descriptorAllocator->allocate(
+			m_emittersDescriptorSetLayout->getDescriptorSetLayout(),
+			m_emittersDescriptorSet
+		);
+	}
+
+	void RayTracingSceneManagerSystem::updateEmittersDescriptorSet() {
+		if (m_emittersBuffer != nullptr) {
+			return;
+		}
+
+		VkDeviceSize bufferSize = sizeof(EmitterData) * m_emitters.size();
+
+		Unique<VulkanBuffer> stagingBuffer = createUnique<VulkanBuffer>(
+			m_context,
+			bufferSize,
+			1,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		);
+		stagingBuffer->map();
+		stagingBuffer->writeToBuffer(m_emitters.data(), bufferSize);
+		stagingBuffer->unmap();
+
+		m_emittersBuffer = createUnique<VulkanBuffer>(
+			m_context,
+			bufferSize,
+			1,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		);
+
+		m_context.copyBuffer(stagingBuffer->getBuffer(), m_emittersBuffer->getBuffer(), bufferSize);
+
+		auto bufferInfo = m_emittersBuffer->descriptorInfo();
+
+		DescriptorWriter(m_context, *m_emittersDescriptorSetLayout)
+			.writeBuffer(0, &bufferInfo)
+			.updateSet(m_emittersDescriptorSet);
 	}
 }
