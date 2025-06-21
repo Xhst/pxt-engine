@@ -67,6 +67,8 @@ namespace PXTEngine {
         const glm::vec4& getEmissiveColor() const;
         Shared<Image> getEmissiveMap() const;
 
+        bool isEmissive();
+
     protected:
         glm::vec4 m_albedoColor{ 1.0f };
         Shared<Image> m_albedoMap{ nullptr };
