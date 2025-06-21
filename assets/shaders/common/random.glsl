@@ -42,6 +42,10 @@ uint nextUint(inout uint seed, uint max) {
     return result % max;
 }
 
+vec2 randomVec2(inout uint seed) {
+    return vec2(randomFloat(seed), randomFloat(seed));
+}
+
 vec3 randomVec3(inout uint seed) {
     return vec3(randomFloat(seed), randomFloat(seed), randomFloat(seed));
 }
