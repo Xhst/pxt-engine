@@ -106,9 +106,13 @@ namespace PXTEngine {
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         vkResetFences(m_context.getDevice(), 1, &m_inFlightFences[m_currentFrame]);
-        if (vkQueueSubmit(m_context.getGraphicsQueue(), 1, &submitInfo,
-                          m_inFlightFences[m_currentFrame]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to submit draw command buffer!");
+
+        VkResult vkResult = vkQueueSubmit(m_context.getGraphicsQueue(), 1, &submitInfo,
+            m_inFlightFences[m_currentFrame]);
+
+        if (vkResult != VK_SUCCESS) {
+			PXT_ERROR("Failed to submit draw command buffer: {}", STR_VK_RESULT(vkResult));
+            throw std::runtime_error("");
         }
 
         VkPresentInfoKHR presentInfo = {};
