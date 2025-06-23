@@ -59,6 +59,12 @@ namespace PXTEngine {
 			meshInstanceData.textureTintColor = glm::vec4(materialComponent.tint, 1.0f);
 			meshInstanceData.textureTilingFactor = materialComponent.tilingFactor;
 
+			// TODO: may be passed as mat4x3 in the shader for memory bandwidth optimization
+			glm::mat4 transform = transformComponent.mat4();
+
+			meshInstanceData.objectToWorldMatrix = transform;
+			meshInstanceData.worldToObjectMatrix = glm::inverse(transform);
+
 			m_meshInstanceData.push_back(meshInstanceData);
 
 			// register entities with emissive materials
@@ -353,7 +359,10 @@ namespace PXTEngine {
 			return;
 		}
 
-		VkDeviceSize bufferSize = sizeof(EmitterData) * m_emitters.size();
+		uint32_t emitterCount = static_cast<uint32_t>(m_emitters.size());
+
+		VkDeviceSize emitterDataSize = sizeof(EmitterData) * emitterCount;
+		VkDeviceSize bufferSize = emitterDataSize + sizeof(emitterCount);
 
 		Unique<VulkanBuffer> stagingBuffer = createUnique<VulkanBuffer>(
 			m_context,
@@ -363,7 +372,8 @@ namespace PXTEngine {
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		);
 		stagingBuffer->map();
-		stagingBuffer->writeToBuffer(m_emitters.data(), bufferSize);
+		stagingBuffer->writeToBuffer((void*) &emitterCount, sizeof(emitterCount));
+		stagingBuffer->writeToBuffer(m_emitters.data(), emitterDataSize, sizeof(emitterCount));
 		stagingBuffer->unmap();
 
 		m_emittersBuffer = createUnique<VulkanBuffer>(

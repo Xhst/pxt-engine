@@ -14,9 +14,11 @@ namespace PXTEngine {
 		float textureTilingFactor;					// offset 20, size 4
 													// offset 24 -> 8 bit padding 
 		alignas(16) glm::vec4 textureTintColor;		// offset 32, size 16
+		alignas(16) glm::mat4 objectToWorldMatrix;				// offset 48, size 64 (4x4 matrix, 16 bytes per row)
+		alignas(16) glm::mat4 worldToObjectMatrix;				// offset 112, size 64 (4x4 matrix, 16 bytes per row)
 	};
 
-	struct alignas(16) EmitterData {
+	struct alignas(uint32_t) EmitterData {
 		uint32_t instanceIndex;
 		uint32_t numberOfFaces;
 	};
