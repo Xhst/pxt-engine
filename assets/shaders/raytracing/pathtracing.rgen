@@ -1,6 +1,7 @@
 #version 460
 
 #extension GL_EXT_ray_tracing : require
+#extension GL_EXT_debug_printf : enable
 #extension GL_GOOGLE_include_directive : require
 
 // Include the global UBO definition
@@ -83,8 +84,8 @@ void main()
                 0                   
             );
         }
-
-        finalColor += p_pathTrace.radiance * p_pathTrace.throughput;
+        
+        finalColor += p_pathTrace.radiance;  
     }
 
     finalColor /= samplesPerPixel;

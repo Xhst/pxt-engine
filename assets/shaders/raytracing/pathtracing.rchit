@@ -1,5 +1,6 @@
 #version 460
 #extension GL_EXT_ray_tracing : require
+#extension GL_EXT_debug_printf : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : require
 #extension GL_EXT_scalar_block_layout : require
@@ -36,6 +37,8 @@ struct MeshInstanceDescription {
     uint materialIndex; 
     float textureTilingFactor;
     vec4 textureTintColor;
+    mat4 objectToWorld;
+    mat4 worldToObject;
 };
 
 struct Emitter {
@@ -56,6 +59,7 @@ layout(set = 6, binding = 0, std430) readonly buffer meshInstancesSSBO {
 } meshInstances;
 
 layout(set = 7, binding = 0, std430) readonly buffer emittersSSBO {
+    uint numEmitters;
     Emitter e[]; 
 } emitters;
 
@@ -67,27 +71,168 @@ layout(location = 1) rayPayloadEXT bool p_isVisible;
 hitAttributeEXT vec2 barycentrics;
 
 vec3 getAlbedo(const Material material, const vec2 uv, const vec4 tintColor) {
-    vec3 albedo = texture(textures[material.albedoMapIndex], uv).rgb;
+    vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb;
     return albedo * tintColor.rgb;
 }
 
 vec3 getNormal(const Material material, const vec2 uv) {
-    return texture(textures[material.normalMapIndex], uv).rgb;
+    return texture(textures[nonuniformEXT(material.normalMapIndex)], uv).rgb;
 }
 
 vec3 getEmission(const Material material, const vec2 uv) {
-    vec3 emissive = texture(textures[material.emissiveMapIndex], uv).rgb;
+    vec3 emissive = texture(textures[nonuniformEXT(material.emissiveMapIndex)], uv).rgb;
 
     // The alpha channels is used as intensity
     return emissive * material.emissiveColor.rgb * material.emissiveColor.a;
 }
 
 float getRoughness(const Material material, const vec2 uv) {
-    return texture(textures[material.roughnessMapIndex], uv).r;
+    return pow2(texture(textures[nonuniformEXT(material.roughnessMapIndex)], uv).r);
 }
 
 float getMetalness(const Material material, const vec2 uv) {
-    return texture(textures[material.metallicMapIndex], uv).r;
+    return texture(textures[nonuniformEXT(material.metallicMapIndex)], uv).r;
+}
+
+struct EmitterSample {
+    vec3 radiance;
+    vec3 inLightDir;
+    float lightDistance;
+    float pdf;
+    bool isVisible; 
+};
+
+void sampleEmitter(
+    SurfaceData surface,
+    vec3 worldPosition, 
+    out EmitterSample smpl
+) {
+    smpl.radiance = vec3(0.0);
+    smpl.lightDistance = FLT_MAX;
+    smpl.pdf = 0.0;
+    smpl.isVisible = false;
+
+    const uint numEmitters = uint(emitters.numEmitters);
+
+    if (numEmitters == 0) {
+        return;
+    }
+    
+    // We add one extra emitters for the sky
+    const uint totalSamplableEmitters = numEmitters + 1;
+
+    const uint emitterIndex = nextUint(p_pathTrace.seed, totalSamplableEmitters);
+
+    vec3 worldInLightDir = vec3(0.0);
+
+    if (emitterIndex == numEmitters) {
+        // Sample the sky as an emitter
+        smpl.inLightDir = sampleCosineWeightedHemisphere(randomVec2(p_pathTrace.seed));
+
+        worldInLightDir = tangentToWorld(surface.tbn, smpl.inLightDir);
+
+        smpl.pdf = pdfCosineWeightedHemisphere(max(smpl.inLightDir.z, 0)) / totalSamplableEmitters;
+        smpl.radiance = getSkyRadiance(worldInLightDir);
+
+        if (smpl.radiance == vec3(0.0)) return;
+
+    } else {
+        // Sample a mesh emitter
+        const Emitter emitter = emitters.e[emitterIndex];
+        MeshInstanceDescription instance = meshInstances.i[emitter.instanceIndex];
+        Material material = materials.m[instance.materialIndex];
+        
+        uint faceIndex = nextUint(p_pathTrace.seed, emitter.numberOfFaces);
+
+        // Generate barycentric coordinates for the triangle
+        vec2 u = randomVec2(p_pathTrace.seed);
+        float uxsqrt = sqrt(u.x);
+        vec2 emitterBarycentrics = vec2(1.0 - uxsqrt, u.y * uxsqrt);
+    
+        Triangle emitterTriangle = getTriangle(instance.indexAddress, instance.vertexAddress, faceIndex);
+
+        vec2 uv = getTextureCoords(emitterTriangle, emitterBarycentrics) * instance.textureTilingFactor;
+        smpl.radiance = getEmission(material, uv);
+
+        if (smpl.radiance == vec3(0.0)) {
+            return; 
+        }
+
+        vec3 emitterObjPosition = getPosition(emitterTriangle, emitterBarycentrics);
+        vec3 emitterObjNormal = getNormal(emitterTriangle, emitterBarycentrics);
+
+        mat4 emitterObjectToWorld = mat4(instance.objectToWorld);
+        // The upper 3x3 of the world-to-object matrix is the normal matrix
+        mat3 emitterNormalMatrix = mat3(instance.worldToObject);
+
+        vec3 emitterPosition = vec3(emitterObjectToWorld * vec4(emitterObjPosition, 1.0));
+        vec3 emitterNormal = normalize(emitterNormalMatrix * emitterObjNormal);
+
+        // vector from emitter the surface to the emitter
+        vec3 outLightVec = worldPosition - emitterPosition;
+
+        smpl.lightDistance = length(outLightVec);
+
+        float area = calculateTriangleArea(emitterTriangle);
+
+        if (area <= 0.0 || smpl.lightDistance <= 0) {
+            return;
+        }
+
+        vec3 outLightDir = outLightVec / smpl.lightDistance;
+
+        float emitterCosTheta = cosTheta(emitterNormal, outLightDir);
+        if (emitterCosTheta <= 0.0) {
+            return;
+        }
+
+        worldInLightDir = -outLightDir; 
+        smpl.inLightDir = worldToTangent(surface.tbn, worldInLightDir);
+        smpl.pdf = pow2(smpl.lightDistance) / (emitterCosTheta * area * totalSamplableEmitters * emitter.numberOfFaces);
+    }
+
+    uint rayFlags = gl_RayFlagsTerminateOnFirstHitEXT;
+    uint cullMask = 0xFF;                 
+    float tMin    = 0.001;               
+    float tMax    = max(0.0, smpl.lightDistance - FLT_EPSILON); 
+    
+    p_isVisible = true;
+
+    // Check if we can see the emitter
+    traceRayEXT(
+        TLAS,               // Top-level acceleration structure
+        rayFlags,           // Ray flags
+        cullMask,           // Cull mask
+        1,                  // SBT record offset
+        0,                  // SBT record stride
+        1,                  // Miss shader index (which miss shader in the SBT to use)
+        worldPosition,      // Ray origin
+        tMin,               // Ray min distance
+        worldInLightDir,    // Ray direction
+        tMax,               // Ray max distance
+        1                   // Payload location (must match the rayPayloadEXT layout location)
+    );
+    
+    smpl.isVisible = p_isVisible;
+}
+
+void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
+    
+    EmitterSample emitterSample;
+    
+    sampleEmitter(surface, worldPosition, emitterSample);
+
+    if (emitterSample.isVisible && emitterSample.radiance != vec3(0.0)) {
+        vec3 halfVector = normalize(outLightDir + emitterSample.inLightDir);
+
+        float receiverCos = cosThetaTangent(emitterSample.inLightDir);
+
+        vec3 bsdf = evaluateBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
+            
+        vec3 contribution = (emitterSample.radiance * bsdf * receiverCos) / emitterSample.pdf;
+
+        p_pathTrace.radiance += contribution;
+    }
 }
 
 void indirectLighting(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir) {
@@ -101,23 +246,20 @@ void indirectLighting(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir
         return;
     }
 
-    p_pathTrace.throughput *= brdf_multiplier;
-
     // Apply Russian Roulette termination 
+    float russianRouletteProbability = 1.0f;
     if (p_pathTrace.depth > MIN_DEPTH) {
         // Calculate the Russian Roulette probability based on the max component of the throughput
         // to ensure that the path is terminated with a probability proportional to its contribution.
-        float russianRouletteProbability = maxComponent(p_pathTrace.throughput);
+        russianRouletteProbability = maxComponent(p_pathTrace.throughput);
 
         if (randomFloat(p_pathTrace.seed) > russianRouletteProbability) {
             p_pathTrace.done = true;
             return;
         }
-
-        // Scale the throughput by the inverse of the Russian Roulette probability
-        // to ensure energy conservation.
-        p_pathTrace.throughput /= russianRouletteProbability;
     }
+
+    p_pathTrace.throughput *= brdf_multiplier / russianRouletteProbability;
 }
 
 void main() {
@@ -128,27 +270,30 @@ void main() {
     const vec2 uv = getTextureCoords(triangle, barycentrics) * instance.textureTilingFactor;
 
     // Tangent, Bi-tangent, Normal (TBN) matrix to transform tangent space to world space
-    mat3 tbn = calculateTBN(triangle, mat3(gl_ObjectToWorld3x4EXT), barycentrics);
+    mat3 tbn = calculateTBN(triangle, mat3(instance.objectToWorld), barycentrics);
     const vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, tbn);
     
     vec3 worldNormal = tbn[2];
 
     SurfaceData surface;
     surface.tbn = tbn;
-    surface.normal = worldToTangent(tbn, surfaceNormal);
     surface.albedo = getAlbedo(material, uv, instance.textureTintColor);
-    surface.metalness = getMetalness(material, uv);
-    surface.roughness = getRoughness(material, uv);
+    surface.metalness = 0; //getMetalness(material, uv);
+    surface.roughness = 1;//getRoughness(material, uv);
     surface.reflectance = calculateReflectance(surface.albedo, surface.metalness);
     surface.specularProbability = calculateSpecularProbability(surface.albedo, surface.metalness, surface.reflectance);
     
     vec3 emission = getEmission(material, uv);
-    p_pathTrace.radiance += emission;
+
+    if (p_pathTrace.depth == 0) {
+        p_pathTrace.radiance += emission * p_pathTrace.throughput; 
+    }
 
     if (maxComponent(emission) > 0.0) {
         p_pathTrace.done = true;
+        return;
     }
-
+    
     const vec3 worldPosition = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_RayTmaxEXT;
 
     // The ray has the opposite direction to that of the light.
@@ -157,7 +302,10 @@ void main() {
     vec3 outgoingLightDirection = worldToTangent(tbn, -gl_WorldRayDirectionEXT);
     vec3 incomingLightDirection;
 
+    directLighting(surface, worldPosition, outgoingLightDirection);
     indirectLighting(surface, outgoingLightDirection, incomingLightDirection);
+    
+    tbn[2] = surfaceNormal;
 
     // Convert back to world space
     outgoingLightDirection = tangentToWorld(tbn, incomingLightDirection);
