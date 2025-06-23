@@ -18,10 +18,10 @@ namespace PXTEngine {
      */
     class Instance {
     public:
-#ifdef NDEBUG
-    const bool enableValidationLayers = false;
-#else
+#ifdef ENABLE_VALIDATION_LAYERS
     const bool enableValidationLayers = true;
+#else
+    const bool enableValidationLayers = false;
 #endif
         Instance(const std::string& appName);
         ~Instance();

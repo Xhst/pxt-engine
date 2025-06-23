@@ -8,11 +8,12 @@
           "cacheVariables": {
               "CMAKE_BUILD_TYPE": "Debug"
           },
-            "environment": {
-                "NV_ALLOW_RAYTRACING_VALIDATION": "1",
-                "VK_LAYER_PRINTF_TO_STDOUT": "1",
-                "VK_LAYER_PRINTF_BUFFER_SIZE": "1048576"
-            }
+          "environment": {
+            "NV_ALLOW_RAYTRACING_VALIDATION": "1",
+            "ENABLE_VALIDATION_LAYERS": "1",
+            "VK_LAYER_PRINTF_TO_STDOUT": "1",
+            "VK_LAYER_PRINTF_BUFFER_SIZE": "1048576"
+          }
         },
       {
         "name": "x64-Release",
