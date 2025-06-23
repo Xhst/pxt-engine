@@ -22,7 +22,7 @@ public:
 
         auto environment = getScene().getEnvironment();
 
-        environment->setAmbientLight({ 1.0, 1.0, 1.0, 0.6f });
+        environment->setAmbientLight({ 1.0, 1.0, 1.0, 0.15f });
         environment->setSkybox(skyboxTextures);
     }
 
@@ -153,8 +153,8 @@ public:
             .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/lamp/roughness.png"))
             .setMetallicMap(rm.get<Image>(TEXTURES_PATH + "/lamp/metallic.png"))
             .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/lamp/normal.png"))
-            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "/lamp/emissive.png"))
-            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 17.0f })
+            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))//"/lamp/emissive.png"))
+            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 20.0f })
             .build();
         rm.add(penMaterial, "lamp_material");
 
@@ -221,7 +221,7 @@ public:
         createCameraEntity();
         createFloor();
         createVasesWithRandomTransforms(5);
-        createRubikCube();
+        //createRubikCube();
         createLamp();
         createPencilAndPen();
         createLights();
@@ -248,7 +248,7 @@ public:
 		rm.add(bunnyMaterial, "bunny_material");
 
         Entity entity = getScene().createEntity("Bunny")
-            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
+            .add<TransformComponent>(glm::vec3{ 0.0f, 0.99f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
             .add<MeshComponent>(bunny)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setMaterial(bunnyMaterial)
