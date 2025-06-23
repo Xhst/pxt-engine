@@ -5,7 +5,6 @@
 
 struct SurfaceData {
     mat3 tbn;
-    vec3 normal;
     vec3 albedo;
     vec3 reflectance;
     float metalness;
@@ -96,7 +95,7 @@ vec3 sampleCosineWeightedHemisphere(vec2 u) {
  * @return The value of the GGX NDF at the given angle and roughness.
  */
 float D_GGX(float NoH, float roughness) {
-    float a2 = pow4(roughness);
+    float a2 = pow2(roughness);
     float d = pow2(NoH) * (a2 - 1.0) + 1.0;
     return a2 / (PI * pow2(d));
 }
@@ -112,7 +111,7 @@ float D_GGX(float NoH, float roughness) {
  * @return The value of the Schlick-GGX G1 term.
  */
 float G_Schlick_GGX(float cosTheta, float roughness) {
-    float r = (pow4(roughness) + 1.0);
+    float r = (pow2(roughness) + 1.0);
     float k = pow2(r) / 8.0; // k for direct lighting
     return cosTheta / (cosTheta * (1.0 - k) + k);
 }
@@ -187,7 +186,7 @@ float pdfCosineWeightedHemisphere(float cosTheta) {
  * @return A vec3 representing the importance sampled half-vector in tangent space.
  */
 vec3 importanceSampleGGX(vec2 r, float roughness) {
-    float alpha2 = pow4(roughness);
+    float alpha2 = pow2(roughness);
     float phi = TWO_PI * r.x;
     float cosTheta = sqrt((1.0 - r.y) / (1.0 + (alpha2 - 1.0 + FLT_EPSILON) * r.y));
     float sinTheta = sqrt(1.0 - pow2(cosTheta));
@@ -208,11 +207,11 @@ vec3 importanceSampleGGX(vec2 r, float roughness) {
  * @return The BRDF value as a vec3 color.
  */
 vec3 evaluateBSDF(SurfaceData surface, vec3 outLightDir, vec3 inLightDir, vec3 halfVector) {
-    float NoH = max(dot(surface.normal, halfVector), FLT_EPSILON);
-    float NoI = max(dot(surface.normal, inLightDir), FLT_EPSILON);
-    float NoO = max(dot(surface.normal, outLightDir), FLT_EPSILON);
+    float NoH = cosThetaTangent(halfVector);
+    float NoI = cosThetaTangent(inLightDir);
+    float NoO = cosThetaTangent(outLightDir);
 
-    float HoO = max(abs(dot(halfVector, outLightDir)), FLT_EPSILON);
+    float HoO = cosTheta(halfVector, outLightDir);
 
     float D = D_GGX(NoH, surface.roughness);
     float G = G_Smith(NoO, NoI, surface.roughness);
@@ -241,8 +240,8 @@ vec3 evaluateBSDF(SurfaceData surface, vec3 outLightDir, vec3 inLightDir, vec3 h
  * @return The PDF value for the given sampled direction.
  */
 float pdfBSDF(SurfaceData surface, vec3 outLightDir, vec3 inLightDir, vec3 halfVector) {
-    float NoH = max(dot(surface.normal, halfVector), 0.0);
-    float NoI = max(dot(surface.normal, inLightDir), 0.0);
+    float NoH = cosThetaTangent(halfVector);
+    float NoI = cosThetaTangent(inLightDir);
 
     float IoH = dot(inLightDir, halfVector);
 
@@ -283,7 +282,7 @@ vec3 sampleBSDF(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir, out 
         halfVector = normalize(outLightDir + inLightDir);
     }
 
-    float cosTheta = max(dot(inLightDir, surface.normal), 0.0);
+    float cosTheta = cosThetaTangent(inLightDir);
 
     pdf = pdfBSDF(surface, outLightDir, inLightDir, halfVector);
 
