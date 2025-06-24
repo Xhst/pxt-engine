@@ -4,13 +4,12 @@
 #extension GL_EXT_debug_printf : enable
 #extension GL_GOOGLE_include_directive : require
 
-// Include the global UBO definition
 #include "../ubo/global_ubo.glsl"
 #include "../common/ray.glsl"
 #include "../common/payload.glsl"
 #include "../common/random.glsl"
 
-layout(location = 0) rayPayloadEXT PathTracePayload p_pathTrace;
+layout(location = PathTracePayloadLocation) rayPayloadEXT PathTracePayload p_pathTrace;
 
 // Declare the top-level acceleration structure (TLAS)
 layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
@@ -20,45 +19,45 @@ layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
 // rgba8 is common for 8-bit per channel normalized output. Use rgba32f for HDR float output.
 layout(set = 3, binding = 0, rgba8) uniform image2D outputImage;
 
-void main()
-{
+Ray getCameraRay(uint seed) {
     // gl_LaunchIDEXT is the pixel coordinate (x, y, z) of the current invocation.
     const vec2 pixelCenter = vec2(gl_LaunchIDEXT.xy) + vec2(0.5);
 
     // gl_LaunchSizeEXT is the total number of ray generation invocations (width, height, depth).
     const vec2 imageDimensions = vec2(gl_LaunchSizeEXT.xy);
 
+     // Normalized device coordinates (NDC), converted to [-1, 1] range (NDC space)
+    vec2 jitter = vec2(randomFloat(seed), randomFloat(seed)) - 0.5;
+    vec2 pixelPos = pixelCenter + jitter;
+        
+    // Normalized device coordinates
+    const vec2 ndc = pixelPos / imageDimensions * 2.0 - 1.0;
+
+    // Ray origin and direction in camera/view space
+    // Assuming perspective projection
+    vec4 rayOriginView = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 rayTargetView = /*ubo.inverseProjectionMatrix*/ inverse(ubo.projectionMatrix) * vec4(ndc.x, ndc.y, 1.0, 1.0); 
+
+    // Transform ray to world space
+    Ray worldRay;
+    // Camera position in world space
+    worldRay.origin = (ubo.inverseViewMatrix * rayOriginView).xyz; 
+    worldRay.direction = normalize((ubo.inverseViewMatrix * vec4(normalize(rayTargetView.xyz / rayTargetView.w), 0.0)).xyz);
+    
+    return worldRay;
+}
+
+void main()
+{
     vec3 finalColor = vec3(0.0);
 
     const uint samplesPerPixel = 1;
     const int maxBounces = 8;
 
-    for (uint currentSample = 0; currentSample < samplesPerPixel; currentSample++) {
+    for (uint currentSample = 0; currentSample < samplesPerPixel; ++currentSample) {
         uint seed = tea(gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x, uint(ubo.frameCount));
 
-        // Normalized device coordinates (NDC), converted to [-1, 1] range (NDC space)
-        vec2 jitter = vec2(randomFloat(seed), randomFloat(seed)) - 0.5;
-        vec2 pixelPos = pixelCenter + jitter;
-        
-        // Normalized device coordinates
-        const vec2 ndc = pixelPos / imageDimensions * 2.0 - 1.0;
-
-        // Ray origin and direction in camera/view space
-        // Assuming perspective projection
-        vec4 rayOriginView = vec4(0.0, 0.0, 0.0, 1.0);
-        vec4 rayTargetView = /*ubo.inverseProjectionMatrix*/ inverse(ubo.projectionMatrix) * vec4(ndc.x, ndc.y, 1.0, 1.0); // Point on far plane
-
-        // Transform ray to world space
-        Ray worldRay;
-        // Camera position in world space
-        worldRay.origin = (ubo.inverseViewMatrix * rayOriginView).xyz; 
-        worldRay.direction = normalize((ubo.inverseViewMatrix * vec4(normalize(rayTargetView.xyz / rayTargetView.w), 0.0)).xyz);
-    
-        // Ray parameters
-        uint rayFlags = gl_RayFlagsOpaqueEXT; // Assume opaque geometry for now
-        uint cullMask = 0xFF;                 // Standard cull mask
-        float tMin    = 0.001;                // Minimum intersection distance
-        float tMax    = 10000.0;              // Maximum intersection distance
+        Ray worldRay = getCameraRay(seed);
 
         p_pathTrace.radiance = vec3(0.0);
         p_pathTrace.throughput = vec3(1.0);
@@ -72,16 +71,16 @@ void main()
         while(!p_pathTrace.done && p_pathTrace.depth < maxBounces) {
             traceRayEXT(
                 TLAS,               
-                rayFlags,           
-                cullMask,           
+                gl_RayFlagsOpaqueEXT, // Ray Flags  
+                0xFF, // Cull Mask          
                 0,                  
                 0,                  
                 0,                  
                 p_pathTrace.origin,     
-                tMin,               
+                RAY_T_MIN,               
                 p_pathTrace.direction,  
-                tMax,               
-                0                   
+                RAY_T_MAX,               
+                PathTracePayloadLocation               
             );
         }
         

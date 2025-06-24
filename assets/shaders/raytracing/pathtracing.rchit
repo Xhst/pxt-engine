@@ -64,8 +64,8 @@ layout(set = 7, binding = 0, std430) readonly buffer emittersSSBO {
 } emitters;
 
 // --- Payloads ---
-layout(location = 0) rayPayloadInEXT PathTracePayload p_pathTrace;
-layout(location = 1) rayPayloadEXT bool p_isVisible;
+layout(location = PathTracePayloadLocation) rayPayloadInEXT PathTracePayload p_pathTrace;
+layout(location = VisibilityPayloadLocation) rayPayloadEXT bool p_isVisible;
 
 // For triangles, this implicitly receives barycentric coordinates.
 hitAttributeEXT vec2 barycentrics;
@@ -191,26 +191,22 @@ void sampleEmitter(
         smpl.pdf = pow2(smpl.lightDistance) / (emitterCosTheta * area * totalSamplableEmitters * emitter.numberOfFaces);
     }
 
-    uint rayFlags = gl_RayFlagsTerminateOnFirstHitEXT;
-    uint cullMask = 0xFF;                 
-    float tMin    = 0.001;               
-    float tMax    = max(0.0, smpl.lightDistance - FLT_EPSILON); 
-    
     p_isVisible = true;
 
+    const float tMax    = max(0.0, smpl.lightDistance - FLT_EPSILON); 
     // Check if we can see the emitter
     traceRayEXT(
-        TLAS,               // Top-level acceleration structure
-        rayFlags,           // Ray flags
-        cullMask,           // Cull mask
-        1,                  // SBT record offset
-        0,                  // SBT record stride
-        1,                  // Miss shader index (which miss shader in the SBT to use)
-        worldPosition,      // Ray origin
-        tMin,               // Ray min distance
-        worldInLightDir,    // Ray direction
-        tMax,               // Ray max distance
-        1                   // Payload location (must match the rayPayloadEXT layout location)
+        TLAS,               
+        gl_RayFlagsTerminateOnFirstHitEXT, // Ray Flags           
+        0xFF,  // Cull Mask         
+        1,                  
+        0,                  
+        1,                  
+        worldPosition,      
+        RAY_T_MIN,               
+        worldInLightDir,    
+        tMax,               
+        VisibilityPayloadLocation
     );
     
     smpl.isVisible = p_isVisible;

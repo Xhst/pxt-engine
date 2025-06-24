@@ -1,6 +1,10 @@
 #ifndef _PAYLOAD_
 #define _PAYLOAD_
 
+#define PathTracePayloadLocation  0
+#define VisibilityPayloadLocation 1
+
+
 struct PathTracePayload {
     // Accumulated color and energy along the path.
     vec3 radiance;
