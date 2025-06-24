@@ -8,6 +8,7 @@
 #include "../common/ray.glsl"
 #include "../common/payload.glsl"
 #include "../common/random.glsl"
+#include "../common/tone_mapping.glsl"
 
 layout(location = PathTracePayloadLocation) rayPayloadEXT PathTracePayload p_pathTrace;
 
@@ -96,6 +97,7 @@ void main()
     } 
 
     finalColor = saturate(finalColor);
+
     if (isnan(finalColor.r) || isnan(finalColor.g) || isnan(finalColor.b) ||
         isinf(finalColor.r) || isinf(finalColor.g) || isinf(finalColor.b)) {
         finalColor = vec3(1.0, 0.0, 1.0); // Magenta for error

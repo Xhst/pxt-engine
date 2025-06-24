@@ -3,6 +3,8 @@
 
 #include "../ubo/global_ubo.glsl"
 
+#define USE_SKY_AS_NEE_EMITTER 0
+
 layout(set = 5, binding = 0) uniform samplerCube skyboxSampler;
 
 vec3 getSkyRadiance(vec3 rayDir) {

@@ -12,6 +12,7 @@
 #include "../common/payload.glsl"
 #include "../common/geometry.glsl"
 #include "../common/random.glsl"
+#include "../common/tone_mapping.glsl"
 #include "../ubo/global_ubo.glsl"
 #include "../material/surface_normal.glsl"
 #include "../material/pbr/bsdf.glsl"
@@ -108,7 +109,7 @@ void sampleEmitter(
     out EmitterSample smpl
 ) {
     smpl.radiance = vec3(0.0);
-    smpl.lightDistance = FLT_MAX;
+    smpl.lightDistance = RAY_T_MAX;
     smpl.pdf = 0.0;
     smpl.isVisible = false;
 
@@ -119,7 +120,7 @@ void sampleEmitter(
     }
     
     // We add one extra emitters for the sky
-    const uint totalSamplableEmitters = numEmitters + 1;
+    const uint totalSamplableEmitters = numEmitters + USE_SKY_AS_NEE_EMITTER;
 
     const uint emitterIndex = nextUint(p_pathTrace.seed, totalSamplableEmitters);
 
@@ -193,7 +194,7 @@ void sampleEmitter(
 
     p_isVisible = true;
 
-    const float tMax    = max(0.0, smpl.lightDistance - FLT_EPSILON); 
+    const float tMax = max(0.0, smpl.lightDistance - FLT_EPSILON); 
     // Check if we can see the emitter
     traceRayEXT(
         TLAS,               
@@ -227,7 +228,12 @@ void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
             
         vec3 contribution = (emitterSample.radiance * bsdf * receiverCos) / emitterSample.pdf;
 
-        p_pathTrace.radiance += contribution;
+        float sas = pow2(emitterSample.pdf);
+        float bsdfPdf = pdfBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
+
+        float weight = sas / (sas + pow2(bsdfPdf));
+
+        p_pathTrace.radiance += contribution * p_pathTrace.throughput * weight;
     }
 }
 
@@ -274,8 +280,8 @@ void main() {
     SurfaceData surface;
     surface.tbn = tbn;
     surface.albedo = getAlbedo(material, uv, instance.textureTintColor);
-    surface.metalness = 0; //getMetalness(material, uv);
-    surface.roughness = 1;//getRoughness(material, uv);
+    surface.metalness = getMetalness(material, uv);
+    surface.roughness = getRoughness(material, uv);
     surface.reflectance = calculateReflectance(surface.albedo, surface.metalness);
     surface.specularProbability = calculateSpecularProbability(surface.albedo, surface.metalness, surface.reflectance);
     
