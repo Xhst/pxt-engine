@@ -51,7 +51,7 @@ public:
         ImageInfo albedoInfo{};
         albedoInfo.format = RGBA8_SRGB;
 
-        auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
+        auto quad = rm.get<Mesh>(MODELS_PATH + "quad.obj");
 		auto stylizedStoneMaterial = Material::Builder()
 			.setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "laminated_wood/albedo.png", &albedoInfo))
 			.setNormalMap(rm.get<Image>(TEXTURES_PATH + "laminated_wood/normal.png"))
@@ -63,7 +63,7 @@ public:
 
         Entity entity = getScene().createEntity("Floor")
             .add<TransformComponent>(glm::vec3{0.f, 1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<MeshComponent>(ground)
+            .add<MeshComponent>(quad)
 			.add<MaterialComponent>(MaterialComponent::Builder()
 				.setMaterial(stylizedStoneMaterial)
                 .setTilingFactor(2.0f)
@@ -71,22 +71,22 @@ public:
 
         entity = getScene().createEntity("Left Wall")
             .add<TransformComponent>(glm::vec3{ -1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, glm::pi<float>() / 2 })
-            .add<MeshComponent>(ground);
+            .add<MeshComponent>(quad);
         entity.addAndGet<MaterialComponent>().tint = glm::vec3{ 1.0f, 0.f, 0.f };
 
         entity = getScene().createEntity("Right Wall")
             .add<TransformComponent>(glm::vec3{ 1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, -glm::pi<float>() / 2 })
-            .add<MeshComponent>(ground);
+            .add<MeshComponent>(quad);
 		entity.addAndGet<MaterialComponent>().tint = glm::vec3{ 0.f, 1.0f, 0.f };
 
         entity = getScene().createEntity("Front Wall")
             .add<TransformComponent>(glm::vec3{ 0.f, 0.f, 1.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>() / 2, 0.0f, 0.0f })
-            .add<MeshComponent>(ground)
+            .add<MeshComponent>(quad)
             .add<MaterialComponent>();
 
         entity = getScene().createEntity("Roof")
             .add<TransformComponent>(glm::vec3{ 0.f, -1.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
-            .add<MeshComponent>(ground)
+            .add<MeshComponent>(quad)
             .add<MaterialComponent>();
     }
 
@@ -130,7 +130,7 @@ public:
             .add<TransformComponent>(glm::vec3{ 0.5f, 1.0f, 0.7f }, glm::vec3{ 0.15f, 0.15f, 0.15f }, glm::vec3{ glm::pi<float>(), -glm::pi<float>()/1.6, 0.0f })
             .add<MeshComponent>(teapotMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
-            .setMaterial(metallicMaterial).build()).tint = glm::vec3(1.0f, 0.66f, 0.545f);
+            .setMaterial(metallicMaterial).build()).tint = glm::vec3(0.737, 0.776, 0.8);
 
         entity = getScene().createEntity("vase")
             .add<TransformComponent>(glm::vec3{ -0.65f, 1.0f, 0.4f }, glm::vec3{ 1.8f, 1.4f, 1.8f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
