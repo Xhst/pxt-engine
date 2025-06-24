@@ -7,7 +7,6 @@
 #include <vector>
 
 namespace PXTEngine {
-
     /**
      * @class Instance
      * 
@@ -18,11 +17,9 @@ namespace PXTEngine {
      */
     class Instance {
     public:
-#ifdef ENABLE_VALIDATION_LAYERS
-    const bool enableValidationLayers = true;
-#else
-    const bool enableValidationLayers = false;
-#endif
+
+        const bool enableValidationLayers = ENABLE_VALIDATION_LAYERS == 1;
+
         Instance(const std::string& appName);
         ~Instance();
 

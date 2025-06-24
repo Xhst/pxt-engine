@@ -109,6 +109,11 @@ if (WIN32)
   # To enable correct logging
   add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
+  # Enable validation layers in Debug mode
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
+    $<IF:$<CONFIG:Debug>,ENABLE_VALIDATION_LAYERS=1,ENABLE_VALIDATION_LAYERS=0>)
+  message(STATUS "Validation layers enabled for Debug builds, disabled for other builds")
+
   # Link everything to the target executable
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw                     
