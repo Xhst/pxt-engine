@@ -266,16 +266,19 @@ float pdfBSDF(SurfaceData surface, vec3 outLightDir, vec3 inLightDir, vec3 halfV
  * @param seed Inout: A seed for the random number generator, updated by the function.
  * @return The evaluated BRDF value for the sampled direction, weighted by cosine and inverse PDF.
  */
-vec3 sampleBSDF(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir, out float pdf, inout uint seed) {
+vec3 sampleBSDF(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir, out float pdf, out bool isSpecular, inout uint seed) {
     // Half vector between the outgoing light direction and the incoming light direction
     vec3 halfVector;
 
     vec3 rand3 = randomVec3(seed);
 
+    isSpecular = false;
+
     if (rand3.z < surface.specularProbability) {
         // Sample specular reflection
         halfVector = importanceSampleGGX(rand3.xy, surface.roughness);
         inLightDir = -reflect(outLightDir, halfVector);
+        isSpecular = true;
     } else {
         // Sample diffuse reflection
         inLightDir = sampleCosineWeightedHemisphere(rand3.xy);

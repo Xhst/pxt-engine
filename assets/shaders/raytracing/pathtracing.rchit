@@ -213,6 +213,13 @@ void sampleEmitter(
     smpl.isVisible = p_isVisible;
 }
 
+float powerHeuristic(float pdfA, float pdfB) {
+    const float pdfASq = pow2(pdfA);
+    const float pdfBSq = pow2(pdfB);
+
+    return pdfASq / (pdfASq + pdfBSq);
+}
+
 void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
     
     EmitterSample emitterSample;
@@ -228,10 +235,9 @@ void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
             
         vec3 contribution = (emitterSample.radiance * bsdf * receiverCos) / emitterSample.pdf;
 
-        float sas = pow2(emitterSample.pdf);
         float bsdfPdf = pdfBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
 
-        float weight = sas / (sas + pow2(bsdfPdf));
+        float weight = powerHeuristic(emitterSample.pdf, bsdfPdf);
 
         p_pathTrace.radiance += contribution * p_pathTrace.throughput * weight;
     }
@@ -239,8 +245,8 @@ void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
 
 void indirectLighting(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir) {
     float pdf;
-
-    vec3 brdf_multiplier = sampleBSDF(surface, outLightDir, inLightDir, pdf, p_pathTrace.seed);
+    bool isSpecular;
+    vec3 brdf_multiplier = sampleBSDF(surface, outLightDir, inLightDir, pdf, isSpecular, p_pathTrace.seed);
 
     if (brdf_multiplier == vec3(0.0)) {
         // No contribution from this surface
@@ -260,7 +266,8 @@ void indirectLighting(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir
             return;
         }
     }
-
+    
+    p_pathTrace.isSpecularBounce = isSpecular;
     p_pathTrace.throughput *= brdf_multiplier / russianRouletteProbability;
 }
 
@@ -287,11 +294,15 @@ void main() {
     
     vec3 emission = getEmission(material, uv);
 
-    if (p_pathTrace.depth == 0) {
-        p_pathTrace.radiance += emission * p_pathTrace.throughput; 
-    }
-
     if (maxComponent(emission) > 0.0) {
+        // Add the light's emission to the total radiance if:
+        // 1. It's the first hit (the camera sees the light directly).
+        // 2. The ray that hit the light came from a perfect mirror bounce.
+        if (p_pathTrace.depth == 0 || p_pathTrace.isSpecularBounce) {
+            p_pathTrace.radiance += emission * p_pathTrace.throughput;
+        }
+        
+        // The path ends at the light source.
         p_pathTrace.done = true;
         return;
     }
@@ -305,6 +316,7 @@ void main() {
     vec3 incomingLightDirection;
 
     directLighting(surface, worldPosition, outgoingLightDirection);
+
     indirectLighting(surface, outgoingLightDirection, incomingLightDirection);
     
     tbn[2] = surfaceNormal;

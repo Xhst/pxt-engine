@@ -26,6 +26,8 @@ struct PathTracePayload {
 
     // A seed for the random number generator, updated at each bounce.
     uint seed;
+
+    bool isSpecularBounce;
 };
 
 #endif

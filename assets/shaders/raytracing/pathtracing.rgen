@@ -67,6 +67,7 @@ void main()
         p_pathTrace.depth = 0;
         p_pathTrace.done = false;
         p_pathTrace.seed = seed;
+        p_pathTrace.isSpecularBounce = false;
 
         // while hangs some GPUs for some reason
         while(!p_pathTrace.done && p_pathTrace.depth < maxBounces) {
