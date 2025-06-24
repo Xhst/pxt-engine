@@ -288,7 +288,7 @@ vec3 sampleBSDF(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir, out 
 
     const float cosTheta = cosThetaTangent(inLightDir);
 
-    const pdf = pdfBSDF(surface, outLightDir, inLightDir, halfVector);
+    pdf = pdfBSDF(surface, outLightDir, inLightDir, halfVector);
 
     if (pdf < FLT_EPSILON) {
         return vec3(0.0);
