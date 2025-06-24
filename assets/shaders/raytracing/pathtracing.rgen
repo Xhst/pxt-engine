@@ -17,7 +17,7 @@ layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
 // Declare the output storage image
 // The format qualifier (e.g., rgba8, rgba32f) should match how the image was created in Vulkan.
 // rgba8 is common for 8-bit per channel normalized output. Use rgba32f for HDR float output.
-layout(set = 3, binding = 0, rgba8) uniform image2D outputImage;
+layout(set = 3, binding = 0, rgba16f) uniform image2D outputImage;
 
 Ray getCameraRay(uint seed) {
     // gl_LaunchIDEXT is the pixel coordinate (x, y, z) of the current invocation.
