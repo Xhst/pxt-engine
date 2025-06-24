@@ -53,7 +53,7 @@ void main()
     vec3 finalColor = vec3(0.0);
 
     const uint samplesPerPixel = 1;
-    const int maxBounces = 5;
+    const int maxBounces = 3;
 
     for (uint currentSample = 0; currentSample < samplesPerPixel; ++currentSample) {
         uint seed = tea(gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x, uint(ubo.frameCount));
@@ -69,7 +69,6 @@ void main()
         p_pathTrace.seed = seed;
         p_pathTrace.isSpecularBounce = false;
 
-        // while hangs some GPUs for some reason
         while(!p_pathTrace.done && p_pathTrace.depth < maxBounces) {
             traceRayEXT(
                 TLAS,               
