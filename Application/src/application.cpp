@@ -90,7 +90,7 @@ public:
             .add<MaterialComponent>();
     }
 
-    void createVasesWithRandomTransforms(int count) {
+    void createTeapotAndVases(int count) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> posDist(-0.7f, 0.7f);
@@ -127,7 +127,7 @@ public:
             .setMaterial(graniteMaterial).build());
 
         entity = getScene().createEntity("teapot")
-            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.7f }, glm::vec3{ 0.15f, 0.15f, 0.15f }, glm::vec3{ glm::pi<float>(), -glm::pi<float>()/1.6, 0.0f })
+            .add<TransformComponent>(glm::vec3{ 0.5f, 1.0f, 0.7f }, glm::vec3{ 0.15f, 0.15f, 0.15f }, glm::vec3{ glm::pi<float>(), -glm::pi<float>()/1.6, 0.0f })
             .add<MeshComponent>(teapotMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
             .setMaterial(metallicMaterial).build()).tint = glm::vec3(1.0f, 0.66f, 0.545f);
@@ -261,7 +261,7 @@ public:
 		prepareEnvironment();
         createCameraEntity();
         createFloor();
-        createVasesWithRandomTransforms(5);
+        createTeapotAndVases(5);
         //createRubikCube();
         //createLamp();
 		createRoofLight();
