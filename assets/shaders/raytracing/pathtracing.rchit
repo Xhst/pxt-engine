@@ -72,7 +72,7 @@ layout(location = VisibilityPayloadLocation) rayPayloadEXT bool p_isVisible;
 hitAttributeEXT vec2 barycentrics;
 
 vec3 getAlbedo(const Material material, const vec2 uv, const vec4 tintColor) {
-    vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb;
+    const vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb;
     return albedo * tintColor.rgb;
 }
 
@@ -81,7 +81,7 @@ vec3 getNormal(const Material material, const vec2 uv) {
 }
 
 vec3 getEmission(const Material material, const vec2 uv) {
-    vec3 emissive = texture(textures[nonuniformEXT(material.emissiveMapIndex)], uv).rgb;
+    const vec3 emissive = texture(textures[nonuniformEXT(material.emissiveMapIndex)], uv).rgb;
 
     // The alpha channels is used as intensity
     return emissive * material.emissiveColor.rgb * material.emissiveColor.a;
@@ -103,11 +103,14 @@ struct EmitterSample {
     bool isVisible; 
 };
 
-void sampleEmitter(
-    SurfaceData surface,
-    vec3 worldPosition, 
-    out EmitterSample smpl
-) {
+vec2 sampleTrianglePoint(uint seed) {
+    const vec2 rand = randomVec2(seed);
+    const float xsqrt = sqrt(rand.x);
+    
+    return vec2(1.0 - xsqrt, rand.y * xsqrt);
+}
+
+void sampleEmitter(SurfaceData surface, vec3 worldPosition, out EmitterSample smpl) {
     smpl.radiance = vec3(0.0);
     smpl.lightDistance = RAY_T_MAX;
     smpl.pdf = 0.0;
@@ -140,41 +143,39 @@ void sampleEmitter(
     } else {
         // Sample a mesh emitter
         const Emitter emitter = emitters.e[emitterIndex];
-        MeshInstanceDescription emitterInstance = meshInstances.i[emitter.instanceIndex];
-        Material material = materials.m[emitterInstance.materialIndex];
+        const MeshInstanceDescription emitterInstance = meshInstances.i[emitter.instanceIndex];
+        const Material material = materials.m[emitterInstance.materialIndex];
         
-        uint faceIndex = nextUint(p_pathTrace.seed, emitter.numberOfFaces);
+        const uint faceIndex = nextUint(p_pathTrace.seed, emitter.numberOfFaces);
 
         // Generate barycentric coordinates for the triangle
-        vec2 u = randomVec2(p_pathTrace.seed);
-        float uxsqrt = sqrt(u.x);
-        vec2 emitterBarycentrics = vec2(1.0 - uxsqrt, u.y * uxsqrt);
+        vec2 emitterBarycentrics = sampleTrianglePoint(p_pathTrace.seed);
     
-        Triangle emitterTriangle = getTriangle(emitterInstance.indexAddress, emitterInstance.vertexAddress, faceIndex);
-
-        vec2 uv = getTextureCoords(emitterTriangle, emitterBarycentrics) * emitterInstance.textureTilingFactor;
+        const Triangle emitterTriangle = getTriangle(emitterInstance.indexAddress, emitterInstance.vertexAddress, faceIndex);
+        const vec2 uv = getTextureCoords(emitterTriangle, emitterBarycentrics) * emitterInstance.textureTilingFactor;
+        
         smpl.radiance = getEmission(material, uv);
 
         if (smpl.radiance == vec3(0.0)) {
             return; 
         }
 
-        vec3 emitterObjPosition = getPosition(emitterTriangle, emitterBarycentrics);
-        vec3 emitterObjNormal = getNormal(emitterTriangle, emitterBarycentrics);
+        const vec3 emitterObjPosition = getPosition(emitterTriangle, emitterBarycentrics);
+        const vec3 emitterObjNormal = getNormal(emitterTriangle, emitterBarycentrics);
 
-        mat4 emitterObjectToWorld = mat4(emitterInstance.objectToWorld);
+        const mat4 emitterObjectToWorld = mat4(emitterInstance.objectToWorld);
         // The upper 3x3 of the world-to-object matrix is the normal matrix
-        mat3 emitterNormalMatrix = mat3(emitterInstance.worldToObject);
+        const mat3 emitterNormalMatrix = mat3(emitterInstance.worldToObject);
 
-        vec3 emitterPosition = vec3(emitterObjectToWorld * vec4(emitterObjPosition, 1.0));
-        vec3 emitterNormal = normalize(emitterNormalMatrix * emitterObjNormal);
+        const vec3 emitterPosition = vec3(emitterObjectToWorld * vec4(emitterObjPosition, 1.0));
+        const vec3 emitterNormal = normalize(emitterNormalMatrix * emitterObjNormal);
 
         // vector from emitter the surface to the emitter
         vec3 outLightVec = worldPosition - emitterPosition;
 
         smpl.lightDistance = length(outLightVec);
 
-        float areaWorld = calculateWorldSpaceTriangleArea(emitterTriangle, mat3(emitterInstance.objectToWorld));
+        const float areaWorld = calculateWorldSpaceTriangleArea(emitterTriangle, mat3(emitterInstance.objectToWorld));
 
         if (areaWorld <= 0.0 || smpl.lightDistance <= 0) {
             return;
@@ -227,17 +228,15 @@ void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
     sampleEmitter(surface, worldPosition, emitterSample);
 
     if (emitterSample.isVisible && emitterSample.radiance != vec3(0.0)) {
-        vec3 halfVector = normalize(outLightDir + emitterSample.inLightDir);
+        const vec3 halfVector = normalize(outLightDir + emitterSample.inLightDir);
+        const float receiverCos = cosThetaTangent(emitterSample.inLightDir);
 
-        float receiverCos = cosThetaTangent(emitterSample.inLightDir);
-
-        vec3 bsdf = evaluateBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
+        const vec3 bsdf = evaluateBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
+        const float bsdfPdf = pdfBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
             
-        vec3 contribution = (emitterSample.radiance * bsdf * receiverCos) / emitterSample.pdf;
+        const vec3 contribution = (emitterSample.radiance * bsdf * receiverCos) / emitterSample.pdf;        
 
-        float bsdfPdf = pdfBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
-
-        float weight = powerHeuristic(emitterSample.pdf, bsdfPdf);
+        const float weight = powerHeuristic(emitterSample.pdf, bsdfPdf);
 
         p_pathTrace.radiance += contribution * p_pathTrace.throughput * weight;
     }
@@ -272,9 +271,9 @@ void indirectLighting(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir
 }
 
 void main() {
-    MeshInstanceDescription instance = meshInstances.i[gl_InstanceCustomIndexEXT];
-    Material material = materials.m[instance.materialIndex];
-    Triangle triangle = getTriangle(instance.indexAddress, instance.vertexAddress, gl_PrimitiveID);
+    const MeshInstanceDescription instance = meshInstances.i[gl_InstanceCustomIndexEXT];
+    const Material material = materials.m[instance.materialIndex];
+    const Triangle triangle = getTriangle(instance.indexAddress, instance.vertexAddress, gl_PrimitiveID);
 
     const vec2 uv = getTextureCoords(triangle, barycentrics) * instance.textureTilingFactor;
 
@@ -282,7 +281,7 @@ void main() {
     mat3 tbn = calculateTBN(triangle, mat3(instance.objectToWorld), barycentrics);
     const vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, tbn);
     
-    vec3 worldNormal = tbn[2];
+    const vec3 worldNormal = tbn[2];
 
     SurfaceData surface;
     surface.tbn = tbn;
@@ -292,7 +291,7 @@ void main() {
     surface.reflectance = calculateReflectance(surface.albedo, surface.metalness);
     surface.specularProbability = calculateSpecularProbability(surface.albedo, surface.metalness, surface.reflectance);
     
-    vec3 emission = getEmission(material, uv);
+    const vec3 emission = getEmission(material, uv);
 
     if (maxComponent(emission) > 0.0) {
         // Add the light's emission to the total radiance if:

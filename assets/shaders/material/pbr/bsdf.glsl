@@ -39,8 +39,8 @@ float luminance(vec3 color) {
  * @return A float representing the probability of choosing the specular path, clamped between 0.0 and 1.0.
  */
 float calculateSpecularProbability(vec3 albedo, float metalness, vec3 reflectance) {
-    float weightSpecular = luminance(reflectance);
-    float weightDiffuse = lerp(luminance(albedo), 0.0, metalness);
+    const float weightSpecular = luminance(reflectance);
+    const float weightDiffuse = lerp(luminance(albedo), 0.0, metalness);
 
     return min(weightSpecular / (weightDiffuse + weightSpecular + FLT_EPSILON), 1.0);
 }
@@ -74,12 +74,11 @@ vec3 calculateReflectance(vec3 albedo, float metalness) {
  * @return A vec3 representing the sampled direction in tangent space, where Z is the normal.
  */
 vec3 sampleCosineWeightedHemisphere(vec2 u) {
-
-    float r = sqrt(u.x);
-    float theta = TWO_PI * u.y;
+    const float r = sqrt(u.x);
+    const float theta = TWO_PI * u.y;
 
     // disk sample
-    vec2 d = r * vec2(cos(theta), sin(theta));
+    const vec2 d = r * vec2(cos(theta), sin(theta));
 
     return vec3(d.x, d.y, sqrt(1.0 - d.x * d.x - d.y * d.y));
 }
@@ -95,8 +94,9 @@ vec3 sampleCosineWeightedHemisphere(vec2 u) {
  * @return The value of the GGX NDF at the given angle and roughness.
  */
 float D_GGX(float NoH, float roughness) {
-    float a2 = pow2(roughness);
-    float d = pow2(NoH) * (a2 - 1.0) + 1.0;
+    const float a2 = pow2(roughness);
+    const float d = pow2(NoH) * (a2 - 1.0) + 1.0;
+
     return a2 / (PI * pow2(d));
 }
 
@@ -111,8 +111,9 @@ float D_GGX(float NoH, float roughness) {
  * @return The value of the Schlick-GGX G1 term.
  */
 float G_Schlick_GGX(float cosTheta, float roughness) {
-    float r = (pow2(roughness) + 1.0);
-    float k = pow2(r) / 8.0; // k for direct lighting
+    const float r = (pow2(roughness) + 1.0);
+    const float k = pow2(r) / 8.0; // k for direct lighting
+
     return cosTheta / (cosTheta * (1.0 - k) + k);
 }
 
@@ -186,10 +187,10 @@ float pdfCosineWeightedHemisphere(float cosTheta) {
  * @return A vec3 representing the importance sampled half-vector in tangent space.
  */
 vec3 importanceSampleGGX(vec2 r, float roughness) {
-    float alpha2 = pow2(roughness);
-    float phi = TWO_PI * r.x;
-    float cosTheta = sqrt((1.0 - r.y) / (1.0 + (alpha2 - 1.0 + FLT_EPSILON) * r.y));
-    float sinTheta = sqrt(1.0 - pow2(cosTheta));
+    const float alpha2 = pow2(roughness);
+    const float phi = TWO_PI * r.x;
+    const float cosTheta = sqrt((1.0 - r.y) / (1.0 + (alpha2 - 1.0 + FLT_EPSILON) * r.y));
+    const float sinTheta = sqrt(1.0 - pow2(cosTheta));
 
     return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
@@ -207,22 +208,22 @@ vec3 importanceSampleGGX(vec2 r, float roughness) {
  * @return The BRDF value as a vec3 color.
  */
 vec3 evaluateBSDF(SurfaceData surface, vec3 outLightDir, vec3 inLightDir, vec3 halfVector) {
-    float NoH = cosThetaTangent(halfVector);
-    float NoI = cosThetaTangent(inLightDir);
-    float NoO = cosThetaTangent(outLightDir);
+    const float NoH = cosThetaTangent(halfVector);
+    const float NoI = cosThetaTangent(inLightDir);
+    const float NoO = cosThetaTangent(outLightDir);
 
-    float HoO = cosTheta(halfVector, outLightDir);
+    const float HoO = cosTheta(halfVector, outLightDir);
 
-    float D = D_GGX(NoH, surface.roughness);
-    float G = G_Smith(NoO, NoI, surface.roughness);
-    vec3  F = F_Schlick(surface.reflectance, HoO);
+    const float D = D_GGX(NoH, surface.roughness);
+    const float G = G_Smith(NoO, NoI, surface.roughness);
+    const vec3  F = F_Schlick(surface.reflectance, HoO);
 
-    vec3 kd = mix(vec3(1.0) - F, vec3(0.0), surface.metalness);
+    const vec3 kd = mix(vec3(1.0) - F, vec3(0.0), surface.metalness);
 
-    float specularDenominator = 4.0 * NoO * NoI + FLT_EPSILON;
-    vec3 specular = D * F * G / specularDenominator;
+    const float specularDenominator = 4.0 * NoO * NoI + FLT_EPSILON;
+    const vec3 specular = D * F * G / specularDenominator;
 
-    vec3 diffuse = surface.albedo * kd * INV_PI;
+    const vec3 diffuse = surface.albedo * kd * INV_PI;
 
     return diffuse + specular;
 }
@@ -240,13 +241,13 @@ vec3 evaluateBSDF(SurfaceData surface, vec3 outLightDir, vec3 inLightDir, vec3 h
  * @return The PDF value for the given sampled direction.
  */
 float pdfBSDF(SurfaceData surface, vec3 outLightDir, vec3 inLightDir, vec3 halfVector) {
-    float NoH = cosThetaTangent(halfVector);
-    float NoI = cosThetaTangent(inLightDir);
+    const float NoH = cosThetaTangent(halfVector);
+    const float NoI = cosThetaTangent(inLightDir);
 
-    float IoH = dot(inLightDir, halfVector);
+    const float IoH = dot(inLightDir, halfVector);
 
-    float specularPdf = pdfD_GGX(NoH, surface.roughness) / max(4.0 * IoH, FLT_EPSILON);
-    float diffusePdf = pdfCosineWeightedHemisphere(NoI);
+    const float specularPdf = pdfD_GGX(NoH, surface.roughness) / max(4.0 * IoH, FLT_EPSILON);
+    const float diffusePdf = pdfCosineWeightedHemisphere(NoI);
 
     return mix(diffusePdf, specularPdf, surface.specularProbability);
 }
@@ -285,15 +286,15 @@ vec3 sampleBSDF(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir, out 
         halfVector = normalize(outLightDir + inLightDir);
     }
 
-    float cosTheta = cosThetaTangent(inLightDir);
+    const float cosTheta = cosThetaTangent(inLightDir);
 
-    pdf = pdfBSDF(surface, outLightDir, inLightDir, halfVector);
+    const pdf = pdfBSDF(surface, outLightDir, inLightDir, halfVector);
 
     if (pdf < FLT_EPSILON) {
         return vec3(0.0);
     }
 
-    vec3 brdf = evaluateBSDF(surface, outLightDir, inLightDir, halfVector);
+    const vec3 brdf = evaluateBSDF(surface, outLightDir, inLightDir, halfVector);
 
     return brdf * cosTheta / pdf;
 }

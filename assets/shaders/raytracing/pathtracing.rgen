@@ -28,16 +28,16 @@ Ray getCameraRay(uint seed) {
     const vec2 imageDimensions = vec2(gl_LaunchSizeEXT.xy);
 
      // Normalized device coordinates (NDC), converted to [-1, 1] range (NDC space)
-    vec2 jitter = vec2(randomFloat(seed), randomFloat(seed)) - 0.5;
-    vec2 pixelPos = pixelCenter + jitter;
+    const vec2 jitter = vec2(randomFloat(seed), randomFloat(seed)) - 0.5;
+    const vec2 pixelPos = pixelCenter + jitter;
         
     // Normalized device coordinates
     const vec2 ndc = pixelPos / imageDimensions * 2.0 - 1.0;
 
     // Ray origin and direction in camera/view space
     // Assuming perspective projection
-    vec4 rayOriginView = vec4(0.0, 0.0, 0.0, 1.0);
-    vec4 rayTargetView = /*ubo.inverseProjectionMatrix*/ inverse(ubo.projectionMatrix) * vec4(ndc.x, ndc.y, 1.0, 1.0); 
+    const vec4 rayOriginView = vec4(0.0, 0.0, 0.0, 1.0);
+    const vec4 rayTargetView = /*ubo.inverseProjectionMatrix*/ inverse(ubo.projectionMatrix) * vec4(ndc.x, ndc.y, 1.0, 1.0); 
 
     // Transform ray to world space
     Ray worldRay;
