@@ -62,12 +62,32 @@ public:
 		rm.add(stylizedStoneMaterial, "floor_material");
 
         Entity entity = getScene().createEntity("Floor")
-            .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<TransformComponent>(glm::vec3{0.f, 1.0f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MeshComponent>(ground)
 			.add<MaterialComponent>(MaterialComponent::Builder()
 				.setMaterial(stylizedStoneMaterial)
                 .setTilingFactor(20.0f)
 				.build());
+
+        entity = getScene().createEntity("Left Wall")
+            .add<TransformComponent>(glm::vec3{ -1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, glm::pi<float>() / 2 })
+            .add<MeshComponent>(ground)
+            .add<MaterialComponent>();
+
+        entity = getScene().createEntity("Right Wall")
+            .add<TransformComponent>(glm::vec3{ 1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, -glm::pi<float>() / 2 })
+            .add<MeshComponent>(ground)
+            .add<MaterialComponent>();
+
+        entity = getScene().createEntity("Front Wall")
+            .add<TransformComponent>(glm::vec3{ 0.f, 0.f, 1.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>() / 2, 0.0f, 0.0f })
+            .add<MeshComponent>(ground)
+            .add<MaterialComponent>();
+
+        entity = getScene().createEntity("Roof")
+            .add<TransformComponent>(glm::vec3{ 0.f, -1.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
+            .add<MeshComponent>(ground)
+            .add<MaterialComponent>();
     }
 
     void createVasesWithRandomTransforms(int count) {
@@ -148,23 +168,44 @@ public:
         ImageInfo albedoInfo{};
         albedoInfo.format = RGBA8_SRGB;
 
-        auto penMaterial = Material::Builder()
+        auto lampMaterial = Material::Builder()
             .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/lamp/albedo.png", &albedoInfo))
             .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/lamp/roughness.png"))
             .setMetallicMap(rm.get<Image>(TEXTURES_PATH + "/lamp/metallic.png"))
             .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/lamp/normal.png"))
             .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))//"/lamp/emissive.png"))
-            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 20.0f })
+            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 6.0f })
             .build();
-        rm.add(penMaterial, "lamp_material");
+        rm.add(lampMaterial, "lamp_material");
 
-        auto penMesh = rm.get<Mesh>(MODELS_PATH + "lamp.obj");
+        auto lampMesh = rm.get<Mesh>(MODELS_PATH + "lamp.obj");
 
         Entity entity = getScene().createEntity("lamp")
             .add<TransformComponent>(glm::vec3{ 0.6f, 1.0f, 0.6f }, glm::vec3{ 2.4f, 2.8f, 2.4f }, glm::vec3{ glm::pi<float>(), glm::pi<float>() / 4, 0.0f })
-            .add<MeshComponent>(penMesh)
+            .add<MeshComponent>(lampMesh)
             .add<MaterialComponent>(MaterialComponent::Builder()
-                .setMaterial(penMaterial).build());
+                .setMaterial(lampMaterial).build());
+    }
+
+    void createRoofLight() {
+        auto& rm = getResourceManager();
+
+        ImageInfo albedoInfo{};
+        albedoInfo.format = RGBA8_SRGB;
+
+        auto roofLightMaterial = Material::Builder()
+            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
+            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f})
+            .build();
+        rm.add(roofLightMaterial, "roof_light_material");
+
+        auto roofLightMesh = rm.get<Mesh>(MODELS_PATH + "cube.obj");
+
+        Entity entity = getScene().createEntity("lamp")
+            .add<TransformComponent>(glm::vec3{ 0.0f, -0.995f, 0.0f }, glm::vec3{ 0.1f, 0.01f, 0.1f }, glm::vec3{ glm::pi<float>(), 0.0, 0.0})
+            .add<MeshComponent>(roofLightMesh)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(roofLightMaterial).build());
     }
 
     void createPencilAndPen() {
@@ -222,7 +263,8 @@ public:
         createFloor();
         createVasesWithRandomTransforms(5);
         //createRubikCube();
-        createLamp();
+        //createLamp();
+		createRoofLight();
         createPencilAndPen();
         createLights();
 
