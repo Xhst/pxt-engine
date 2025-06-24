@@ -139,8 +139,8 @@ void sampleEmitter(
     } else {
         // Sample a mesh emitter
         const Emitter emitter = emitters.e[emitterIndex];
-        MeshInstanceDescription instance = meshInstances.i[emitter.instanceIndex];
-        Material material = materials.m[instance.materialIndex];
+        MeshInstanceDescription emitterInstance = meshInstances.i[emitter.instanceIndex];
+        Material material = materials.m[emitterInstance.materialIndex];
         
         uint faceIndex = nextUint(p_pathTrace.seed, emitter.numberOfFaces);
 
@@ -149,9 +149,9 @@ void sampleEmitter(
         float uxsqrt = sqrt(u.x);
         vec2 emitterBarycentrics = vec2(1.0 - uxsqrt, u.y * uxsqrt);
     
-        Triangle emitterTriangle = getTriangle(instance.indexAddress, instance.vertexAddress, faceIndex);
+        Triangle emitterTriangle = getTriangle(emitterInstance.indexAddress, emitterInstance.vertexAddress, faceIndex);
 
-        vec2 uv = getTextureCoords(emitterTriangle, emitterBarycentrics) * instance.textureTilingFactor;
+        vec2 uv = getTextureCoords(emitterTriangle, emitterBarycentrics) * emitterInstance.textureTilingFactor;
         smpl.radiance = getEmission(material, uv);
 
         if (smpl.radiance == vec3(0.0)) {
@@ -161,9 +161,9 @@ void sampleEmitter(
         vec3 emitterObjPosition = getPosition(emitterTriangle, emitterBarycentrics);
         vec3 emitterObjNormal = getNormal(emitterTriangle, emitterBarycentrics);
 
-        mat4 emitterObjectToWorld = mat4(instance.objectToWorld);
+        mat4 emitterObjectToWorld = mat4(emitterInstance.objectToWorld);
         // The upper 3x3 of the world-to-object matrix is the normal matrix
-        mat3 emitterNormalMatrix = mat3(instance.worldToObject);
+        mat3 emitterNormalMatrix = mat3(emitterInstance.worldToObject);
 
         vec3 emitterPosition = vec3(emitterObjectToWorld * vec4(emitterObjPosition, 1.0));
         vec3 emitterNormal = normalize(emitterNormalMatrix * emitterObjNormal);
@@ -173,9 +173,9 @@ void sampleEmitter(
 
         smpl.lightDistance = length(outLightVec);
 
-        float area = calculateTriangleArea(emitterTriangle);
+        float areaWorld = calculateWorldSpaceTriangleArea(emitterTriangle, mat3(emitterInstance.objectToWorld));
 
-        if (area <= 0.0 || smpl.lightDistance <= 0) {
+        if (areaWorld <= 0.0 || smpl.lightDistance <= 0) {
             return;
         }
 
@@ -188,7 +188,7 @@ void sampleEmitter(
 
         worldInLightDir = -outLightDir; 
         smpl.inLightDir = worldToTangent(surface.tbn, worldInLightDir);
-        smpl.pdf = pow2(smpl.lightDistance) / (emitterCosTheta * area * totalSamplableEmitters * emitter.numberOfFaces);
+        smpl.pdf = pow2(smpl.lightDistance) / (emitterCosTheta * areaWorld * totalSamplableEmitters * emitter.numberOfFaces);
     }
 
     p_isVisible = true;
