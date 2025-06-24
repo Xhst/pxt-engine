@@ -59,11 +59,18 @@ Triangle getTriangle(uint64_t indexAddress, uint64_t vertexAddress, uint faceInd
     return triangle;
 }
 
-float calculateTriangleArea(Triangle triangle) {
+float calculateObjectSpaceTriangleArea(Triangle triangle) {
     return 0.5 * length(cross(
         triangle.v1.position.xyz - triangle.v0.position.xyz,
         triangle.v2.position.xyz - triangle.v0.position.xyz
     ));
+}
+
+float calculateWorldSpaceTriangleArea(Triangle triangle, mat3 objectToWorld) {
+    vec3 v0 = objectToWorld * triangle.v0.position.xyz;
+    vec3 v1 = objectToWorld * triangle.v1.position.xyz;
+    vec3 v2 = objectToWorld * triangle.v2.position.xyz;
+    return 0.5 * length(cross(v1 - v0, v2 - v0));
 }
 
 vec2 getTextureCoords(Triangle triangle, vec2 barycentrics) {
