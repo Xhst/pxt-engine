@@ -62,22 +62,22 @@ public:
 		rm.add(stylizedStoneMaterial, "floor_material");
 
         Entity entity = getScene().createEntity("Floor")
-            .add<TransformComponent>(glm::vec3{0.f, 1.0f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<TransformComponent>(glm::vec3{0.f, 1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
             .add<MeshComponent>(ground)
 			.add<MaterialComponent>(MaterialComponent::Builder()
 				.setMaterial(stylizedStoneMaterial)
-                .setTilingFactor(20.0f)
+                .setTilingFactor(2.0f)
 				.build());
 
         entity = getScene().createEntity("Left Wall")
             .add<TransformComponent>(glm::vec3{ -1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, glm::pi<float>() / 2 })
-            .add<MeshComponent>(ground)
-            .add<MaterialComponent>();
+            .add<MeshComponent>(ground);
+        entity.addAndGet<MaterialComponent>().tint = glm::vec3{ 1.0f, 0.f, 0.f };
 
         entity = getScene().createEntity("Right Wall")
             .add<TransformComponent>(glm::vec3{ 1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, -glm::pi<float>() / 2 })
-            .add<MeshComponent>(ground)
-            .add<MaterialComponent>();
+            .add<MeshComponent>(ground);
+		entity.addAndGet<MaterialComponent>().tint = glm::vec3{ 0.f, 1.0f, 0.f };
 
         entity = getScene().createEntity("Front Wall")
             .add<TransformComponent>(glm::vec3{ 0.f, 0.f, 1.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>() / 2, 0.0f, 0.0f })
@@ -195,14 +195,14 @@ public:
 
         auto roofLightMaterial = Material::Builder()
             .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
-            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f})
+            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 12.0f})
             .build();
         rm.add(roofLightMaterial, "roof_light_material");
 
         auto roofLightMesh = rm.get<Mesh>(MODELS_PATH + "cube.obj");
 
         Entity entity = getScene().createEntity("lamp")
-            .add<TransformComponent>(glm::vec3{ 0.0f, -0.995f, 0.0f }, glm::vec3{ 0.1f, 0.01f, 0.1f }, glm::vec3{ glm::pi<float>(), 0.0, 0.0})
+            .add<TransformComponent>(glm::vec3{ 0.0f, -0.995f, 0.0f }, glm::vec3{ 0.25f, 0.01f, 0.25f }, glm::vec3{ glm::pi<float>(), 0.0, 0.0})
             .add<MeshComponent>(roofLightMesh)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setMaterial(roofLightMaterial).build());
