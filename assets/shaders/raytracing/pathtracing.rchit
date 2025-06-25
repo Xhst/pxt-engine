@@ -1,6 +1,6 @@
 #version 460
-
 #extension GL_EXT_ray_tracing : require
+#extension GL_EXT_debug_printf : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : require
 #extension GL_EXT_scalar_block_layout : require
@@ -9,39 +9,17 @@
 
 #include "../common/math.glsl"
 #include "../common/ray.glsl"
+#include "../common/payload.glsl"
+#include "../common/geometry.glsl"
 #include "../common/random.glsl"
+#include "../common/tone_mapping.glsl"
 #include "../ubo/global_ubo.glsl"
 #include "../material/surface_normal.glsl"
-#include "../lighting/blinn_phong_lighting.glsl"
-#include "../material/pbr/brdf.glsl"
+#include "../material/pbr/bsdf.glsl"
+#include "sky.glsl"
 
-struct Vertex {
-    vec4 position;  // Position of the vertex.
-    vec4 normal;    // Normal vector for lighting calculations.
-    vec4 tangent;   // Tangent vector for lighting calculations.
-    vec4 uv;        // Texture coordinates for the vertex.
-};
-
-/**
- * References of the vertex buffers.
- * It can be used to access vertex data using the buffer address (uint64_t)
- */
-layout(buffer_reference, buffer_reference_align = 16, std430) readonly buffer VertexBuffer {
-    Vertex v[];
-};
-
-/**
- * References of the index buffers.
- * It can be used to access index data using the buffer address (uint64_t)
- * The indices are stored as uint32 values, and each triangle is represented by 3 indices.
- */
-layout(buffer_reference, buffer_reference_align = 16, std430) readonly buffer IndexBuffer {
-    uint i[]; 
-};
-
-layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS; // Used for shadows
-
-layout(set = 2, binding = 0) uniform sampler2D textures[];
+// Min depth for Russian Roulette termination
+#define MIN_DEPTH 3
 
 struct Material {
 	vec4 albedoColor;
@@ -54,224 +32,299 @@ struct Material {
     int emissiveMapIndex;
 };
 
-layout(set = 4, binding = 0) readonly buffer materials {
-    Material materials[];
-} materialsSSBO;
-
 struct MeshInstanceDescription {
     uint64_t vertexAddress;  
     uint64_t indexAddress;   
     uint materialIndex; 
     float textureTilingFactor;
     vec4 textureTintColor;
+    mat4 objectToWorld;
+    mat4 worldToObject;
 };
 
-layout(set = 6, binding = 0, std430) readonly buffer meshInstances {
-    MeshInstanceDescription instances[]; 
-} meshInstancesSSBO;
+struct Emitter {
+    uint instanceIndex;
+    uint numberOfFaces;
+};
 
+layout(set = 1, binding = 0) uniform accelerationStructureEXT TLAS;
 
-// Define the ray payload structure. Must match the raygen and miss shaders.
-layout(location = 0) rayPayloadInEXT struct RayPayload {
-    // Accumulated color and energy along the path.
-    vec3 radiance;
+layout(set = 2, binding = 0) uniform sampler2D textures[];
 
-    // The accumulated material reflectance/transmittance. It's multiplied at each bounce.
-    vec3 throughput;
+layout(set = 4, binding = 0) readonly buffer materialsSSBO {
+    Material m[];
+} materials;
 
-    // Current number of bounces. Used to limit path length and for Russian Roulette.
-    int depth;
+layout(set = 6, binding = 0, std430) readonly buffer meshInstancesSSBO {
+    MeshInstanceDescription i[]; 
+} meshInstances;
 
-    // The origin of the ray in world space.
-    vec3 origin; 
+layout(set = 7, binding = 0, std430) readonly buffer emittersSSBO {
+    uint numEmitters;
+    Emitter e[]; 
+} emitters;
 
-    // The direction of the ray in world space.
-    vec3 direction;
+// --- Payloads ---
+layout(location = PathTracePayloadLocation) rayPayloadInEXT PathTracePayload p_pathTrace;
+layout(location = VisibilityPayloadLocation) rayPayloadEXT bool p_isVisible;
 
-    // A flag to signal that the path has been terminated (e.g., hit the sky, absorbed).
-    bool done;
-
-    // A seed for the random number generator, updated at each bounce.
-    uint seed;
-} payload;
-
-// Define the ray attributes structure.
-// layout(location = 0) hitAttributeEXT is used to receive attributes from the intersection.
 // For triangles, this implicitly receives barycentric coordinates.
-hitAttributeEXT vec2 HitAttribs;
+hitAttributeEXT vec2 barycentrics;
 
-
-float D_GGX(float NdotH, float roughness) {
-    float a2 = roughness * roughness;
-    float d = NdotH * NdotH * (a2 - 1.0) + 1.0;
-    return a2 / (PI * d * d);
+vec3 getAlbedo(const Material material, const vec2 uv, const vec4 tintColor) {
+    const vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb;
+    return albedo * tintColor.rgb;
 }
 
-// Geometry Function (Smith's method with Schlick-GGX)
-float G_Schlick_GGX(float NdotV, float roughness) {
-    float r = (roughness + 1.0);
-    float k = (r * r) / 8.0; // k for direct lighting
-    return NdotV / (NdotV * (1.0 - k) + k);
+vec3 getNormal(const Material material, const vec2 uv) {
+    return texture(textures[nonuniformEXT(material.normalMapIndex)], uv).rgb;
 }
 
-float G_Smith(float NdotV, float NdotL, float roughness) {
-    return G_Schlick_GGX(NdotV, roughness) * G_Schlick_GGX(NdotL, roughness);
+vec3 getEmission(const Material material, const vec2 uv) {
+    const vec3 emissive = texture(textures[nonuniformEXT(material.emissiveMapIndex)], uv).rgb;
+
+    // The alpha channels is used as intensity
+    return emissive * material.emissiveColor.rgb * material.emissiveColor.a;
 }
 
-// Fresnel Function (Schlick's approximation)
-vec3 F_Schlick(float HdotV, vec3 F0) {
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - HdotV, 0.0, 1.0), 5.0);
+float getRoughness(const Material material, const vec2 uv) {
+    return pow2(texture(textures[nonuniformEXT(material.roughnessMapIndex)], uv).r);
 }
 
-// Generates a sample direction on a cosine-weighted hemisphere using the provided TBN matrix.
-vec3 sampleCosineWeightedHemisphere(inout uint seed, const mat3 TBN) {
-    float r1 = randomFloat(seed);
-    float r2 = randomFloat(seed);
-    float phi = 2.0 * PI * r1;
-    float cosTheta = sqrt(1.0 - r2);
-    float sinTheta = sqrt(r2);
-    vec3 sampleDir_local = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
-    // Transform from local tangent space to world space using the TBN matrix.
-    return TBN * sampleDir_local;
+float getMetalness(const Material material, const vec2 uv) {
+    return texture(textures[nonuniformEXT(material.metallicMapIndex)], uv).r;
 }
 
-// Generates an importance-sampled microfacet normal (H) for GGX using the TBN matrix.
-vec3 importanceSampleGGX(inout uint seed, const mat3 TBN, float roughness) {
-    float r1 = randomFloat(seed);
-    float r2 = randomFloat(seed);
-    float a = roughness * roughness;
-    float phi = 2.0 * PI * r1;
-    float cosTheta = sqrt((1.0 - r2) / (1.0 + (a * a - 1.0 + FLT_EPSILON) * r2));
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-    vec3 H_local = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
-    // Transform from local tangent space to world space.
-    return normalize(TBN * H_local);
+struct EmitterSample {
+    vec3 radiance;
+    vec3 inLightDir;
+    float lightDistance;
+    float pdf;
+    bool isVisible; 
+};
+
+vec2 sampleTrianglePoint(uint seed) {
+    const vec2 rand = randomVec2(seed);
+    const float xsqrt = sqrt(rand.x);
+    
+    return vec2(1.0 - xsqrt, rand.y * xsqrt);
 }
 
+void sampleEmitter(SurfaceData surface, vec3 worldPosition, out EmitterSample smpl) {
+    smpl.radiance = vec3(0.0);
+    smpl.lightDistance = RAY_T_MAX;
+    smpl.pdf = 0.0;
+    smpl.isVisible = false;
 
-// The main sampleBSDF function now takes the TBN matrix instead of just the normal.
-vec3 sampleBSDF(vec3 V, vec3 surfaceNormal, mat3 TBN, vec3 albedo, float metallic, float roughness, inout uint seed, out vec3 L) {
-    vec3 N = surfaceNormal;
-    vec3 Wo = -V;
+    const uint numEmitters = uint(emitters.numEmitters);
 
-    const vec3 F0_dielectric = vec3(0.04);
-    vec3 F0 = mix(F0_dielectric, albedo, metallic);
+    if (numEmitters == 0) {
+        return;
+    }
+    
+    // We add one extra emitters for the sky
+    const uint totalSamplableEmitters = numEmitters + USE_SKY_AS_NEE_EMITTER;
 
-    float specularProbability = max(F0.r, max(F0.g, F0.b));
-    specularProbability = mix(specularProbability, 1.0, metallic);
+    const uint emitterIndex = nextUint(p_pathTrace.seed, totalSamplableEmitters);
 
-    if (randomFloat(seed) < specularProbability) {
-        // --- Specular Lobe ---
-        vec3 H = importanceSampleGGX(seed, TBN, roughness);
-        L = reflect(Wo, H);
+    vec3 worldInLightDir = vec3(0.0);
 
-        if (dot(N, L) <= 0.0) return vec3(0.0);
+    if (emitterIndex == numEmitters) {
+        // Sample the sky as an emitter
+        smpl.inLightDir = sampleCosineWeightedHemisphere(randomVec2(p_pathTrace.seed));
 
-        float NdotL = max(abs(dot(N, L)), FLT_EPSILON);
-        float NdotWo = max(abs(dot(N, Wo)), FLT_EPSILON);
-        float NdotH = max(abs(dot(N, H)), FLT_EPSILON);
-        float HdotWo = max(abs(dot(H, Wo)), FLT_EPSILON);
+        worldInLightDir = tangentToWorld(surface.tbn, smpl.inLightDir);
 
-        vec3 F = brdf_fresnel(F0, HdotWo);
-        float G = G_Smith(NdotWo, NdotL, roughness);
+        smpl.pdf = pdfCosineWeightedHemisphere(max(smpl.inLightDir.z, 0)) / totalSamplableEmitters;
+        smpl.radiance = getSkyRadiance(worldInLightDir);
 
-        float denominator = NdotWo * NdotH;
-        vec3 specular_brdf = F * G * HdotWo / denominator;
+        if (smpl.radiance == vec3(0.0)) return;
 
-        return specular_brdf / specularProbability;
     } else {
-        // --- Diffuse Lobe ---
-        L = sampleCosineWeightedHemisphere(seed, TBN);
+        // Sample a mesh emitter
+        const Emitter emitter = emitters.e[emitterIndex];
+        const MeshInstanceDescription emitterInstance = meshInstances.i[emitter.instanceIndex];
+        const Material material = materials.m[emitterInstance.materialIndex];
+        
+        const uint faceIndex = nextUint(p_pathTrace.seed, emitter.numberOfFaces);
 
-        if (dot(N, L) <= 0.0) return vec3(0.0);
+        // Generate barycentric coordinates for the triangle
+        vec2 emitterBarycentrics = sampleTrianglePoint(p_pathTrace.seed);
+    
+        const Triangle emitterTriangle = getTriangle(emitterInstance.indexAddress, emitterInstance.vertexAddress, faceIndex);
+        const vec2 uv = getTextureCoords(emitterTriangle, emitterBarycentrics) * emitterInstance.textureTilingFactor;
+        
+        smpl.radiance = getEmission(material, uv);
 
-        return albedo * (1.0 - metallic) / (1.0 - specularProbability);
+        if (smpl.radiance == vec3(0.0)) {
+            return; 
+        }
+
+        const vec3 emitterObjPosition = getPosition(emitterTriangle, emitterBarycentrics);
+        const vec3 emitterObjNormal = getNormal(emitterTriangle, emitterBarycentrics);
+
+        const mat4 emitterObjectToWorld = mat4(emitterInstance.objectToWorld);
+        // The upper 3x3 of the world-to-object matrix is the normal matrix
+        const mat3 emitterNormalMatrix = mat3(emitterInstance.worldToObject);
+
+        const vec3 emitterPosition = vec3(emitterObjectToWorld * vec4(emitterObjPosition, 1.0));
+        const vec3 emitterNormal = normalize(emitterNormalMatrix * emitterObjNormal);
+
+        // vector from emitter the surface to the emitter
+        vec3 outLightVec = worldPosition - emitterPosition;
+
+        smpl.lightDistance = length(outLightVec);
+
+        const float areaWorld = calculateWorldSpaceTriangleArea(emitterTriangle, mat3(emitterInstance.objectToWorld));
+
+        if (areaWorld <= 0.0 || smpl.lightDistance <= 0) {
+            return;
+        }
+
+        vec3 outLightDir = outLightVec / smpl.lightDistance;
+
+        float emitterCosTheta = cosTheta(emitterNormal, outLightDir);
+        if (emitterCosTheta <= 0.0) {
+            return;
+        }
+
+        worldInLightDir = -outLightDir; 
+        smpl.inLightDir = worldToTangent(surface.tbn, worldInLightDir);
+        smpl.pdf = pow2(smpl.lightDistance) / (emitterCosTheta * areaWorld * totalSamplableEmitters * emitter.numberOfFaces);
+    }
+
+    p_isVisible = true;
+
+    const float tMax = max(0.0, smpl.lightDistance - FLT_EPSILON); 
+    // Check if we can see the emitter
+    traceRayEXT(
+        TLAS,               
+        gl_RayFlagsTerminateOnFirstHitEXT, // Ray Flags           
+        0xFF,  // Cull Mask         
+        1,                  
+        0,                  
+        1,                  
+        worldPosition,      
+        RAY_T_MIN,               
+        worldInLightDir,    
+        tMax,               
+        VisibilityPayloadLocation
+    );
+    
+    smpl.isVisible = p_isVisible;
+}
+
+float powerHeuristic(float pdfA, float pdfB) {
+    const float pdfASq = pow2(pdfA);
+    const float pdfBSq = pow2(pdfB);
+
+    return pdfASq / (pdfASq + pdfBSq);
+}
+
+void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
+    
+    EmitterSample emitterSample;
+    
+    sampleEmitter(surface, worldPosition, emitterSample);
+
+    if (emitterSample.isVisible && emitterSample.radiance != vec3(0.0)) {
+        const vec3 halfVector = normalize(outLightDir + emitterSample.inLightDir);
+        const float receiverCos = cosThetaTangent(emitterSample.inLightDir);
+
+        const vec3 bsdf = evaluateBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
+        const float bsdfPdf = pdfBSDF(surface, outLightDir, emitterSample.inLightDir, halfVector);
+            
+        const vec3 contribution = (emitterSample.radiance * bsdf * receiverCos) / emitterSample.pdf;        
+
+        const float weight = powerHeuristic(emitterSample.pdf, bsdfPdf);
+
+        p_pathTrace.radiance += contribution * p_pathTrace.throughput * weight;
     }
 }
 
+void indirectLighting(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir) {
+    float pdf;
+    bool isSpecular;
+    vec3 brdf_multiplier = sampleBSDF(surface, outLightDir, inLightDir, pdf, isSpecular, p_pathTrace.seed);
 
-void main()
-{
-    MeshInstanceDescription instance = meshInstancesSSBO.instances[gl_InstanceCustomIndexEXT];
-
-    IndexBuffer indices = IndexBuffer(instance.indexAddress);
-    VertexBuffer vertices = VertexBuffer(instance.vertexAddress);
-    Material material = materialsSSBO.materials[instance.materialIndex];
-
-    // Retrieve the indices of the triangle being hit.
-    uint i0 = indices.i[gl_PrimitiveID * 3 + 0];
-    uint i1 = indices.i[gl_PrimitiveID * 3 + 1];
-    uint i2 = indices.i[gl_PrimitiveID * 3 + 2];
-
-    // Retrieve the vertices of the triangle using the indices.
-    Vertex v0 = vertices.v[i0];
-    Vertex v1 = vertices.v[i1];
-    Vertex v2 = vertices.v[i2];
-
-    // Calculate barycentric coordinates from the hit attributes.
-    const vec3 barycentrics = vec3(1.0 - HitAttribs.x - HitAttribs.y, HitAttribs.x, HitAttribs.y);
-    
-    // Interpolate the vertex attributes using barycentric coordinates.
-    const vec4 position = barycentricLerp(v0.position, v1.position, v2.position, barycentrics);
-    const vec4 objectNormal = barycentricLerp(v0.normal, v1.normal, v2.normal, barycentrics);
-    const vec4 objectTangent = barycentricLerp(v0.tangent, v1.tangent, v2.tangent, barycentrics);
-    const vec2 uv = barycentricLerp(v0.uv.xy, v1.uv.xy, v2.uv.xy, barycentrics) * instance.textureTilingFactor;
-
-    // Normal Matrix (or Model-View Matrix) used to trasform from object space to world space.
-    // its just the inverse of the gl_ObjectToWorld3x4EXT
-    const mat3 normalMatrix = mat3(gl_WorldToObject3x4EXT);
-    vec3 worldNormal = normalize(normalMatrix * objectNormal.xyz);
-
-    // Calculate the Tangent-Bitangent-Normal (TBN) matrix and the surface normal in world space.
-    const mat3 TBN = calculateTBN(objectNormal, objectTangent, normalMatrix);
-    const vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, TBN);
-
-
-    // calculate world position
-    const vec3 worldPosition = vec3(gl_ObjectToWorldEXT * position);
-
-    vec3 albedo = texture(textures[nonuniformEXT(material.albedoMapIndex)], uv).rgb * instance.textureTintColor.rgb;
-    vec3 emissive = texture(textures[nonuniformEXT(material.emissiveMapIndex)], uv).rgb * material.emissiveColor.rgb * material.emissiveColor.a;
-    float metallic = texture(textures[nonuniformEXT(material.metallicMapIndex)], uv).r;
-    float perceptualRoughness = texture(textures[nonuniformEXT(material.roughnessMapIndex)], uv).r;
-
-    const float roughness = perceptualRoughness * perceptualRoughness;
-
-    const vec3 V = -gl_WorldRayDirectionEXT;
-    const vec3 N = surfaceNormal;    
-    
-    payload.depth++;
-
-    // If the surface emits light, we add its contribution to the path's radiance and terminate.
-    if (dot(emissive, emissive) > 0.0) {
-        payload.radiance += emissive * payload.throughput;
-        payload.done = true;
-        return; 
-    }
-
-    float survivalProb = 1.0;
-    if (payload.depth > 3) {
-        survivalProb = max(payload.throughput.r, max(payload.throughput.g, payload.throughput.b));
-        if (randomFloat(payload.seed) > survivalProb) {
-            payload.done = true;
-            return; // Path is terminated/absorbed
-        }
-        // If the path survives, we must scale its throughput to compensate for the absorbed energy.
-        payload.throughput /= survivalProb;
-    }
-
-    vec3 L; // New direction
-    vec3 bsdfContribution = sampleBSDF(V, surfaceNormal, TBN, albedo, metallic, roughness, payload.seed, L);
-
-    payload.throughput *= bsdfContribution;
-
-    // If throughput is close to zero, no more light can be contributed, so we stop.
-    if (dot(payload.throughput, payload.throughput) < 0.0001) {
-        payload.done = true;
+    if (brdf_multiplier == vec3(0.0)) {
+        // No contribution from this surface
+        p_pathTrace.done = true;
         return;
     }
 
-    payload.origin = worldPosition + worldNormal * 0.0001;
-    payload.direction = L;
+    // Apply Russian Roulette termination 
+    float russianRouletteProbability = 1.0f;
+    if (p_pathTrace.depth > MIN_DEPTH) {
+        // Calculate the Russian Roulette probability based on the max component of the throughput
+        // to ensure that the path is terminated with a probability proportional to its contribution.
+        russianRouletteProbability = maxComponent(p_pathTrace.throughput);
+
+        if (randomFloat(p_pathTrace.seed) > russianRouletteProbability) {
+            p_pathTrace.done = true;
+            return;
+        }
+    }
     
+    p_pathTrace.isSpecularBounce = isSpecular;
+    p_pathTrace.throughput *= brdf_multiplier / russianRouletteProbability;
+}
+
+void main() {
+    const MeshInstanceDescription instance = meshInstances.i[gl_InstanceCustomIndexEXT];
+    const Material material = materials.m[instance.materialIndex];
+    const Triangle triangle = getTriangle(instance.indexAddress, instance.vertexAddress, gl_PrimitiveID);
+
+    const vec2 uv = getTextureCoords(triangle, barycentrics) * instance.textureTilingFactor;
+
+    // Tangent, Bi-tangent, Normal (TBN) matrix to transform tangent space to world space
+    mat3 tbn = calculateTBN(triangle, mat3(instance.objectToWorld), barycentrics);
+    const vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, tbn);
+    
+    const vec3 worldNormal = tbn[2];
+
+    SurfaceData surface;
+    surface.tbn = tbn;
+    surface.albedo = getAlbedo(material, uv, instance.textureTintColor);
+    surface.metalness = getMetalness(material, uv);
+    surface.roughness = getRoughness(material, uv);
+    surface.reflectance = calculateReflectance(surface.albedo, surface.metalness);
+    surface.specularProbability = calculateSpecularProbability(surface.albedo, surface.metalness, surface.reflectance);
+    
+    const vec3 emission = getEmission(material, uv);
+
+    if (maxComponent(emission) > 0.0) {
+        // Add the light's emission to the total radiance if:
+        // 1. It's the first hit (the camera sees the light directly).
+        // 2. The ray that hit the light came from a perfect mirror bounce.
+        if (p_pathTrace.depth == 0 || p_pathTrace.isSpecularBounce) {
+            p_pathTrace.radiance += emission * p_pathTrace.throughput;
+        }
+        
+        // The path ends at the light source.
+        p_pathTrace.done = true;
+        return;
+    }
+    
+    const vec3 worldPosition = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_RayTmaxEXT;
+
+    // The ray has the opposite direction to that of the light.
+    // The "incoming" ray hitting the surface is actually the outgoing light direction.
+    // We perform calculation in tangent space
+    vec3 outgoingLightDirection = worldToTangent(tbn, -gl_WorldRayDirectionEXT);
+    vec3 incomingLightDirection;
+
+    directLighting(surface, worldPosition, outgoingLightDirection);
+
+    indirectLighting(surface, outgoingLightDirection, incomingLightDirection);
+    
+    tbn[2] = surfaceNormal;
+
+    // Convert back to world space
+    outgoingLightDirection = tangentToWorld(tbn, incomingLightDirection);
+
+    // Update the payload for the next bounce
+    p_pathTrace.depth++;
+    p_pathTrace.origin = worldPosition + worldNormal * FLT_EPSILON;
+    p_pathTrace.direction = outgoingLightDirection;
 }

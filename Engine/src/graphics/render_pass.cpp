@@ -1,4 +1,5 @@
 #include "graphics/render_pass.hpp"
+#include "core/logger.hpp"
 
 #include <iostream>
 
@@ -11,19 +12,19 @@ namespace PXTEngine {
 		m_colorAttachmentDescription(colorAttachmentDescription),
 		m_depthAttachmentDescription(depthAttachmentDescription),
         m_name(name){
-        std::cout << "[RenderPass] Creating VkRenderPass: " + m_name << std::endl;
+        PXT_DEBUG("Creating VkRenderPass: {}", m_name);
         if (vkCreateRenderPass(m_context.getDevice(), &m_createInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
             throw std::runtime_error("[RenderPass] Failed to create VkRenderPass: " + m_name);
         }
-        std::cout << "[RenderPass] VkRenderPass " + m_name + " created successfully." << std::endl;
+        PXT_DEBUG("VkRenderPass {} created successfully.", m_name);
     }
 
     RenderPass::~RenderPass() {
         if (m_renderPass != VK_NULL_HANDLE) {
-            std::cout << "[RenderPass] Destroying VkRenderPass: " + m_name << std::endl;
+            PXT_DEBUG("Destroying VkRenderPass: {}", m_name);
             vkDestroyRenderPass(m_context.getDevice(), m_renderPass, nullptr);
             m_renderPass = VK_NULL_HANDLE;
-            std::cout << "[RenderPass] VkRenderPass: " + m_name + " destroyed." << std::endl;
+            PXT_DEBUG("VkRenderPass: {} destroyed.", m_name);
         }
     }
 }

@@ -14,6 +14,13 @@ namespace PXTEngine {
 		float textureTilingFactor;					// offset 20, size 4
 													// offset 24 -> 8 bit padding 
 		alignas(16) glm::vec4 textureTintColor;		// offset 32, size 16
+		alignas(16) glm::mat4 objectToWorldMatrix;				// offset 48, size 64 (4x4 matrix, 16 bytes per row)
+		alignas(16) glm::mat4 worldToObjectMatrix;				// offset 112, size 64 (4x4 matrix, 16 bytes per row)
+	};
+
+	struct alignas(uint32_t) EmitterData {
+		uint32_t instanceIndex;
+		uint32_t numberOfFaces;
 	};
 
 	class RayTracingSceneManagerSystem {
@@ -33,6 +40,9 @@ namespace PXTEngine {
 
 		VkDescriptorSet getMeshInstanceDescriptorSet() const { return m_meshInstanceDescriptorSet; }
 		VkDescriptorSetLayout getMeshInstanceDescriptorSetLayout() const { return m_meshInstanceDescriptorSetLayout->getDescriptorSetLayout(); }
+
+		VkDescriptorSet getEmittersDescriptorSet() const { return m_emittersDescriptorSet; }
+		VkDescriptorSetLayout getEmittersDescriptorSetLayout() const { return m_emittersDescriptorSetLayout->getDescriptorSetLayout(); }
 	private:
 		void destroyTLAS();
 		VkTransformMatrixKHR glmToVkTransformMatrix(const glm::mat4& glmMatrix);
@@ -42,6 +52,9 @@ namespace PXTEngine {
 
 		void createMeshInstanceDescriptorSet();
 		void updateMeshInstanceDescriptorSet();
+
+		void createEmittersDescriptorSet();
+		void updateEmittersDescriptorSet();
 
 		Context& m_context;
 		MaterialRegistry& m_materialRegistry;
@@ -60,5 +73,10 @@ namespace PXTEngine {
 		Shared<DescriptorSetLayout> m_meshInstanceDescriptorSetLayout = nullptr;
 		Unique<VulkanBuffer> m_meshInstanceBuffer = nullptr;
 		VkDescriptorSet m_meshInstanceDescriptorSet = VK_NULL_HANDLE;
+
+		std::vector<EmitterData> m_emitters;
+		Shared<DescriptorSetLayout> m_emittersDescriptorSetLayout = nullptr;
+		Unique<VulkanBuffer> m_emittersBuffer = nullptr;
+		VkDescriptorSet m_emittersDescriptorSet = VK_NULL_HANDLE;
 	};
 }

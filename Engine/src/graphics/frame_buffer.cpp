@@ -1,4 +1,5 @@
 #include "graphics/frame_buffer.hpp"
+#include "core/logger.hpp"
 
 #include <iostream>
 
@@ -14,7 +15,7 @@ namespace PXTEngine {
         m_colorAttachment(colorAttachment),
         m_depthAttachment(depthAttachment) {
 
-        std::cout << "[FrameBuffer] Creating VkFrameBuffer: " + m_name << std::endl;
+        PXT_DEBUG("Creating VkFrameBuffer: {}", m_name);
 
         if (!m_colorAttachment) {
             throw std::runtime_error("[FrameBuffer] Color attachment cannot be null for FrameBuffer: " + m_name);
@@ -27,15 +28,15 @@ namespace PXTEngine {
         if (vkCreateFramebuffer(m_context.getDevice(), &m_createInfo, nullptr, &m_FrameBuffer) != VK_SUCCESS) {
             throw std::runtime_error("[FrameBuffer] Failed to create VkFrameBuffer: " + m_name);
         }
-        std::cout << "[FrameBuffer] VkFrameBuffer " + m_name + " created successfully." << std::endl;
+        PXT_DEBUG("VkFrameBuffer {} created successfully.", m_name);
     }
 
     FrameBuffer::~FrameBuffer() {
         if (m_FrameBuffer != VK_NULL_HANDLE) {
-            std::cout << "[FrameBuffer] Destroying VkFrameBuffer: " + m_name << std::endl;
+            PXT_DEBUG("Destroying VkFrameBuffer: {}", m_name);
             vkDestroyFramebuffer(m_context.getDevice(), m_FrameBuffer, nullptr);
             m_FrameBuffer = VK_NULL_HANDLE;
-            std::cout << "[FrameBuffer] VkFrameBuffer " + m_name + " destroyed." << std::endl;
+            PXT_DEBUG("VkFrameBuffer {} destroyed.", m_name);
         }
     }
 }

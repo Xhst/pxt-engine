@@ -34,6 +34,20 @@ float randomFloat(inout uint seed) {
     return float(result) * INV_UINT_MAX;
 }
 
+uint nextUint(inout uint seed, uint max) {
+    uint result = pcgHash(seed);
 
+    seed++;
+
+    return result % max;
+}
+
+vec2 randomVec2(inout uint seed) {
+    return vec2(randomFloat(seed), randomFloat(seed));
+}
+
+vec3 randomVec3(inout uint seed) {
+    return vec3(randomFloat(seed), randomFloat(seed), randomFloat(seed));
+}
 
 #endif

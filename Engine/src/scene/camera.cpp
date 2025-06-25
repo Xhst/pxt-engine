@@ -6,26 +6,26 @@
 
 namespace PXTEngine {
 
-    void Camera::setOrthographic(float left, float right, float top, float bottom, float near, float far) {
+    void Camera::setOrthographic(float left, float right, float top, float bottom, float zNear, float zFar) {
         m_projectionMatrix = glm::mat4{1.0f};
         m_projectionMatrix[0][0] = 2.f / (right - left);
         m_projectionMatrix[1][1] = 2.f / (bottom - top);
-        m_projectionMatrix[2][2] = 1.f / (far - near);
+        m_projectionMatrix[2][2] = 1.f / (zFar - zNear);
         m_projectionMatrix[3][0] = -(right + left) / (right - left);
         m_projectionMatrix[3][1] = -(bottom + top) / (bottom - top);
-        m_projectionMatrix[3][2] = -near / (far - near);
+        m_projectionMatrix[3][2] = -zNear / (zFar - zNear);
     }
 
-    void Camera::setPerspective(float fovY, float aspect, float near, float far) {
+    void Camera::setPerspective(float fovY, float aspect, float zNear, float zFar) {
         PXT_ASSERT(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
 
         const float tanHalfFovy = tan(fovY / 2.f);
         m_projectionMatrix = glm::mat4{0.0f};
         m_projectionMatrix[0][0] = 1.f / (aspect * tanHalfFovy);
         m_projectionMatrix[1][1] = 1.f / (tanHalfFovy);
-        m_projectionMatrix[2][2] = far / (far - near);
+        m_projectionMatrix[2][2] = zFar / (zFar - zNear);
         m_projectionMatrix[2][3] = 1.f;
-        m_projectionMatrix[3][2] = -(far * near) / (far - near);
+        m_projectionMatrix[3][2] = -(zFar * zNear) / (zFar - zNear);
     }
 
     void Camera::setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up) {

@@ -1,9 +1,12 @@
 #include "graphics/context/instance.hpp"
 
+#include "core/logger.hpp"
+
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <unordered_set>
+#include <sstream>
 
 #ifndef ENABLE_RAYTRACING_EXT
 #define ENABLE_RAYTRACING_EXT 1
@@ -26,9 +29,33 @@ namespace PXTEngine {
      * @return VK_FALSE to indicate that the Vulkan call should not be aborted.
      */
     static VKAPI_ATTR VkBool32 VKAPI_CALL
-    debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
+    gpuDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
                   const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,  void *pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+        std::stringstream ss;
+
+        // Message type filtering (you can adjust these)
+        if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
+            ss << "\033[95m[GENERAL]\033[0m ";
+        }
+        if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
+            ss << "\033[95m[VALIDATION]\033[0m ";
+        }
+        if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
+            ss << "\033[95m[PERFORMANCE]\033[0m ";
+        }
+
+        ss << pCallbackData->pMessage << std::endl;
+
+        if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+			PXT_DEBUG(ss.str());
+        } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+			PXT_INFO(ss.str());
+        } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+			PXT_WARN(ss.str());
+        } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+			PXT_ERROR(ss.str());
+        }
 
         return VK_FALSE;
     }
@@ -45,7 +72,7 @@ namespace PXTEngine {
      * @param pDebugMessenger Pointer to the debug messenger handle.
      * @return VK_SUCCESS if the messenger was created successfully, or a Vulkan error code.
      */
-    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+    VkResult createDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
             const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger) {
 
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -64,7 +91,7 @@ namespace PXTEngine {
      * @param debugMessenger The debug messenger handle.
      * @param pAllocator Pointer to the allocation callbacks.
      */
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, 
+    void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, 
             const VkAllocationCallbacks *pAllocator) {
 
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
@@ -83,7 +110,7 @@ namespace PXTEngine {
 
     Instance::~Instance() {
         if (enableValidationLayers) {
-            DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
+            destroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
         }
 
         vkDestroyInstance(m_instance, nullptr);
@@ -91,12 +118,9 @@ namespace PXTEngine {
 
     std::vector<const char *> Instance::getRequiredExtensions() {
         uint32_t glfwExtensionCount = 0;
-        const char **glfwExtensions;
-        glfwExtensions =
-            glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+        const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-        std::vector<const char *> extensions(
-            glfwExtensions, glfwExtensions + glfwExtensionCount);
+        std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
         if (enableValidationLayers) {
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -128,11 +152,37 @@ namespace PXTEngine {
 
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 
+        debugCreateInfo.messageSeverity =
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | // Detailed diagnostic messages
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |    // Informational messages
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | // Potentially problematic usage
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;    // Invalid usage that may lead to crashes
+
+        debugCreateInfo.messageType =
+            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |     // General events not tied to a specific Vulkan spec issue
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |  // Violations of the Vulkan spec or best practices
+            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;  // Potential non-optimal usage
+
+
+        // Define the VkValidationFeaturesEXT for debug printf
+        VkValidationFeatureEnableEXT enabledValidationFeatures[] = {
+            VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT 
+        };
+        VkValidationFeaturesEXT validationFeatures{};
+        validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        validationFeatures.enabledValidationFeatureCount = 1;
+        validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures;
+
         if (enableValidationLayers) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
 
             populateDebugMessengerCreateInfo(debugCreateInfo);
+
+            // chain
+            createInfo.pNext = &debugCreateInfo;
+            debugCreateInfo.pNext = &validationFeatures;
+            validationFeatures.pNext = nullptr;
 
             createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
         } else {
@@ -153,7 +203,7 @@ namespace PXTEngine {
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
         populateDebugMessengerCreateInfo(createInfo);
 
-        if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS) {
+        if (createDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS) {
             throw std::runtime_error("failed to set up debug messenger!");
         }
     }
@@ -202,7 +252,7 @@ namespace PXTEngine {
                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 
         // specifies the callback function to be called when a debug message is generated.
-        createInfo.pfnUserCallback = debugCallback;
+        createInfo.pfnUserCallback = gpuDebugCallback;
 
         createInfo.pUserData = nullptr;  // Optional
     }

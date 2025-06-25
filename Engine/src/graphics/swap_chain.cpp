@@ -1,4 +1,6 @@
 #include "swap_chain.hpp"
+#include "core/logger.hpp"
+#include "utils/vk_enum_str.h"
 
 #include <array>
 #include <cstdlib>
@@ -104,9 +106,13 @@ namespace PXTEngine {
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         vkResetFences(m_context.getDevice(), 1, &m_inFlightFences[m_currentFrame]);
-        if (vkQueueSubmit(m_context.getGraphicsQueue(), 1, &submitInfo,
-                          m_inFlightFences[m_currentFrame]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to submit draw command buffer!");
+
+        VkResult vkResult = vkQueueSubmit(m_context.getGraphicsQueue(), 1, &submitInfo,
+            m_inFlightFences[m_currentFrame]);
+
+        if (vkResult != VK_SUCCESS) {
+			PXT_ERROR("Failed to submit draw command buffer: {}", STR_VK_RESULT(vkResult));
+            throw std::runtime_error("");
         }
 
         VkPresentInfoKHR presentInfo = {};
@@ -375,14 +381,14 @@ namespace PXTEngine {
         for (const auto& availableFormat : availableFormats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-                std::cout << "Selected VK_FORMAT_B8G8R8A8_SRGB with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR." << std::endl;
+                PXT_INFO("Selected {} with {}.", STR_VK_FORMAT(availableFormat.format), STR_VK_COLOR_SPACE_KHR(availableFormat.colorSpace));
                 return availableFormat;
             }
         }
         for (const auto& availableFormat : availableFormats) {
             if (availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-                std::cout << "Selected VK_FORMAT_R8G8B8A8_SRGB with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR." << std::endl;
+                PXT_INFO("Selected {} with {}.", STR_VK_FORMAT(availableFormat.format), STR_VK_COLOR_SPACE_KHR(availableFormat.colorSpace));
                 return availableFormat;
             }
         }
@@ -394,20 +400,19 @@ namespace PXTEngine {
         for (const auto& availableFormat : availableFormats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) { // Still prefer sRGB color space if possible
-                std::cout << "Selected VK_FORMAT_B8G8R8A8_UNORM with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR (linear)." << std::endl;
+                PXT_INFO("Selected {} with {}.", STR_VK_FORMAT(availableFormat.format), STR_VK_COLOR_SPACE_KHR(availableFormat.colorSpace));
                 return availableFormat;
             }
         }
         for (const auto& availableFormat : availableFormats) {
             if (availableFormat.format == VK_FORMAT_R8G8B8A8_UNORM &&
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) { // Still prefer sRGB color space if possible
-                std::cout << "Selected VK_FORMAT_R8G8B8A8_UNORM with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR (linear)." << std::endl;
+                PXT_INFO("Selected {} with {}.", STR_VK_FORMAT(availableFormat.format), STR_VK_COLOR_SPACE_KHR(availableFormat.colorSpace));
                 return availableFormat;
             }
         }
 
-		std::cout << "Using default surface format:" << availableFormats[0].format << 
-            ", " << availableFormats[0].colorSpace << std::endl;
+        PXT_INFO("Selected first format available (only one supported): {} with {}.", STR_VK_FORMAT(availableFormats[0].format), STR_VK_COLOR_SPACE_KHR(availableFormats[0].colorSpace));
         return availableFormats[0];
     }
 
@@ -415,7 +420,7 @@ namespace PXTEngine {
         const std::vector<VkPresentModeKHR>& availablePresentModes) {
         for (const auto& availablePresentMode : availablePresentModes) {
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-                std::cout << "Present mode: Mailbox" << std::endl;
+                PXT_INFO("Present mode: Mailbox");
                 return availablePresentMode;
             }
         }
@@ -423,13 +428,13 @@ namespace PXTEngine {
 #ifdef USE_IMMEDIATE_PRESENT_MODE
 		for (const auto& availablePresentMode : availablePresentModes) {
 			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-				std::cout << "Present mode: Immediate" << std::endl;
+                PXT_INFO("Present mode: Immediate");
 				return availablePresentMode;
 			}
 		}
 #endif
 
-        std::cout << "Present mode: V-Sync" << std::endl;
+        PXT_INFO("Present mode: V-Sync (FIFO)");
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 

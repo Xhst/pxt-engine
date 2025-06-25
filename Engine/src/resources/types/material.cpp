@@ -38,6 +38,10 @@ namespace PXTEngine {
     const glm::vec4& Material::getEmissiveColor() const { return m_emissiveColor; }
     Shared<Image> Material::getEmissiveMap() const { return m_emissiveMap; }
 
+    bool Material::isEmissive() {
+        return m_emissiveColor.a > 0.0f;
+    }
+
     // -------- Builder Implementation --------
 
     Material::Builder& Material::Builder::setAlbedoColor(const glm::vec4& color) {

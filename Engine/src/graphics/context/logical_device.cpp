@@ -121,7 +121,7 @@ namespace PXTEngine {
 		// finally check if the validation layer for raytracing is supported
         if (!rayTracingValidationFeatures.rayTracingValidation) {
             // end the chain before and create the device
-			std::cout << "Ray tracing validation layer not supported, disabling it." << std::endl;
+			//std::cout << "Ray tracing validation layer not supported, disabling it." << std::endl;
             rtPipelineFeatures.pNext = nullptr;
         }
 

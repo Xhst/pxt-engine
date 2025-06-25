@@ -22,13 +22,13 @@ public:
 
         auto environment = getScene().getEnvironment();
 
-        environment->setAmbientLight({ 0.67f, 0.85f, 0.9f, 0.25f });
+        environment->setAmbientLight({ 1.0, 1.0, 1.0, 0.15f });
         environment->setSkybox(skyboxTextures);
     }
 
     void createCameraEntity() {
         Entity camera = getScene().createEntity("camera")
-            .add<TransformComponent>(glm::vec3{ -0.1f, -0.2f, -0.9f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec3{ -glm::pi<float>() / 4, 0.0f, 0.0f })
+            .add<TransformComponent>(glm::vec3{ -0.1f, -0.4f, -1.0f }, glm::vec3{ 0.0f, 0.0f, 0.0f }, glm::vec3{ -glm::pi<float>() / 4, 0.0f, 0.0f })
             .add<CameraComponent>();
 
         camera.addAndGet<ScriptComponent>().bind<CameraController>();
@@ -51,7 +51,7 @@ public:
         ImageInfo albedoInfo{};
         albedoInfo.format = RGBA8_SRGB;
 
-        auto ground = rm.get<Mesh>(MODELS_PATH + "quad.obj");
+        auto quad = rm.get<Mesh>(MODELS_PATH + "quad.obj");
 		auto stylizedStoneMaterial = Material::Builder()
 			.setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "laminated_wood/albedo.png", &albedoInfo))
 			.setNormalMap(rm.get<Image>(TEXTURES_PATH + "laminated_wood/normal.png"))
@@ -62,15 +62,35 @@ public:
 		rm.add(stylizedStoneMaterial, "floor_material");
 
         Entity entity = getScene().createEntity("Floor")
-            .add<TransformComponent>(glm::vec3{0.f, 1.f, 0.f}, glm::vec3{15.f, 15.f, 15.f}, glm::vec3{0.0f, 0.0f, 0.0f})
-            .add<MeshComponent>(ground)
+            .add<TransformComponent>(glm::vec3{0.f, 1.0f, 0.f}, glm::vec3{1.f, 1.f, 1.f}, glm::vec3{0.0f, 0.0f, 0.0f})
+            .add<MeshComponent>(quad)
 			.add<MaterialComponent>(MaterialComponent::Builder()
 				.setMaterial(stylizedStoneMaterial)
-                .setTilingFactor(20.0f)
+                .setTilingFactor(2.0f)
 				.build());
+
+        entity = getScene().createEntity("Left Wall")
+            .add<TransformComponent>(glm::vec3{ -1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, glm::pi<float>() / 2 })
+            .add<MeshComponent>(quad);
+        entity.addAndGet<MaterialComponent>().tint = glm::vec3{ 1.0f, 0.f, 0.f };
+
+        entity = getScene().createEntity("Right Wall")
+            .add<TransformComponent>(glm::vec3{ 1.f, 0.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ 0.0f, 0.0f, -glm::pi<float>() / 2 })
+            .add<MeshComponent>(quad);
+		entity.addAndGet<MaterialComponent>().tint = glm::vec3{ 0.f, 1.0f, 0.f };
+
+        entity = getScene().createEntity("Front Wall")
+            .add<TransformComponent>(glm::vec3{ 0.f, 0.f, 1.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>() / 2, 0.0f, 0.0f })
+            .add<MeshComponent>(quad)
+            .add<MaterialComponent>();
+
+        entity = getScene().createEntity("Roof")
+            .add<TransformComponent>(glm::vec3{ 0.f, -1.f, 0.f }, glm::vec3{ 1.f, 1.f, 1.f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
+            .add<MeshComponent>(quad)
+            .add<MaterialComponent>();
     }
 
-    void createVasesWithRandomTransforms(int count) {
+    void createTeapotAndVases(int count) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<float> posDist(-0.7f, 0.7f);
@@ -101,16 +121,16 @@ public:
         rm.add(graniteMaterial, "brown_granite");
 
         Entity entity = getScene().createEntity("vase")
-            .add<TransformComponent>(glm::vec3{ 0.5f, 1.0f, 0.2f }, glm::vec3{ 1.0f, 1.0f, 1.0f }, glm::vec3{0.0f, glm::pi<float>()/4, 0.0f})
+            .add<TransformComponent>(glm::vec3{ -0.75f, 1.0f, 0.1f }, glm::vec3{ 1.0f, 1.0f, 1.0f }, glm::vec3{0.0f, glm::pi<float>()/4, 0.0f})
             .add<MeshComponent>(vaseMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
             .setMaterial(graniteMaterial).build());
 
-        entity = getScene().createEntity("vase")
-            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.7f }, glm::vec3{ 0.15f, 0.15f, 0.15f }, glm::vec3{ glm::pi<float>(), -glm::pi<float>()/1.6, 0.0f })
+        entity = getScene().createEntity("teapot")
+            .add<TransformComponent>(glm::vec3{ 0.5f, 1.0f, 0.7f }, glm::vec3{ 0.15f, 0.15f, 0.15f }, glm::vec3{ glm::pi<float>(), -glm::pi<float>()/1.6, 0.0f })
             .add<MeshComponent>(teapotMesh);
         entity.addAndGet<MaterialComponent>(MaterialComponent::Builder()
-            .setMaterial(metallicMaterial).build()).tint = glm::vec3(1.0f, 0.66f, 0.545f);
+            .setMaterial(metallicMaterial).build()).tint = glm::vec3(0.737, 0.776, 0.8);
 
         entity = getScene().createEntity("vase")
             .add<TransformComponent>(glm::vec3{ -0.65f, 1.0f, 0.4f }, glm::vec3{ 1.8f, 1.4f, 1.8f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
@@ -127,7 +147,7 @@ public:
         albedoInfo.format = RGBA8_SRGB;
 
         auto rubikMaterial = Material::Builder()
-            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/rubik/albedo.jpg"))
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/rubik/albedo.jpg", &albedoInfo))
             .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/rubik/roughness.jpg"))
             .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/rubik/normal.jpg"))
             .setAmbientOcclusionMap(rm.get<Image>(TEXTURES_PATH + "/rubik/ao.jpg"))
@@ -135,37 +155,87 @@ public:
         rm.add(rubikMaterial, "rubik_material");
 
         Entity entity = getScene().createEntity("rubik")
-            .add<TransformComponent>(glm::vec3{ -0.75f, 0.9f, -0.1f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>()/2.5, 0.0f})
+            .add<TransformComponent>(glm::vec3{ -0.75f, 0.9f, -0.3f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>()/2.5, 0.0f})
             .add<MeshComponent>(rubikMesh)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setMaterial(rubikMaterial).build());
 
     }
 
-    void createBigCube() {
+    void createLamp() {
 		auto& rm = getResourceManager();
 
         ImageInfo albedoInfo{};
         albedoInfo.format = RGBA8_SRGB;
 
-        auto material = Material::Builder()
-            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png", &albedoInfo))
-            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
-            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
-            .setEmissiveColor({1.0, 1.0, 1.0, 15.0})
+        auto lampMaterial = Material::Builder()
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/lamp/albedo.png", &albedoInfo))
+            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/lamp/roughness.png"))
+            .setMetallicMap(rm.get<Image>(TEXTURES_PATH + "/lamp/metallic.png"))
+            .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/lamp/normal.png"))
+            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))//"/lamp/emissive.png"))
+            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 6.0f })
             .build();
-        rm.add(material, "wall_stone_material");
+        rm.add(lampMaterial, "lamp_material");
 
-        // add a cube
-        Entity cubeEntity = getScene().createEntity("Cube")
-            .add<TransformComponent>(glm::vec3{ 1.0f, 0.5f, 1.0f }, glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{ 0.0f, 0.0f, 0.0f })
-            .add<MeshComponent>(rm.get<Mesh>(MODELS_PATH + "cube.obj"))
+        auto lampMesh = rm.get<Mesh>(MODELS_PATH + "lamp.obj");
+
+        Entity entity = getScene().createEntity("lamp")
+            .add<TransformComponent>(glm::vec3{ 0.6f, 1.0f, 0.6f }, glm::vec3{ 2.4f, 2.8f, 2.4f }, glm::vec3{ glm::pi<float>(), glm::pi<float>() / 4, 0.0f })
+            .add<MeshComponent>(lampMesh)
             .add<MaterialComponent>(MaterialComponent::Builder()
-                .setMaterial(material)
-                .setTilingFactor(8.0f)
-                .build());
+                .setMaterial(lampMaterial).build());
+    }
 
-        cubeEntity.get<MaterialComponent>().tint = glm::vec4{ 0.9, 0.4, 0.3, 1.0 };
+    void createRoofLight() {
+        auto& rm = getResourceManager();
+
+        ImageInfo albedoInfo{};
+        albedoInfo.format = RGBA8_SRGB;
+
+        auto roofLightMaterial = Material::Builder()
+            .setEmissiveMap(rm.get<Image>(TEXTURES_PATH + "white_pixel.png"))
+            .setEmissiveColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 12.0f})
+            .build();
+        rm.add(roofLightMaterial, "roof_light_material");
+
+        auto roofLightMesh = rm.get<Mesh>(MODELS_PATH + "cube.obj");
+
+        Entity entity = getScene().createEntity("lamp")
+            .add<TransformComponent>(glm::vec3{ 0.0f, -0.995f, 0.0f }, glm::vec3{ 0.25f, 0.01f, 0.25f }, glm::vec3{ glm::pi<float>(), 0.0, 0.0})
+            .add<MeshComponent>(roofLightMesh)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(roofLightMaterial).build());
+    }
+
+    void createPencilAndPen() {
+        auto& rm = getResourceManager();
+
+        ImageInfo albedoInfo{};
+        albedoInfo.format = RGBA8_SRGB;
+
+        auto pencilMaterial = Material::Builder()
+            .setAlbedoMap(rm.get<Image>(TEXTURES_PATH + "/pencil/albedo.png", &albedoInfo))
+            .setRoughnessMap(rm.get<Image>(TEXTURES_PATH + "/pencil/roughness.png"))
+			.setMetallicMap(rm.get<Image>(TEXTURES_PATH + "/pencil/metallic.png"))
+            .setNormalMap(rm.get<Image>(TEXTURES_PATH + "/pencil/normal.png"))
+            .build();
+        rm.add(pencilMaterial, "pencil_material");
+
+        auto pencilMesh = rm.get<Mesh>(MODELS_PATH + "pencil.obj");
+
+        Entity entity = getScene().createEntity("pencil")
+            .add<TransformComponent>(glm::vec3{ 0.65f, 0.985f, -0.1f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>() / 10, 0.0f })
+            .add<MeshComponent>(pencilMesh)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(pencilMaterial).build());
+
+        entity = getScene().createEntity("pencil2")
+            .add<TransformComponent>(glm::vec3{ 0.55f, 0.985f, 0.0f }, glm::vec3{ 0.1f, 0.1f, 0.1f }, glm::vec3{ 0.0f, -glm::pi<float>() / 12, 0.0f })
+            .add<MeshComponent>(pencilMesh)
+            .add<MaterialComponent>(MaterialComponent::Builder()
+                .setMaterial(pencilMaterial).build());
+        
     }
 
     void createLights() {
@@ -191,9 +261,11 @@ public:
 		prepareEnvironment();
         createCameraEntity();
         createFloor();
-        createVasesWithRandomTransforms(5);
-        createRubikCube();
-        createBigCube();
+        createTeapotAndVases(5);
+        //createRubikCube();
+        //createLamp();
+		createRoofLight();
+        createPencilAndPen();
         createLights();
 
         auto& rm = getResourceManager();
@@ -218,7 +290,7 @@ public:
 		rm.add(bunnyMaterial, "bunny_material");
 
         Entity entity = getScene().createEntity("Bunny")
-            .add<TransformComponent>(glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
+            .add<TransformComponent>(glm::vec3{ 0.0f, 0.99f, 0.0f }, glm::vec3{ 2.5f, 2.5f, 2.5f }, glm::vec3{ glm::pi<float>(), 0.0f, 0.0f })
             .add<MeshComponent>(bunny)
             .add<MaterialComponent>(MaterialComponent::Builder()
                 .setMaterial(bunnyMaterial)

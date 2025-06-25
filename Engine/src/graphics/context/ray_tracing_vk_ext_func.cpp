@@ -1,4 +1,5 @@
 #include "graphics/context/ray_tracing_vk_ext_func.hpp"
+#include "core/logger.hpp"
 
 #include <stdexcept>
 #include <iostream>
@@ -94,6 +95,6 @@ void g_loadRayTracingFunctions(VkDevice device) {
     //     vkGetDeviceProcAddr(device, "vkCmdSetRayTracingPipelineStackSizeKHR"));
     // if (!vkCmdSetRayTracingPipelineStackSizeKHR_) throw std::runtime_error("Failed to load vkCmdSetRayTracingPipelineStackSizeKHR");
 
-    std::cout << "Successfully loaded Vulkan Ray Tracing function pointers.\n";
+   PXT_INFO("Successfully loaded Vulkan Ray Tracing function pointers.");
 }
 

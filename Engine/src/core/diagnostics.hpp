@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/logger.hpp"
 #include "core/platform.hpp"
 #include "utils/timer.hpp"
 
@@ -7,10 +8,6 @@
 #include <iostream>
 #include <format>
 #include <cassert>
-
-#define PXT_LOG(fmt, ...) std::cout << std::format(fmt, __VA_ARGS__) << "\n"
-
-#define PXT_ERROR(fmt, ...) std::cerr << std::format(fmt, __VA_ARGS__) << "\n"
 
 #if defined(PXT_PLATFORM_WINDOWS)
 	// Use the Windows-specific intrinsic

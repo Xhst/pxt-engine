@@ -139,7 +139,9 @@ namespace PXTEngine {
             VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
 			VK_NV_RAY_TRACING_VALIDATION_EXTENSION_NAME,
 			// buffer device address extension
-            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
+            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+			// debuging extension
+			VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
         };
 
 	private:
