@@ -103,6 +103,14 @@ struct EmitterSample {
     bool isVisible; 
 };
 
+/**
+ * Samples a point on a triangle uniformly.
+ * This function generates barycentric coordinates for a triangle and returns the corresponding point.
+ * The sampling is done using a uniform distribution over the triangle's area.
+ *
+ * @param seed A seed value for random number generation.
+ * @return A vec2 representing the barycentric coordinates of the sampled point.
+ */
 vec2 sampleTrianglePoint(uint seed) {
     const vec2 rand = randomVec2(seed);
     const float xsqrt = sqrt(rand.x);
@@ -110,6 +118,15 @@ vec2 sampleTrianglePoint(uint seed) {
     return vec2(1.0 - xsqrt, rand.y * xsqrt);
 }
 
+/**
+ * Samples an emitter (either a mesh emitter or the sky) and returns the sample.
+ * The function samples a mesh emitter or the sky based on the provided seed.
+ * It calculates the radiance, light distance, PDF, and visibility of the sampled emitter.
+ *
+ * @param surface The SurfaceData containing geometric and material properties of the hit point.
+ * @param worldPosition The world position of the surface being sampled.
+ * @param smpl Output parameter to store the sampled emitter data.
+ */
 void sampleEmitter(SurfaceData surface, vec3 worldPosition, out EmitterSample smpl) {
     smpl.radiance = vec3(0.0);
     smpl.lightDistance = RAY_T_MAX;
@@ -214,6 +231,24 @@ void sampleEmitter(SurfaceData surface, vec3 worldPosition, out EmitterSample sm
     smpl.isVisible = p_isVisible;
 }
 
+/**
+ * Power Heuristic for combining multiple sampling strategies.
+ * This heuristic is used to balance the contributions of different sampling methods
+ * based on their probability density functions (PDFs).
+ * 
+ * The generic power heurisitc is: w_i = pow(pdf_i, beta) / sum(pow(pdf_j, beta))
+ *
+ * The power heuristic, particularly with beta=2 was extensively studied and empirically shown to be 
+ * highly effective by Eric Veach in his Ph.D. thesis. 
+ * While not always strictly "optimal" in a mathematical sense for every single scenario, it provides
+ * a very robust and generally well-performing solution across a wide range of rendering situations.
+ * @see https://graphics.stanford.edu/papers/veach_thesis/thesis.pdf
+ *
+ * @param pdfA The PDF of the first sampling method.
+ * @param pdfB The PDF of the second sampling method.
+
+ * @return The weight for the first sampling method.
+ */
 float powerHeuristic(float pdfA, float pdfB) {
     const float pdfASq = pow2(pdfA);
     const float pdfBSq = pow2(pdfB);
@@ -221,6 +256,18 @@ float powerHeuristic(float pdfA, float pdfB) {
     return pdfASq / (pdfASq + pdfBSq);
 }
 
+/**
+ * @brief Calculates the direct illumination at a given surface point using Next Event Estimation (NEE)
+ * and Multiple Importance Sampling (MIS).
+ *
+ * This function is responsible for computing the radiance received directly from light sources (emitters)
+ * at a specified surface point. It employs two complementary sampling strategies for direct lighting
+ * and combines their contributions using the Power Heuristic to minimize variance.
+ *
+ * @param surface The SurfaceData containing geometric and material properties of the hit point.
+ * @param worldPosition The world-space coordinates of the surface point where direct lighting is being calculated.
+ * @param outLightDir The outgoing light direction from the surface point.
+ */
 void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
     
     EmitterSample emitterSample;
@@ -242,6 +289,18 @@ void directLighting(SurfaceData surface, vec3 worldPosition, vec3 outLightDir) {
     }
 }
 
+/**
+ * @brief Prepares for the indirect lighting step by sampling a new direction based on the BSDF and updating path state.
+ *
+ * This function handles the sampling of an outgoing direction for the next segment of an indirect path
+ * and applies Russian Roulette for path termination. It's a crucial part of the recursive path tracing process
+ * for indirect illumination.
+ *
+ * @param surface The SurfaceData containing geometric and material properties of the hit point.
+ * @param outLightDir The outgoing light direction from the surface point.
+ * @param inLightDir The incoming direction for the next bounce, sampled based on the BSDF.
+ *                   This will be used to trace the next ray.
+ */
 void indirectLighting(SurfaceData surface, vec3 outLightDir, out vec3 inLightDir) {
     float pdf;
     bool isSpecular;
@@ -280,8 +339,6 @@ void main() {
     // Tangent, Bi-tangent, Normal (TBN) matrix to transform tangent space to world space
     mat3 tbn = calculateTBN(triangle, mat3(instance.objectToWorld), barycentrics);
     const vec3 surfaceNormal = calculateSurfaceNormal(textures[nonuniformEXT(material.normalMapIndex)], uv, tbn);
-    
-    const vec3 worldNormal = tbn[2];
 
     SurfaceData surface;
     surface.tbn = tbn;
@@ -318,6 +375,9 @@ void main() {
 
     indirectLighting(surface, outgoingLightDirection, incomingLightDirection);
     
+    // We change the geometric normal with the surface normal in the TBN before converting back to
+    // world space the incoming light direction. By doing this, we apply the normals from the normal map.
+    const vec3 geometricNormal = tbn[2];
     tbn[2] = surfaceNormal;
 
     // Convert back to world space
@@ -325,6 +385,6 @@ void main() {
 
     // Update the payload for the next bounce
     p_pathTrace.depth++;
-    p_pathTrace.origin = worldPosition + worldNormal * FLT_EPSILON;
+    p_pathTrace.origin = worldPosition + geometricNormal * FLT_EPSILON;
     p_pathTrace.direction = outgoingLightDirection;
 }
