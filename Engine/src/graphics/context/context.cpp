@@ -200,6 +200,28 @@ namespace PXTEngine {
 		return sampler;
 	}
 
+    void Context::createShaderModuleFromSpirV(const std::vector<char>& code, VkShaderModule* shaderModule) {
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = code.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+        if (vkCreateShaderModule(m_device.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create shader module!");
+        }
+    }
+
+    void Context::createShaderModuleFromSourceBinary(const std::vector<uint32_t>& binary, VkShaderModule* shaderModule) {
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = binary.size() * sizeof(uint32_t);
+        createInfo.pCode = binary.data();
+
+        if (vkCreateShaderModule(m_device.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create shader module!");
+        }
+    }
+
 	VkFormat Context::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
                                           VkFormatFeatureFlags features) {
 

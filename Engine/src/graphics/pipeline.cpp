@@ -2,7 +2,9 @@
 
 #include "core/diagnostics.hpp"
 #include "graphics/resources/vk_mesh.hpp"
+#include "graphics/resources/vk_shader.hpp"
 #include "graphics/frame_info.hpp"
+#include "core/constants.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -14,7 +16,7 @@ namespace PXTEngine {
         int32_t maxLights;
     };
 
-    Pipeline::Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
+    Pipeline::Pipeline(Context& context, const std::vector<std::string>& shaderFilePaths,
                        const RasterizationPipelineConfigInfo& configInfo) : m_context(context) {
         createGraphicsPipeline(shaderFilePaths, configInfo);
     }
@@ -22,6 +24,7 @@ namespace PXTEngine {
 	Pipeline::Pipeline(Context& context, const RayTracingPipelineConfigInfo& configInfo)
         : m_context(context) {
 		createRayTracingPipeline(configInfo);
+		VulkanShader(m_context, SPV_SHADERS_PATH + "material_shader.vert.spv");
 	}
 
 	Pipeline::~Pipeline() {
@@ -61,7 +64,7 @@ namespace PXTEngine {
 	}
 
 	void Pipeline::createGraphicsPipeline(
-		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
+		const std::vector<std::string>& shaderFilePaths,
 		const RasterizationPipelineConfigInfo& configInfo
 	) {
 		// Ensure that the pipeline layout and render pass are properly set.
@@ -87,27 +90,20 @@ namespace PXTEngine {
 		// --- Prepare shader stages ---
 		// Container to keep created shader stage infos.
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+		// Container to contain vulkan shader wrappers (if they go out of scope before the pipeline is created,
+		// the shader modules will be destroyed automatically).
+		std::vector<Unique<VulkanShader>> shaders{ shaderFilePaths.size() };
 
 		// Loop through each provided shader stage.
-		for (const auto& [stage, filepath] : shaderFilePaths) {
-			// Read the shader binary code from the file.
-			auto shaderCode = readFile(filepath);
+		for (int i = 0; i < shaderFilePaths.size(); i++) {
+			const auto& filepath = shaderFilePaths[i];
+			// to handle memory stuff atomatically
+			shaders[i] = createUnique<VulkanShader>(m_context, filepath);
 
-			// Create the shader module.
-			VkShaderModule shaderModule;
-			createShaderModule(shaderCode, &shaderModule);
-			m_shaderModules.push_back(shaderModule);
+			VkPipelineShaderStageCreateInfo shaderStageCreateInfo = shaders[i]->GetShaderStageCreateInfo();
+			shaderStageCreateInfo.pSpecializationInfo = &specializationInfo;
 
-			// Prepare the shader stage create info.
-			VkPipelineShaderStageCreateInfo shaderStageInfo{};
-			shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			shaderStageInfo.stage = stage;
-			shaderStageInfo.module = shaderModule;
-			shaderStageInfo.pName = "main";
-			shaderStageInfo.flags = 0;
-			shaderStageInfo.pNext = nullptr;
-			shaderStageInfo.pSpecializationInfo = &specializationInfo;
-			shaderStages.push_back(shaderStageInfo);
+			shaderStages.push_back(shaderStageCreateInfo);
 		}
 
 		// --- Set up the vertex input state ---
@@ -149,13 +145,6 @@ namespace PXTEngine {
 			&m_pipeline) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
-
-		// --- Clean up: Destroy the shader modules ---
-		for (auto& shaderModule : m_shaderModules) {
-			vkDestroyShaderModule(m_context.getDevice(), shaderModule, nullptr);
-			shaderModule = VK_NULL_HANDLE;
-		}
-		m_shaderModules.clear();
 	}
 
 	void Pipeline::createRayTracingPipeline(const RayTracingPipelineConfigInfo& configInfo) {

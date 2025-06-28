@@ -157,6 +157,22 @@ namespace PXTEngine {
 		VkSampler createSampler(const VkSamplerCreateInfo& samplerInfo);
 
 		/**
+		 * @brief Creates a shader module from SPIR-V code.
+		 * 
+		 * @param code The SPIR-V code to create the shader module from.
+		 * @param shaderModule The output shader module handle.
+		 */
+		void createShaderModuleFromSpirV(const std::vector<char>& code, VkShaderModule* shaderModule);
+		
+		/**
+		 * @brief Creates a shader module from source binary code, compiled from GLSL (for now).
+		 *
+		 * @param code The binary code to create the shader module from.
+		 * @param shaderModule The output shader module handle.
+		 */
+		void createShaderModuleFromSourceBinary(const std::vector<uint32_t>& binary, VkShaderModule* shaderModule);
+
+		/**
 		 * @brief Finds a supported format for an image.
 		 *
 		 * This function finds a supported format for an image, given a list of candidate formats,

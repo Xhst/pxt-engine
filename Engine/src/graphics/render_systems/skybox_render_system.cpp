@@ -73,9 +73,9 @@ namespace PXTEngine {
         pipelineConfig.bindingDescriptions.clear();
 
 
-        const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
-            {VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "skybox.vert.spv"},
-            {VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "skybox.frag.spv"}
+        const std::vector<std::string>& shaderFilePaths = {
+            SPV_SHADERS_PATH + "skybox.vert.spv",
+            SPV_SHADERS_PATH + "skybox.frag.spv"
         };
 
         m_pipeline = createUnique<Pipeline>(

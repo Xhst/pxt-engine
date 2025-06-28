@@ -268,9 +268,9 @@ namespace PXTEngine {
         pipelineConfig.renderPass = m_renderPass->getHandle();
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
-			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "cube_shadow_map_creation.vert.spv"},
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "cube_shadow_map_creation.frag.spv" }
+		const std::vector<std::string>& shaderFilePaths = {
+			SPV_SHADERS_PATH + "cube_shadow_map_creation.vert.spv",
+			SPV_SHADERS_PATH + "cube_shadow_map_creation.frag.spv"
 		};
 
         m_pipeline = createUnique<Pipeline>(
