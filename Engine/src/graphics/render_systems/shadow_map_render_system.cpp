@@ -260,7 +260,7 @@ namespace PXTEngine {
         }
     }
 
-    void ShadowMapRenderSystem::createPipeline() {
+    void ShadowMapRenderSystem::createPipeline(bool useCompiledSpirvFiles) {
 		PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         RasterizationPipelineConfigInfo pipelineConfig{};
@@ -268,9 +268,12 @@ namespace PXTEngine {
         pipelineConfig.renderPass = m_renderPass->getHandle();
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::string>& shaderFilePaths = {
-			SPV_SHADERS_PATH + "cube_shadow_map_creation.vert.spv",
-			SPV_SHADERS_PATH + "cube_shadow_map_creation.frag.spv"
+		const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+		const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
+
+		std::vector<std::string> shaderFilePaths;
+		for (const auto& filePath : m_shaderFilePaths) {
+			shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
 		};
 
         m_pipeline = createUnique<Pipeline>(

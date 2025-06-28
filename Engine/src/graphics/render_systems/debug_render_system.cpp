@@ -60,7 +60,7 @@ namespace PXTEngine {
         }
     }
 
-    void DebugRenderSystem::createPipelines(VkRenderPass renderPass) {
+    void DebugRenderSystem::createPipelines(VkRenderPass renderPass, bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         // Default Solid Pipeline
@@ -69,10 +69,13 @@ namespace PXTEngine {
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::string>& shaderFilePaths = {
-			SPV_SHADERS_PATH + "debug_shader.vert.spv",
-			SPV_SHADERS_PATH + "debug_shader.frag.spv"
-		};
+        const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+        const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
+
+        std::vector<std::string> shaderFilePaths;
+        for (const auto& filePath : m_shaderFilePaths) {
+            shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
+        };
 
         m_pipelineSolid = createUnique<Pipeline>(
             m_context,

@@ -35,7 +35,7 @@ namespace PXTEngine {
         void createRenderPass();
         void createOffscreenFrameBuffers();
         void createPipelineLayout(DescriptorSetLayout& setLayout);
-        void createPipeline();
+        void createPipeline(bool useCompiledSpirvFiles = true);
 
         void createDebugDescriptorSets();
         void updateShadowCubeMapDebugWindow();
@@ -71,5 +71,10 @@ namespace PXTEngine {
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
+
+        std::array<const std::string, 2> m_shaderFilePaths = {
+            "cube_shadow_map_creation.vert",
+            "cube_shadow_map_creation.frag"
+        };
     };
 }

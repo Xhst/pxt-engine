@@ -82,7 +82,7 @@ namespace PXTEngine {
         }
     }
 
-    void MaterialRenderSystem::createPipeline(VkRenderPass renderPass) {
+    void MaterialRenderSystem::createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         RasterizationPipelineConfigInfo pipelineConfig{};
@@ -90,9 +90,12 @@ namespace PXTEngine {
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::string>& shaderFilePaths = {
-			SPV_SHADERS_PATH + "material_shader.vert.spv",
-			SPV_SHADERS_PATH + "material_shader.frag.spv"
+        const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+        const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
+
+        std::vector<std::string> shaderFilePaths;
+		for (const auto& filePath : m_shaderFilePaths) {
+            shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
 		};
 
         m_pipeline = createUnique<Pipeline>(

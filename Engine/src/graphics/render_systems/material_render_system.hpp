@@ -24,7 +24,7 @@ namespace PXTEngine {
     private:
         void createDescriptorSets(VkDescriptorImageInfo shadowMapImageInfo);
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
-        void createPipeline(VkRenderPass renderPass);
+        void createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles = true);
         
         Context& m_context;
         TextureRegistry& m_textureRegistry;
@@ -36,5 +36,10 @@ namespace PXTEngine {
 
         Unique<DescriptorSetLayout> m_shadowMapDescriptorSetLayout{};
         VkDescriptorSet m_shadowMapDescriptorSet{};
+
+        std::array<const std::string, 2> m_shaderFilePaths = {
+            "material_shader.vert",
+            "material_shader.frag"
+        };
     };
 }

@@ -28,7 +28,7 @@ namespace PXTEngine {
 
     private:
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
-        void createPipelines(VkRenderPass renderPass);  
+        void createPipelines(VkRenderPass renderPass, bool useCompiledSpirvFiles = true);
         
         Context& m_context;
 		TextureRegistry& m_textureRegistry;
@@ -45,5 +45,10 @@ namespace PXTEngine {
 		bool m_isAlbedoMapEnabled = true;
 		bool m_isNormalMapEnabled = true;
 		bool m_isAOMapEnabled = true;
+
+        std::array<const std::string, 2> m_shaderFilePaths = {
+            "debug_shader.vert",
+            "debug_shader.frag"
+        };
     };
 }

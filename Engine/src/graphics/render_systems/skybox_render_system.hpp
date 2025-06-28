@@ -32,13 +32,18 @@ namespace PXTEngine {
 
     private:
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
-        void createPipeline(VkRenderPass renderPass);
+        void createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles = true);
 
         Context& m_context;
         Shared<VulkanSkybox> m_skybox;
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
+
+        std::array<const std::string, 2> m_shaderFilePaths = {
+            "skybox.vert",
+            "skybox.frag"
+        };
     };
 
 }

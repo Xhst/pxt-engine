@@ -23,11 +23,16 @@ namespace PXTEngine {
 
     private:
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-        void createPipeline(VkRenderPass renderPass);  
+        void createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles = true);  
         
         Context& m_context;
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
+
+        std::array<const std::string, 2> m_shaderFilePaths = {
+            "point_light_billboard.vert",
+            "point_light_billboard.frag"
+        };
     };
 }

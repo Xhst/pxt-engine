@@ -51,7 +51,7 @@ namespace PXTEngine {
         }
     }
 
-    void SkyboxRenderSystem::createPipeline(VkRenderPass renderPass) {
+    void SkyboxRenderSystem::createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create skybox pipeline before pipelineLayout");
 
         RasterizationPipelineConfigInfo pipelineConfig{};
@@ -72,10 +72,12 @@ namespace PXTEngine {
         pipelineConfig.attributeDescriptions.clear();
         pipelineConfig.bindingDescriptions.clear();
 
+        const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+        const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
 
-        const std::vector<std::string>& shaderFilePaths = {
-            SPV_SHADERS_PATH + "skybox.vert.spv",
-            SPV_SHADERS_PATH + "skybox.frag.spv"
+        std::vector<std::string> shaderFilePaths;
+        for (const auto& filePath : m_shaderFilePaths) {
+            shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
         };
 
         m_pipeline = createUnique<Pipeline>(
