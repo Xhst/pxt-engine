@@ -129,7 +129,7 @@ namespace PXTEngine
 
 		// Setup compiler environment
 		m_CompileOptions.SetIncluder(std::make_unique<FileIncluder>(&m_Finder));
-		m_CompileOptions.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_4);
+		m_CompileOptions.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 		m_CompileOptions.SetSourceLanguage(shaderc_source_language_glsl);
 		//m_CompileOptions.SetTargetSpirv(shaderc_spirv_version_1_4);
 		m_CompileOptions.SetOptimizationLevel(shaderc_optimization_level_performance);
