@@ -1,7 +1,7 @@
 include(./Engine/.env OPTIONAL RESULT_VARIABLE LOCAL_ENV)
 message(STATUS "Local .env: ${LOCAL_ENV}")
 
-cmake_minimum_required(VERSION 3.11.0)
+cmake_minimum_required(VERSION 3.17.0)
 
 set(NAME PXT_Engine)
 
@@ -20,17 +20,22 @@ project(${NAME} VERSION 0.0.1)
 
 # Vulkan
 if (DEFINED VULKAN_SDK_PATH)
-  set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
-  set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
-  set(Vulkan_FOUND "True")
+  #set(VULKAN_SDK "${VULKAN_SDK_PATH}" CACHE PATH "Path to the Vulkan SDK" FORCE)
+  message(STATUS "VULKAN_SDK_PATH defined, setting VULKAN_SDK to: ${VULKAN_SDK}")
 else()
-  find_package(Vulkan REQUIRED)
-  message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
+  message(STATUS "VULKAN_SDK_PATH not defined. find_package will use environment or system paths for Vulkan SDK.")
 endif()
+
+# Always call find_package(Vulkan...) to let CMake find the SDK and its components.
+# It will correctly use the VULKAN_SDK CMake variable (or environment variable) if set.
+find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
+
 if (NOT Vulkan_FOUND)
-  message(FATAL_ERROR "Could not find Vulkan library!")
+  message(FATAL_ERROR "Could not find Vulkan library and/or required components (shaderc_combined)!")
 else()
-  message(STATUS "Using Vulkan library at: ${Vulkan_LIBRARIES}")
+  message(STATUS "Found Vulkan SDK at: ${Vulkan_SDK}")
+  message(STATUS "Found Vulkan include directories: ${Vulkan_INCLUDE_DIRS}")
+  message(STATUS "Found Vulkan libraries: ${Vulkan_LIBRARIES}")
 endif()
 
 # Vendor libraries
@@ -40,6 +45,11 @@ add_subdirectory(Engine/vendor/tinyobjloader)
 add_subdirectory(Engine/vendor/entt)
 add_subdirectory(Engine/vendor/spdlog)
 
+# ShaderC
+#set(SHADERC_SKIP_TESTS ON CACHE BOOL "Skip ShaderC tests")
+#set(SHADERC_ENABLE_SHARED_CRT ON CACHE BOOL "Use static CRT for ShaderC")
+
+
 # Tracy Profiler
 option(TRACY_ENABLE " " ON)
 add_subdirectory(Engine/vendor/tracy) # target : TracyClient or alias Tracy::TracyClient
@@ -47,7 +57,6 @@ add_subdirectory(Engine/vendor/tracy) # target : TracyClient or alias Tracy::Tra
 # STB IMAGE library
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE ${CMAKE_SOURCE_DIR}/Engine/vendor/stb)
-
 
 # IMGUI Library
 set(IMGUI_DIR ${PROJECT_SOURCE_DIR}/Engine/vendor/imgui)
@@ -69,13 +78,19 @@ add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC ${Vulkan_INCLUDE_DIRS})
 
 # Link dependencies to ImGui
-target_link_libraries(imgui PUBLIC glfw ${Vulkan_LIBRARIES}/vulkan-1.lib)
+target_link_libraries(imgui PUBLIC glfw Vulkan::Vulkan)
 
 ####
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/Application/src/*.cpp ${PROJECT_SOURCE_DIR}/Engine/src/*.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+
+# If compiling with MSVC, we ignore warning 4099 which is about debug information for PDB files.
+# This is because the shaderc library does not provide pdb files, and MSVC will complain about it.
+if (MSVC)
+    target_link_options(${PROJECT_NAME} PRIVATE /IGNORE:4099)
+endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
@@ -120,10 +135,11 @@ if (WIN32)
     glm                      
     tinyobjloader
     stb
-    vulkan-1  # This is the name of the Vulkan library
+    Vulkan::Vulkan
     imgui
     Tracy::TracyClient
     spdlog::spdlog_header_only
+    Vulkan::shaderc_combined
   )
 
 

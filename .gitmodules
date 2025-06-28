@@ -23,6 +23,3 @@
 [submodule "Engine/vendor/spdlog"]
 	path = Engine/vendor/spdlog
 	url = https://github.com/gabime/spdlog
-[submodule "Engine/vendor/shaderc"]
-	path = Engine/vendor/shaderc
-	url = https://github.com/google/shaderc
