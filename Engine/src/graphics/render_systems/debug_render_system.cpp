@@ -28,9 +28,10 @@ namespace PXTEngine {
     };
 
     DebugRenderSystem::DebugRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout)
-		: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry) {
+		: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry),
+		m_renderPassHandle(renderPass) {
         createPipelineLayout(globalSetLayout);
-        createPipelines(renderPass);
+        createPipelines();
     }
 
     DebugRenderSystem::~DebugRenderSystem() {
@@ -60,13 +61,13 @@ namespace PXTEngine {
         }
     }
 
-    void DebugRenderSystem::createPipelines(VkRenderPass renderPass, bool useCompiledSpirvFiles) {
+    void DebugRenderSystem::createPipelines(bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         // Default Solid Pipeline
         RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        pipelineConfig.renderPass = renderPass;
+        pipelineConfig.renderPass = m_renderPassHandle;;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
         const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
@@ -159,5 +160,9 @@ namespace PXTEngine {
 		ImGui::Checkbox("Show Normal Map", &m_isNormalMapEnabled);
 		ImGui::Checkbox("Show Ambient Occlusion Map", &m_isAOMapEnabled);
 		ImGui::EndDisabled();
+    }
+
+    void DebugRenderSystem::reloadShaders() {
+        createPipelines(false);
     }
 }

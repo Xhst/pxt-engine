@@ -25,14 +25,16 @@ namespace PXTEngine {
 
         void render(FrameInfo& frameInfo);
         void updateUi();
+		void reloadShaders();
 
     private:
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
-        void createPipelines(VkRenderPass renderPass, bool useCompiledSpirvFiles = true);
+        void createPipelines(bool useCompiledSpirvFiles = true);
         
         Context& m_context;
 		TextureRegistry& m_textureRegistry;
 
+        VkRenderPass m_renderPassHandle;
         Unique<Pipeline> m_pipelineWireframe;
 		Unique<Pipeline> m_pipelineSolid;
         VkPipelineLayout m_pipelineLayout;

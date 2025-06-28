@@ -34,11 +34,12 @@ namespace PXTEngine {
     	VkRenderPass renderPass, VkDescriptorImageInfo shadowMapImageInfo)
         : m_context(context),
         m_descriptorAllocator(descriptorAllocator),
-        m_textureRegistry(textureRegistry)
+        m_textureRegistry(textureRegistry),
+        m_renderPassHandle(renderPass)
     {
 		createDescriptorSets(shadowMapImageInfo);
         createPipelineLayout(globalSetLayout);
-        createPipeline(renderPass);
+        createPipeline();
     }
 
     MaterialRenderSystem::~MaterialRenderSystem() {
@@ -82,12 +83,12 @@ namespace PXTEngine {
         }
     }
 
-    void MaterialRenderSystem::createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles) {
+    void MaterialRenderSystem::createPipeline(bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        pipelineConfig.renderPass = renderPass;
+        pipelineConfig.renderPass = m_renderPassHandle;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
         const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
@@ -154,5 +155,9 @@ namespace PXTEngine {
             vulkanMesh->draw(frameInfo.commandBuffer);
 
         }
+    }
+
+    void MaterialRenderSystem::reloadShaders() {
+		createPipeline(false);
     }
 }

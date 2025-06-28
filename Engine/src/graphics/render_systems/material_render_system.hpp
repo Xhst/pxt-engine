@@ -20,15 +20,17 @@ namespace PXTEngine {
         MaterialRenderSystem& operator=(const MaterialRenderSystem&) = delete;
 
         void render(FrameInfo& frameInfo);
+        void reloadShaders();
 
     private:
         void createDescriptorSets(VkDescriptorImageInfo shadowMapImageInfo);
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
-        void createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles = true);
+        void createPipeline(bool useCompiledSpirvFiles = true);
         
         Context& m_context;
         TextureRegistry& m_textureRegistry;
 
+		VkRenderPass m_renderPassHandle;
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
 
