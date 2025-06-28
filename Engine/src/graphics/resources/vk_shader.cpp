@@ -24,16 +24,13 @@ inline std::string get_cwd() {
 
 namespace PXTEngine
 {
-	std::string VulkanShader::BaseFolder = "";
-	std::string VulkanShader::BSDFFolder = "";
-
 	inline bool IsSPIR_V(const std::string_view& fileName)
 	{
 		const std::string_view extention = fileName.substr(fileName.size() - 4, 4);
 		return extention == ".spv";
 	}
 
-	void VulkanShader::InferKindAndStageFromFileName(const std::string_view& fileName) {
+	void VulkanShader::inferKindAndStageFromFileName(const std::string_view& fileName) {
 		std::string_view effectiveFileName = fileName;
 
 		// 1. Check if the file is a SPIR-V file (.spv)
@@ -118,61 +115,60 @@ namespace PXTEngine
 		const std::vector<std::pair<std::string, std::string>>& definitions)
 		: m_context(context) {
 		const auto cwd = get_cwd();
-		const std::string fileLocation = cwd + "/" + BaseFolder + std::string(fileName.data());
+		const std::string fileLocation = cwd + "/" + std::string(fileName.data());
 
 		// Sanity check
 		//if (!FileExists(fileLocation.c_str()))
 			//PXT_FATAL("File: \"%s\" does not exist.", fileLocation.data());
 
 		// Infer shader kind and stage from file name
-		InferKindAndStageFromFileName(fileName);
+		inferKindAndStageFromFileName(fileName);
 
 		// Setup compiler environment
-		m_CompileOptions.SetIncluder(std::make_unique<FileIncluder>(&m_Finder));
-		m_CompileOptions.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
-		m_CompileOptions.SetSourceLanguage(shaderc_source_language_glsl);
-		//m_CompileOptions.SetTargetSpirv(shaderc_spirv_version_1_4);
-		m_CompileOptions.SetOptimizationLevel(shaderc_optimization_level_performance);
-		m_Finder.search_path().push_back(BSDFFolder);
+		m_compileOptions.SetIncluder(std::make_unique<FileIncluder>(&m_finder));
+		m_compileOptions.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_4);
+		m_compileOptions.SetSourceLanguage(shaderc_source_language_glsl);
+		//m_compileOptions.SetTargetSpirv(shaderc_spirv_version_1_4);
+		m_compileOptions.SetOptimizationLevel(shaderc_optimization_level_performance);
 
 		std::vector<std::pair<std::string, std::string>> defs = definitions;
 
 		for (auto& defPair : defs) // Add given definitions to compiler
-			m_CompileOptions.AddMacroDefinition(defPair.first, defPair.second);
+			m_compileOptions.AddMacroDefinition(defPair.first, defPair.second);
 
 		if (IsSPIR_V(fileName)) // In case we get fed an pre-compiled SPIR-V shader
 		{
-			const auto source = ReadFile(fileLocation);
-			m_context.createShaderModuleFromSpirV(source, &m_Module);
-			PXT_ASSERT(m_Module, "Could not create shader module for shader: \"%s\".", fileLocation.data());
+			const auto source = readFile(fileLocation);
+			m_context.createShaderModuleFromSpirV(source, &m_module);
+			PXT_ASSERT(m_module, "Could not create shader module for shader: \"%s\".", fileLocation.data());
 		}
 		else // We need to compile the shader ourselves
 		{
-			const std::string sourceString = ReadTextFile(fileLocation);			  // Get source of shader
-			const auto result = PreprocessShader(fileLocation, sourceString, m_kind); // Preprocess source file
-			const auto binary = CompileFile(fileLocation, result, m_kind);			  // Produce SPIR-V binary
+			const std::string sourceString = readTextFile(fileLocation);			  // Get source of shader
+			const auto result = preprocessShader(fileLocation, sourceString, m_kind); // Preprocess source file
+			const auto binary = compileFile(fileLocation, result, m_kind);			  // Produce SPIR-V binary
 
-			m_context.createShaderModuleFromSourceBinary(binary, &m_Module);
-			PXT_ASSERT(m_Module, "Could not create shader module for shader: \"%s\".", fileLocation.data());
+			m_context.createShaderModuleFromSourceBinary(binary, &m_module);
+			PXT_ASSERT(m_module, "Could not create shader module for shader: \"%s\".", fileLocation.data());
 		}
 	}
 
 	VulkanShader::~VulkanShader() {
-		Cleanup();
+		cleanup();
 	}
 
-	void VulkanShader::Cleanup() {
-		if (m_Module) {
-			vkDestroyShaderModule(m_context.getDevice(), m_Module, nullptr);
-			m_Module = nullptr;
+	void VulkanShader::cleanup() {
+		if (m_module) {
+			vkDestroyShaderModule(m_context.getDevice(), m_module, nullptr);
+			m_module = nullptr;
 		}
 	}
 
-	VkPipelineShaderStageCreateInfo VulkanShader::GetShaderStageCreateInfo() {
+	VkPipelineShaderStageCreateInfo VulkanShader::getShaderStageCreateInfo() {
 		VkPipelineShaderStageCreateInfo shaderStageInfo{};
 		shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		shaderStageInfo.stage = m_vkStage;
-		shaderStageInfo.module = m_Module;
+		shaderStageInfo.module = m_module;
 		shaderStageInfo.pName = "main";
 		shaderStageInfo.flags = 0;
 		shaderStageInfo.pNext = nullptr;
@@ -181,7 +177,7 @@ namespace PXTEngine
 		return shaderStageInfo;
 	}
 
-	std::vector<char> VulkanShader::ReadFile(const std::string_view& fileName) {
+	std::vector<char> VulkanShader::readFile(const std::string_view& fileName) {
 		std::ifstream fileStream(fileName.data(), std::ios::binary | std::ios::in | std::ios::ate);
 		if (!fileStream.is_open())
 			PXT_FATAL("Could not open file.");
@@ -194,7 +190,7 @@ namespace PXTEngine
 		return data;
 	}
 
-	std::string VulkanShader::ReadTextFile(const std::string_view& fileName) {
+	std::string VulkanShader::readTextFile(const std::string_view& fileName) {
 		std::string buffer;
 		std::ifstream fileStream(fileName.data());
 		if (!fileStream.is_open())
@@ -212,8 +208,8 @@ namespace PXTEngine
 	// The shader compilation implementation below was taken from google/shaderc itself
 	// It implements include support for GLSL
 	// https://github.com/google/shaderc
-	std::string VulkanShader::PreprocessShader(const std::string_view& fileName, const std::string& source, shaderc_shader_kind shaderKind) {
-		auto result = m_Compiler.PreprocessGlsl(source, shaderKind, fileName.data(), m_CompileOptions);
+	std::string VulkanShader::preprocessShader(const std::string_view& fileName, const std::string& source, shaderc_shader_kind shaderKind) {
+		auto result = m_compiler.PreprocessGlsl(source, shaderKind, fileName.data(), m_compileOptions);
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
 			PXT_FATAL("%s", result.GetErrorMessage().data());
@@ -222,8 +218,8 @@ namespace PXTEngine
 		return { result.cbegin(), result.cend() };
 	}
 
-	std::string VulkanShader::CompileToAssembly(const std::string_view& fileName, const std::string& source, shaderc_shader_kind shaderKind) {
-		auto result = m_Compiler.CompileGlslToSpvAssembly(source, shaderKind, fileName.data(), m_CompileOptions);
+	std::string VulkanShader::compileToAssembly(const std::string_view& fileName, const std::string& source, shaderc_shader_kind shaderKind) {
+		auto result = m_compiler.CompileGlslToSpvAssembly(source, shaderKind, fileName.data(), m_compileOptions);
 
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
@@ -233,8 +229,8 @@ namespace PXTEngine
 		return { result.cbegin(), result.cend() };
 	}
 
-	std::vector<uint32_t> VulkanShader::CompileFile(const std::string_view& fileName, const std::string& source, shaderc_shader_kind shaderKind) {
-		auto module = m_Compiler.CompileGlslToSpv(source, shaderKind, fileName.data(), m_CompileOptions);
+	std::vector<uint32_t> VulkanShader::compileFile(const std::string_view& fileName, const std::string& source, shaderc_shader_kind shaderKind) {
+		auto module = m_compiler.CompileGlslToSpv(source, shaderKind, fileName.data(), m_compileOptions);
 
 		if (module.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
@@ -547,13 +543,13 @@ namespace PXTEngine
 		return (path.empty() || path.back() == '/') ? "" : "/";
 	}
 
-	std::string VulkanShader::FileFinder::FindReadableFilepath(
+	std::string VulkanShader::FileFinder::findReadableFilepath(
 		const std::string& filename) const
 	{
 		assert(!filename.empty());
 		static const auto for_reading = std::ios_base::in;
 		std::filebuf opener;
-		for (const auto& prefix : search_path_)
+		for (const auto& prefix : m_searchPath)
 		{
 			const std::string prefixed_filename =
 				prefix + MaybeSlash(prefix) + filename;
@@ -562,7 +558,7 @@ namespace PXTEngine
 		return "";
 	}
 
-	std::string VulkanShader::FileFinder::FindRelativeReadableFilepath(
+	std::string VulkanShader::FileFinder::findRelativeReadableFilepath(
 		const std::string& requesting_file, const std::string& filename) const
 	{
 		assert(!filename.empty());
@@ -587,7 +583,7 @@ namespace PXTEngine
 			dir_name.str() + MaybeSlash(dir_name) + filename;
 		if (opener.open(relative_filename, for_reading)) return relative_filename;
 
-		return FindReadableFilepath(filename);
+		return findReadableFilepath(filename);
 	}
 
 	VulkanShader::FileIncluder::~FileIncluder() = default;
@@ -599,9 +595,9 @@ namespace PXTEngine
 
 		const std::string full_path =
 			(include_type == shaderc_include_type_relative)
-			? file_finder_.FindRelativeReadableFilepath(requesting_source,
+			? m_fileFinder.findRelativeReadableFilepath(requesting_source,
 				requested_source)
-			: file_finder_.FindReadableFilepath(requested_source);
+			: m_fileFinder.findReadableFilepath(requested_source);
 
 		if (full_path.empty())
 			return MakeErrorIncludeResult("Cannot find or open include file.");
@@ -636,10 +632,10 @@ namespace PXTEngine
 			return MakeErrorIncludeResult("Cannot read file");
 		}
 
-		included_files_.insert(full_path);
+		m_includedFiles.insert(full_path);
 
 		return new shaderc_include_result{
-			new_file_info->full_path.data(), new_file_info->full_path.length(),
+			new_file_info->fullPath.data(), new_file_info->fullPath.length(),
 			new_file_info->contents.data(), new_file_info->contents.size(),
 			new_file_info };
 	}

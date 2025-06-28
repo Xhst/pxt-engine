@@ -282,7 +282,6 @@ namespace PXTEngine {
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
         std::vector<VkFence> m_inFlightFences;
-        std::vector<VkFence> m_imagesInFlight;
     };
 
 }

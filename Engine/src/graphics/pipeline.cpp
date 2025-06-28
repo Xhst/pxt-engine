@@ -100,7 +100,7 @@ namespace PXTEngine {
 			// to handle memory stuff atomatically
 			shaders[i] = createUnique<VulkanShader>(m_context, filepath);
 
-			VkPipelineShaderStageCreateInfo shaderStageCreateInfo = shaders[i]->GetShaderStageCreateInfo();
+			VkPipelineShaderStageCreateInfo shaderStageCreateInfo = shaders[i]->getShaderStageCreateInfo();
 			shaderStageCreateInfo.pSpecializationInfo = &specializationInfo;
 
 			shaderStages.push_back(shaderStageCreateInfo);

@@ -20,14 +20,12 @@ project(${NAME} VERSION 0.0.1)
 
 # Vulkan
 if (DEFINED VULKAN_SDK_PATH)
-  #set(VULKAN_SDK "${VULKAN_SDK_PATH}" CACHE PATH "Path to the Vulkan SDK" FORCE)
+  set(VULKAN_SDK "${VULKAN_SDK_PATH}" CACHE PATH "Path to the Vulkan SDK" FORCE)
   message(STATUS "VULKAN_SDK_PATH defined, setting VULKAN_SDK to: ${VULKAN_SDK}")
 else()
   message(STATUS "VULKAN_SDK_PATH not defined. find_package will use environment or system paths for Vulkan SDK.")
 endif()
 
-# Always call find_package(Vulkan...) to let CMake find the SDK and its components.
-# It will correctly use the VULKAN_SDK CMake variable (or environment variable) if set.
 find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
 
 if (NOT Vulkan_FOUND)
