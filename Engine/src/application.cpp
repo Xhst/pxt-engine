@@ -87,7 +87,8 @@ namespace PXTEngine {
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<float>(m_textureRegistry.getTextureCount())},
             {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1.0f},
-            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2.0f}
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2.0f},
+			{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 2.0f}
 		};
 
 		m_descriptorAllocator = createShared<DescriptorAllocatorGrowable>(m_context, SwapChain::MAX_FRAMES_IN_FLIGHT, ratios);
