@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "core/events/event.hpp"
 #include "graphics/window.hpp"
 #include "graphics/context/context.hpp"
@@ -14,10 +14,6 @@
 #include "resources/resource_manager.hpp"
 #include "resources/types/material.hpp"
 #include "scene/scene.hpp"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
 
 int main();
 

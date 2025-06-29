@@ -1,11 +1,8 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "resources/resource.hpp"
 #include "resources/resource_manager.hpp"
-
-#include <filesystem>
-#include <optional>
 
 namespace PXTEngine {
 

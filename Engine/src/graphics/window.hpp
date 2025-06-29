@@ -1,12 +1,6 @@
 #pragma once
 
-#include "core/memory.hpp"
-
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#include <string>
-#include <functional>
+#include "core/pch.hpp"
 
 namespace PXTEngine {
 

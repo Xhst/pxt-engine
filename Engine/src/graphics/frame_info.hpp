@@ -1,9 +1,8 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "scene/camera.hpp"
 #include "scene/scene.hpp"
-
-#include <vulkan/vulkan.h>
 
 namespace PXTEngine {
 

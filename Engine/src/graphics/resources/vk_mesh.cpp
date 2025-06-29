@@ -1,7 +1,6 @@
 #include "graphics/resources/vk_mesh.hpp"
 
 #include "application.hpp"
-#include "core/diagnostics.hpp"
 
 namespace PXTEngine {
 

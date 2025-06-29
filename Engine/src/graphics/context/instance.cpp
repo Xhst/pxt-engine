@@ -1,12 +1,6 @@
 #include "graphics/context/instance.hpp"
 
-#include "core/logger.hpp"
-
-#include <cstring>
-#include <iostream>
-#include <stdexcept>
-#include <unordered_set>
-#include <sstream>
+#include "core/pch.hpp"
 
 #ifndef ENABLE_RAYTRACING_EXT
 #define ENABLE_RAYTRACING_EXT 1

@@ -1,8 +1,5 @@
 #include "graphics/context/context.hpp"
 
-#include <stdexcept>
-
-
 namespace PXTEngine {
 
     Context::Context(Window& window)

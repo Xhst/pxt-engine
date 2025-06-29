@@ -1,11 +1,7 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "resources/resource.hpp"
-
-#include <unordered_map>
-#include <functional>
-#include <string>
 
 namespace PXTEngine {
 

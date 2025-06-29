@@ -1,8 +1,4 @@
 #include "graphics/context/ray_tracing_vk_ext_func.hpp"
-#include "core/logger.hpp"
-
-#include <stdexcept>
-#include <iostream>
 
 // Define the global function pointers, initialized to nullptr
 

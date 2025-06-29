@@ -1,10 +1,5 @@
 #include "graphics/renderer.hpp"
 
-#include "core/diagnostics.hpp"
-
-#include <array>
-#include <stdexcept>
-
 namespace PXTEngine {
 
     Renderer::Renderer(Window& window, Context& context) : m_window{window}, m_context{context} {

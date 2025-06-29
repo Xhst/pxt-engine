@@ -2,8 +2,6 @@
 
 #include "application.hpp"
 
-#include <stdexcept>
-
 
 namespace PXTEngine {
 

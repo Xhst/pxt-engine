@@ -1,14 +1,8 @@
 #include "graphics/pipeline.hpp"
 
-#include "core/diagnostics.hpp"
 #include "graphics/resources/vk_mesh.hpp"
 #include "graphics/resources/vk_shader.hpp"
 #include "graphics/frame_info.hpp"
-#include "core/constants.hpp"
-
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
 
 namespace PXTEngine {
 

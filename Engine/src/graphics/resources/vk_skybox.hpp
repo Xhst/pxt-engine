@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/resources/cube_map.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "scene/skybox.hpp"

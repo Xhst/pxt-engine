@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "resources/resource.hpp"
 
 namespace PXTEngine {

@@ -1,17 +1,10 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/context/instance.hpp"
 #include "graphics/context/surface.hpp"
 #include "graphics/context/physical_device.hpp"
 #include "graphics/context/logical_device.hpp"
-
-// IMGUI
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imconfig.h"
-#include "imgui_internal.h"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
 
 namespace PXTEngine {
 

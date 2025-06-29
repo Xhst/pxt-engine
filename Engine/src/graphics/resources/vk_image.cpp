@@ -1,7 +1,5 @@
 #include "graphics/resources/vk_image.hpp"
 
-#include <format>
-
 namespace PXTEngine {
 	VulkanImage::VulkanImage(Context& context, const ImageInfo& info, const Buffer& buffer) :
 	m_context(context),

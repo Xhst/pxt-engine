@@ -1,18 +1,6 @@
 #include "graphics/render_systems/point_light_system.hpp"
-#include "core/memory.hpp"
-#include "core/diagnostics.hpp"
-#include "core/constants.hpp"
+
 #include "scene/ecs/entity.hpp"
-
-#include <iostream>
-#include <ranges>
-#include <stdexcept>
-#include <map>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
 
 namespace PXTEngine {
 

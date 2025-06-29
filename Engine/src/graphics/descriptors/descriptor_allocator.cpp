@@ -1,8 +1,5 @@
 #include "graphics/descriptors/descriptor_allocator.hpp"
 
-#include <stdexcept>
-#include <algorithm>
-
 namespace PXTEngine {
 
 	DescriptorAllocatorGrowable::DescriptorAllocatorGrowable(Context& context, const uint32_t maxSets,

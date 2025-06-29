@@ -1,15 +1,6 @@
 #include "swap_chain.hpp"
-#include "core/logger.hpp"
-#include "utils/vk_enum_str.h"
 
-#include <array>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <limits>
-#include <set>
-#include <stdexcept>
-#include <utility>
+#include "utils/vk_enum_str.h"
 
 #define USE_IMMEDIATE_PRESENT_MODE 0
 

@@ -1,10 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
-
-#include <vector>
-
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
 
 namespace PXTEngine {

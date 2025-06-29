@@ -1,9 +1,4 @@
 #include "graphics/context/physical_device.hpp"
-#include "core/logger.hpp"
-
-#include <vector>
-#include <iostream>
-#include <set>
 
 namespace PXTEngine {
 

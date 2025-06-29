@@ -1,17 +1,7 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 
-#include "core/memory.hpp"
-#include "core/diagnostics.hpp"
-#include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 #include "graphics/resources/vk_mesh.hpp"
-
-#include <stdexcept>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
 
 namespace PXTEngine {
 

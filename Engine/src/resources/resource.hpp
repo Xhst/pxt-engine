@@ -1,8 +1,8 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "core/uuid.hpp"
 
-#include <string>
 
 namespace PXTEngine {
 

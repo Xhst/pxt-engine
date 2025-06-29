@@ -1,9 +1,8 @@
 // Code based on https://github.com/jbikker/lighthouse2/blob/master/lib/rendercore_vulkan_rt/vulkan_shader.h
-
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
-#include <unordered_set>
 
 #include <shaderc/shaderc.hpp>
 

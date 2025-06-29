@@ -1,13 +1,11 @@
 #pragma once
 
-#include "core/uuid.hpp"         
-#include "core/memory.hpp"       
+#include "core/pch.hpp"
+#include "core/uuid.hpp"               
 #include "resources/types/mesh.hpp"
 #include "resources/types/material.hpp" 
 #include "scene/camera.hpp"       
-
-#include <glm/glm.hpp>          
-#include <string>               
+           
 
 namespace PXTEngine
 {

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <string>
-#include <vector>
-
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
 
 namespace PXTEngine {

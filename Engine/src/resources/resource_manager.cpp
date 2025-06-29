@@ -2,10 +2,6 @@
 
 #include "resources/importers/resource_importer.hpp"
 
-#include <filesystem>
-#include <iostream>
-#include <ranges>
-
 namespace PXTEngine {
 
 	Shared<Material> ResourceManager::defaultMaterial = nullptr;

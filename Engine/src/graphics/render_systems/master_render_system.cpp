@@ -1,5 +1,5 @@
 #include "graphics/render_systems/master_render_system.hpp"
-#include "core/logger.hpp"
+
 #include "utils/vk_enum_str.h"
 
 namespace PXTEngine {

@@ -1,16 +1,5 @@
 #include "graphics/render_systems/skybox_render_system.hpp"
 
-#include "core/memory.hpp"
-#include "core/diagnostics.hpp"
-#include "core/constants.hpp"
-
-#include <stdexcept>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 namespace PXTEngine {
 
     // No push constants needed for skybox, as it doesn't transform based on a model matrix

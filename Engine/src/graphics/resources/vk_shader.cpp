@@ -1,12 +1,5 @@
 // Code based on https://github.com/jbikker/lighthouse2/blob/master/lib/rendercore_vulkan_rt/vulkan_shader.cpp
-
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string>
-
 #include "graphics/resources/vk_shader.hpp"
-#include "core/diagnostics.hpp"
 
 inline std::string get_cwd() {
 	char* cwd;

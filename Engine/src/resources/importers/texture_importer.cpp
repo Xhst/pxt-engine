@@ -1,10 +1,10 @@
 #include "resources/importers/texture_importer.hpp"
 
+#include "core/pch.hpp"
 #include "core/buffer.hpp"
 #include "graphics/resources/texture2d.hpp"
 
 #include <stb_image.h>
-#include <stdexcept>
 
 namespace PXTEngine {
 

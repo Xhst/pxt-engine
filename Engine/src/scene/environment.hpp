@@ -1,9 +1,7 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "scene/skybox.hpp"
-
-#include <glm/glm.hpp>  
 
 namespace PXTEngine {
 

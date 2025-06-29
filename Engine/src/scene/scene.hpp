@@ -1,11 +1,9 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "core/uuid.hpp"
 
 #include "scene/environment.hpp"
-
-#include <entt/entt.hpp>
 
 namespace PXTEngine {
 

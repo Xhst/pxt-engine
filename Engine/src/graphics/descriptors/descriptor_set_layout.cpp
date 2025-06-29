@@ -1,10 +1,5 @@
 #include "graphics/descriptors/descriptor_set_layout.hpp"
 
-#include "core/diagnostics.hpp"
-#include <ranges>
-#include <stdexcept>
-#include <utility>
-
 namespace PXTEngine {
     DescriptorSetLayout::Builder& DescriptorSetLayout::Builder::addBinding(
         const uint32_t binding,

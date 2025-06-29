@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/resources/vk_skybox.hpp"
@@ -7,10 +8,6 @@
 #include "graphics/frame_info.hpp"
 
 #include "scene/environment.hpp"
-
-#include <array>
-#include <memory>
-#include <vector>
 
 namespace PXTEngine {
 
