@@ -127,6 +127,10 @@ if (WIN32)
     $<IF:$<CONFIG:Debug>,ENABLE_VALIDATION_LAYERS=1,ENABLE_VALIDATION_LAYERS=0>)
   message(STATUS "Validation layers enabled for Debug builds, disabled for other builds")
 
+  target_precompile_headers(${PROJECT_NAME} PRIVATE
+    ${PROJECT_SOURCE_DIR}/Engine/src/core/pch.hpp
+  )
+
   # Link everything to the target executable
   target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw                     
