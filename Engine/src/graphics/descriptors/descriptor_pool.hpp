@@ -1,9 +1,7 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
-
-#include <vector>
-#include <span>
 
 namespace PXTEngine {
 

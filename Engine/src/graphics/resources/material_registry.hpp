@@ -1,14 +1,11 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "resources/resource.hpp"
 #include "resources/types/material.hpp"
 #include "graphics/descriptors/descriptors.hpp"
 #include "graphics/resources/vk_buffer.hpp"
 #include "graphics/resources/texture_registry.hpp"
-
-#include <vector>
-#include <unordered_map>
 
 namespace PXTEngine {
 

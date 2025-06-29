@@ -1,7 +1,5 @@
 #include "graphics/render_systems/raytracing_render_system.hpp"
 
-#include "core/constants.hpp"
-
 namespace PXTEngine {
 	RayTracingRenderSystem::RayTracingRenderSystem(
 		Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator,

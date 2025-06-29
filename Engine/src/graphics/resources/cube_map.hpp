@@ -1,8 +1,7 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/resources/vk_image.hpp"
-
-#include <array>
 
 namespace PXTEngine {
 

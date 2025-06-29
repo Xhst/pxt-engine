@@ -1,6 +1,5 @@
 #include "scene/scene.hpp"
 
-#include "core/diagnostics.hpp"
 #include "scene/ecs/component.hpp"
 #include "scene/ecs/entity.hpp"
 #include "scene/script/script.hpp"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "scene/ecs/entity.hpp"
 
 namespace PXTEngine {

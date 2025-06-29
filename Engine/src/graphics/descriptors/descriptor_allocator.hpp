@@ -1,10 +1,8 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/descriptors/descriptor_pool.hpp"
 #include "graphics/descriptors/descriptor_set_layout.hpp"
-
-#include <span>
-#include <vector>
 
 namespace PXTEngine {
 	/**

@@ -1,16 +1,5 @@
 #include "graphics/render_systems/skybox_render_system.hpp"
 
-#include "core/memory.hpp"
-#include "core/diagnostics.hpp"
-#include "core/constants.hpp"
-
-#include <stdexcept>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 namespace PXTEngine {
 
     // No push constants needed for skybox, as it doesn't transform based on a model matrix
@@ -51,7 +40,7 @@ namespace PXTEngine {
         }
     }
 
-    void SkyboxRenderSystem::createPipeline(VkRenderPass renderPass) {
+    void SkyboxRenderSystem::createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create skybox pipeline before pipelineLayout");
 
         RasterizationPipelineConfigInfo pipelineConfig{};
@@ -72,10 +61,12 @@ namespace PXTEngine {
         pipelineConfig.attributeDescriptions.clear();
         pipelineConfig.bindingDescriptions.clear();
 
+        const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+        const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
 
-        const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
-            {VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "skybox.vert.spv"},
-            {VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "skybox.frag.spv"}
+        std::vector<std::string> shaderFilePaths;
+        for (const auto& filePath : m_shaderFilePaths) {
+            shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
         };
 
         m_pipeline = createUnique<Pipeline>(

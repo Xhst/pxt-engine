@@ -1,5 +1,5 @@
 #include "graphics/render_systems/master_render_system.hpp"
-#include "core/logger.hpp"
+
 #include "utils/vk_enum_str.h"
 
 namespace PXTEngine {
@@ -325,6 +325,23 @@ namespace PXTEngine {
 		);
 	}
 
+	void MasterRenderSystem::reloadShaders() {
+		// wait for the device to be idle before reloading shaders
+		vkDeviceWaitIdle(m_context.getDevice());
+
+		PXT_INFO("Reloading shaders in MasterRenderSystem...");
+
+		// reload shaders in all render systems
+		m_materialRenderSystem->reloadShaders();
+		m_debugRenderSystem->reloadShaders();
+		//m_skyboxRenderSystem->reloadShaders();
+		//m_pointLightSystem->reloadShaders();
+		//m_shadowMapRenderSystem->reloadShaders();
+		//m_rayTracingRenderSystem->reloadShaders();
+
+		PXT_INFO("Shaders reloaded successfully.");
+	}
+
 	void MasterRenderSystem::onUpdate(FrameInfo& frameInfo, GlobalUbo& ubo) {
 		// check if viewport size has changed, if so recreate resources
 		VkExtent2D swapChainExtent = m_renderer.getSwapChainExtent();
@@ -335,6 +352,13 @@ namespace PXTEngine {
 			// update scene image for raytracing
 			m_rayTracingRenderSystem->updateSceneImage(m_sceneImage);
 			m_lastFrameSwapChainExtent = swapChainExtent;
+		}
+
+		// check if the user asked for the shaders to be reloaded
+		if (m_isReloadShadersButtonPressed) {
+			reloadShaders();
+
+			m_isReloadShadersButtonPressed = false;
 		}
 		
 		// update ubo buffer
@@ -504,6 +528,9 @@ namespace PXTEngine {
 		ImGui::End();
 
 		ImGui::Begin("Debug Renderer");
+
+		m_isReloadShadersButtonPressed = (ImGui::Button("Reload Shaders", ImVec2(150, 0)));
+
 		ImGui::Checkbox("Enable Debug", &m_isDebugEnabled);
 
 		if (m_isDebugEnabled) {

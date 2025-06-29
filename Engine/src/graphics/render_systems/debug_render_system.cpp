@@ -1,17 +1,7 @@
 #include "graphics/render_systems/debug_render_system.hpp"
 
-#include "core/memory.hpp"
-#include "core/diagnostics.hpp"
-#include "core/constants.hpp"
 #include "graphics/resources/vk_mesh.hpp"
 #include "scene/ecs/entity.hpp"
-
-#include <stdexcept>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
 
 namespace PXTEngine {
 
@@ -28,9 +18,10 @@ namespace PXTEngine {
     };
 
     DebugRenderSystem::DebugRenderSystem(Context& context, Shared<DescriptorAllocatorGrowable> descriptorAllocator, TextureRegistry& textureRegistry, VkRenderPass renderPass, DescriptorSetLayout& globalSetLayout)
-		: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry) {
+		: m_context(context), m_descriptorAllocator(descriptorAllocator), m_textureRegistry(textureRegistry),
+		m_renderPassHandle(renderPass) {
         createPipelineLayout(globalSetLayout);
-        createPipelines(renderPass);
+        createPipelines();
     }
 
     DebugRenderSystem::~DebugRenderSystem() {
@@ -60,19 +51,22 @@ namespace PXTEngine {
         }
     }
 
-    void DebugRenderSystem::createPipelines(VkRenderPass renderPass) {
+    void DebugRenderSystem::createPipelines(bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         // Default Solid Pipeline
         RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        pipelineConfig.renderPass = renderPass;
+        pipelineConfig.renderPass = m_renderPassHandle;;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
-			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "debug_shader.vert.spv"},
-			{VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "debug_shader.frag.spv"}
-		};
+        const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+        const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
+
+        std::vector<std::string> shaderFilePaths;
+        for (const auto& filePath : m_shaderFilePaths) {
+            shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
+        };
 
         m_pipelineSolid = createUnique<Pipeline>(
             m_context,
@@ -156,5 +150,9 @@ namespace PXTEngine {
 		ImGui::Checkbox("Show Normal Map", &m_isNormalMapEnabled);
 		ImGui::Checkbox("Show Ambient Occlusion Map", &m_isAOMapEnabled);
 		ImGui::EndDisabled();
+    }
+
+    void DebugRenderSystem::reloadShaders() {
+        createPipelines(false);
     }
 }

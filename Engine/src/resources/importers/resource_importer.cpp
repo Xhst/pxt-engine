@@ -4,9 +4,6 @@
 #include "resources/importers/texture_importer.hpp"
 #include "resources/importers/mesh_importer.hpp"
 
-#include <unordered_map>
-#include <stdexcept>
-
 namespace PXTEngine {
 
     namespace {

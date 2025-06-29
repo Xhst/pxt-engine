@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/input/key_code.hpp"
+#include "core/pch.hpp"
 
-#include <GLFW/glfw3.h>
+#include "core/input/key_code.hpp"
 
 namespace PXTEngine {
 

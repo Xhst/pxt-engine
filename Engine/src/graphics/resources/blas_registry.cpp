@@ -1,5 +1,4 @@
 #include "graphics/resources/blas_registry.hpp"
-#include "core/diagnostics.hpp"
 
 namespace PXTEngine {
     BLASRegistry::BLASRegistry(Context& context) : m_context(context) {}

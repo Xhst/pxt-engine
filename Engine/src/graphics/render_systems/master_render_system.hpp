@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/descriptors/descriptors.hpp"
@@ -52,6 +52,8 @@ namespace PXTEngine {
 		void createOffscreenFrameBuffer();
 		void createRenderSystems();
 
+		void reloadShaders();
+
 		void createDescriptorSetsImGui();
 		void updateImguiDescriptorSet();
 
@@ -97,5 +99,6 @@ namespace PXTEngine {
 		bool m_isDebugEnabled = false;
 		bool m_isRaytracingEnabled = true;
 		bool m_isAccumulationEnabled = false;
+		bool m_isReloadShadersButtonPressed = false;
 	};
 }

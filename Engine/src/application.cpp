@@ -1,8 +1,6 @@
 #include "application.hpp"
 
-#include "core/memory.hpp"
 #include "core/buffer.hpp"
-#include "core/constants.hpp"
 #include "core/events/event_dispatcher.hpp"
 #include "core/events/window_event.hpp"
 #include "core/diagnostics.hpp"
@@ -11,16 +9,6 @@
 #include "scene/camera.hpp"
 #include "graphics/render_systems/master_render_system.hpp"
 #include "graphics/resources/texture2d.hpp"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-
-#include <iostream>
-#include <chrono>
-
-#define STB_IMAGE_IMPLEMENTATION
 
 #include "tracy/Tracy.hpp"
 
@@ -87,7 +75,8 @@ namespace PXTEngine {
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1.0f},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<float>(m_textureRegistry.getTextureCount())},
             {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1.0f},
-            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2.0f}
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2.0f},
+			{VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 2.0f}
 		};
 
 		m_descriptorAllocator = createShared<DescriptorAllocatorGrowable>(m_context, SwapChain::MAX_FRAMES_IN_FLIGHT, ratios);

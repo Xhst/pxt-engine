@@ -1,15 +1,6 @@
 #include "swap_chain.hpp"
-#include "core/logger.hpp"
-#include "utils/vk_enum_str.h"
 
-#include <array>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <limits>
-#include <set>
-#include <stdexcept>
-#include <utility>
+#include "utils/vk_enum_str.h"
 
 #define USE_IMMEDIATE_PRESENT_MODE 0
 
@@ -62,9 +53,11 @@ namespace PXTEngine {
 
         // cleanup synchronization objects
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(m_context.getDevice(), m_renderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(m_context.getDevice(), m_imageAvailableSemaphores[i], nullptr);
             vkDestroyFence(m_context.getDevice(), m_inFlightFences[i], nullptr);
+        }
+        for (size_t i = 0; i < imageCount(); i++) {
+            vkDestroySemaphore(m_context.getDevice(), m_renderFinishedSemaphores[i], nullptr);
         }
     }
 
@@ -82,12 +75,7 @@ namespace PXTEngine {
     }
 
     VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex) {
-        if (m_imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
-            vkWaitForFences(m_context.getDevice(), 1, &m_imagesInFlight[*imageIndex], VK_TRUE,
-                            UINT64_MAX);
-        }
-        
-        m_imagesInFlight[*imageIndex] = m_inFlightFences[m_currentFrame];
+        vkWaitForFences(m_context.getDevice(), 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -101,7 +89,7 @@ namespace PXTEngine {
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = buffers;
 
-        VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphores[m_currentFrame]};
+        VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphores[*imageIndex]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -348,9 +336,8 @@ namespace PXTEngine {
 
     void SwapChain::createSyncObjects() {
         m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        m_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        m_renderFinishedSemaphores.resize(imageCount());
         m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        m_imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
 
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -362,11 +349,16 @@ namespace PXTEngine {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             if (vkCreateSemaphore(m_context.getDevice(), &semaphoreInfo, nullptr,
                                   &m_imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(m_context.getDevice(), &semaphoreInfo, nullptr,
-                                  &m_renderFinishedSemaphores[i]) != VK_SUCCESS ||
                 vkCreateFence(m_context.getDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) !=
                     VK_SUCCESS) {
-                throw std::runtime_error("failed to create synchronization objects for a frame!");
+                throw std::runtime_error("failed to create m_imageAvailableSemaphores or m_inFlightFences objects for a frame!");
+            }
+        }
+
+        for (size_t i = 0; i < imageCount(); i++) {
+            if (vkCreateSemaphore(m_context.getDevice(), &semaphoreInfo, nullptr,
+                    &m_renderFinishedSemaphores[i]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create m_renderFinishedSemaphores objects for a frame!");
             }
         }
     }

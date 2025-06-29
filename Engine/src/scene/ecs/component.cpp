@@ -1,9 +1,6 @@
 #include "scene/ecs/component.hpp"
 
 #include "application.hpp"  
-#include "core/constants.hpp"
-
-#include <glm/glm.hpp>
 
 namespace PXTEngine
 {

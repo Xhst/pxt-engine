@@ -1,8 +1,5 @@
 #include "graphics/context/logical_device.hpp"
 
-#include <iostream>
-#include <set>
-
 namespace PXTEngine {
 
     LogicalDevice::LogicalDevice(Window& window, Instance& instance, Surface& surface, PhysicalDevice& physicalDevice)

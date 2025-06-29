@@ -1,15 +1,10 @@
 #include "resources/importers/mesh_importer.hpp"
 
-#include "core/constants.hpp"
-#include "core/memory.hpp"
 #include "graphics/resources/vk_mesh.hpp"
 #include "resources/types/material.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
-
-#include <unordered_map>
-#include <vector>
 
 namespace PXTEngine {
 

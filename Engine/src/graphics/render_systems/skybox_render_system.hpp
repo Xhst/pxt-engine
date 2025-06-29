@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/resources/vk_skybox.hpp"
@@ -7,10 +8,6 @@
 #include "graphics/frame_info.hpp"
 
 #include "scene/environment.hpp"
-
-#include <array>
-#include <memory>
-#include <vector>
 
 namespace PXTEngine {
 
@@ -32,13 +29,18 @@ namespace PXTEngine {
 
     private:
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
-        void createPipeline(VkRenderPass renderPass);
+        void createPipeline(VkRenderPass renderPass, bool useCompiledSpirvFiles = true);
 
         Context& m_context;
         Shared<VulkanSkybox> m_skybox;
 
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
+
+        std::array<const std::string, 2> m_shaderFilePaths = {
+            "skybox.vert",
+            "skybox.frag"
+        };
     };
 
 }

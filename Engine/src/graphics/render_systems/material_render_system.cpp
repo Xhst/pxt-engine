@@ -1,17 +1,7 @@
 #include "graphics/render_systems/material_render_system.hpp"
 
-#include "core/memory.hpp"
-#include "core/diagnostics.hpp"
-#include "core/constants.hpp"
 #include "graphics/resources/vk_mesh.hpp"
 #include "scene/ecs/entity.hpp"
-
-#include <stdexcept>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
 
 namespace PXTEngine {
 
@@ -34,11 +24,12 @@ namespace PXTEngine {
     	VkRenderPass renderPass, VkDescriptorImageInfo shadowMapImageInfo)
         : m_context(context),
         m_descriptorAllocator(descriptorAllocator),
-        m_textureRegistry(textureRegistry)
+        m_textureRegistry(textureRegistry),
+        m_renderPassHandle(renderPass)
     {
 		createDescriptorSets(shadowMapImageInfo);
         createPipelineLayout(globalSetLayout);
-        createPipeline(renderPass);
+        createPipeline();
     }
 
     MaterialRenderSystem::~MaterialRenderSystem() {
@@ -82,17 +73,20 @@ namespace PXTEngine {
         }
     }
 
-    void MaterialRenderSystem::createPipeline(VkRenderPass renderPass) {
+    void MaterialRenderSystem::createPipeline(bool useCompiledSpirvFiles) {
         PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         RasterizationPipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        pipelineConfig.renderPass = renderPass;
+        pipelineConfig.renderPass = m_renderPassHandle;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
-			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "material_shader.vert.spv"},
-			{VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "material_shader.frag.spv"}
+        const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+        const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
+
+        std::vector<std::string> shaderFilePaths;
+		for (const auto& filePath : m_shaderFilePaths) {
+            shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
 		};
 
         m_pipeline = createUnique<Pipeline>(
@@ -151,5 +145,9 @@ namespace PXTEngine {
             vulkanMesh->draw(frameInfo.commandBuffer);
 
         }
+    }
+
+    void MaterialRenderSystem::reloadShaders() {
+		createPipeline(false);
     }
 }

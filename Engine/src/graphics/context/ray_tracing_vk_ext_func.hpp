@@ -1,6 +1,7 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include "core/pch.hpp"
+
 // Include necessary extension headers if not already pulled in by vulkan.h
 // For Vulkan 1.3, many are promoted, but explicit includes might be needed depending on SDK/headers
 // #include <vulkan/vulkan_beta.h> // Might be needed for some definitions if not using latest headers

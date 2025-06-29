@@ -1,7 +1,4 @@
 #include "graphics/render_pass.hpp"
-#include "core/logger.hpp"
-
-#include <iostream>
 
 namespace PXTEngine {
     RenderPass::RenderPass(Context& context, const VkRenderPassCreateInfo& createInfo,

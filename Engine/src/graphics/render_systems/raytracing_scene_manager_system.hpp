@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/resources/material_registry.hpp"
 #include "graphics/resources/blas_registry.hpp"
 #include "graphics/resources/vk_buffer.hpp"

@@ -1,9 +1,5 @@
 #include "scene/camera.hpp"
 
-#include "core/diagnostics.hpp"
-
-#include <limits>
-
 namespace PXTEngine {
 
     void Camera::setOrthographic(float left, float right, float top, float bottom, float zNear, float zFar) {

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <cstring>
+#include "core/pch.hpp"
 
 namespace PXTEngine {
 

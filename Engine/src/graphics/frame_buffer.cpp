@@ -1,7 +1,4 @@
 #include "graphics/frame_buffer.hpp"
-#include "core/logger.hpp"
-
-#include <iostream>
 
 namespace PXTEngine {
     FrameBuffer::FrameBuffer(Context& context,

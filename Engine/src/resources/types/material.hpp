@@ -1,14 +1,8 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "resources/resource.hpp"
 #include "resources/types/image.hpp"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/hash.hpp>
-#include <glm/glm.hpp>
 
 namespace PXTEngine {
 

@@ -1,10 +1,8 @@
 #pragma once
 
-#include "core/diagnostics.hpp"
+#include "core/pch.hpp"
 #include "scene/scene.hpp"
 #include "scene/ecs/component.hpp"
-
-#include <entt/entt.hpp>
 
 namespace PXTEngine {
 

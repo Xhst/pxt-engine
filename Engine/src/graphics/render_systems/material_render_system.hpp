@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/memory.hpp"
+#include "core/pch.hpp"
 #include "graphics/pipeline.hpp"
 #include "graphics/swap_chain.hpp"
 #include "graphics/context/context.hpp"
@@ -20,15 +20,17 @@ namespace PXTEngine {
         MaterialRenderSystem& operator=(const MaterialRenderSystem&) = delete;
 
         void render(FrameInfo& frameInfo);
+        void reloadShaders();
 
     private:
         void createDescriptorSets(VkDescriptorImageInfo shadowMapImageInfo);
         void createPipelineLayout(DescriptorSetLayout& globalSetLayout);
-        void createPipeline(VkRenderPass renderPass);
+        void createPipeline(bool useCompiledSpirvFiles = true);
         
         Context& m_context;
         TextureRegistry& m_textureRegistry;
 
+		VkRenderPass m_renderPassHandle;
         Unique<Pipeline> m_pipeline;
         VkPipelineLayout m_pipelineLayout;
 
@@ -36,5 +38,10 @@ namespace PXTEngine {
 
         Unique<DescriptorSetLayout> m_shadowMapDescriptorSetLayout{};
         VkDescriptorSet m_shadowMapDescriptorSet{};
+
+        std::array<const std::string, 2> m_shaderFilePaths = {
+            "material_shader.vert",
+            "material_shader.frag"
+        };
     };
 }

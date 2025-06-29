@@ -1,8 +1,6 @@
 #pragma once
 
-#include <string>
-#include <vector>
-
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
 
 namespace PXTEngine {
@@ -66,7 +64,7 @@ namespace PXTEngine {
      */
     class Pipeline {
        public:
-        Pipeline(Context& context, const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
+        Pipeline(Context& context, const std::vector<std::string>& shaderFilePaths,
                  const RasterizationPipelineConfigInfo& configInfo);
 		Pipeline(Context& context, const RayTracingPipelineConfigInfo& configInfo);
                  
@@ -86,7 +84,7 @@ namespace PXTEngine {
         static std::vector<char> readFile(const std::string& filename);
 
         void createGraphicsPipeline(
-            const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths,
+            const std::vector<std::string>& shaderFilePaths,
             const RasterizationPipelineConfigInfo& configInfo);
 
 		void createRayTracingPipeline(const RayTracingPipelineConfigInfo& configInfo);

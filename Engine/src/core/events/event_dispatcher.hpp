@@ -1,7 +1,8 @@
 #pragma once
 
+#include "core/pch.hpp"
+
 #include "core/events/event.hpp"
-#include <functional>
 
 namespace PXTEngine {
 

@@ -1,17 +1,9 @@
 #pragma once
 
+#include "core/pch.hpp"
 #include "graphics/context/context.hpp"
-
-#include "core/memory.hpp"
 #include "resources/types/mesh.hpp"
-
 #include "graphics/resources/vk_buffer.hpp"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
-
-#include <vector>
 
 namespace PXTEngine {
 

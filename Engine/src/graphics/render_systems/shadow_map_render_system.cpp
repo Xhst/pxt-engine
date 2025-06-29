@@ -1,17 +1,7 @@
 #include "graphics/render_systems/shadow_map_render_system.hpp"
 
-#include "core/memory.hpp"
-#include "core/diagnostics.hpp"
-#include "core/constants.hpp"
 #include "scene/ecs/entity.hpp"
 #include "graphics/resources/vk_mesh.hpp"
-
-#include <stdexcept>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
 
 namespace PXTEngine {
 
@@ -260,7 +250,7 @@ namespace PXTEngine {
         }
     }
 
-    void ShadowMapRenderSystem::createPipeline() {
+    void ShadowMapRenderSystem::createPipeline(bool useCompiledSpirvFiles) {
 		PXT_ASSERT(m_pipelineLayout != nullptr, "Cannot create pipeline before pipelineLayout");
 
         RasterizationPipelineConfigInfo pipelineConfig{};
@@ -268,9 +258,12 @@ namespace PXTEngine {
         pipelineConfig.renderPass = m_renderPass->getHandle();
         pipelineConfig.pipelineLayout = m_pipelineLayout;
 
-		const std::vector<std::pair<VkShaderStageFlagBits, std::string>>& shaderFilePaths = {
-			{VK_SHADER_STAGE_VERTEX_BIT, SPV_SHADERS_PATH + "cube_shadow_map_creation.vert.spv"},
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, SPV_SHADERS_PATH + "cube_shadow_map_creation.frag.spv" }
+		const std::string baseShaderPath = useCompiledSpirvFiles ? SPV_SHADERS_PATH : SHADERS_PATH;
+		const std::string filenameSuffix = useCompiledSpirvFiles ? ".spv" : "";
+
+		std::vector<std::string> shaderFilePaths;
+		for (const auto& filePath : m_shaderFilePaths) {
+			shaderFilePaths.push_back(baseShaderPath + filePath + filenameSuffix);
 		};
 
         m_pipeline = createUnique<Pipeline>(

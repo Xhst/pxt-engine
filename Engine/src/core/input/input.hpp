@@ -1,10 +1,10 @@
 #pragma once
 
+#include "core/pch.hpp"
+
 #include "application.hpp"
 #include "core/input/key_code.hpp"
 #include "core/input/mapper/glfw_input_mapper.hpp"
-
-#include <glm/glm.hpp>
 
 namespace PXTEngine {
 
